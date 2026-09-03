@@ -8,6 +8,7 @@ The project combines Olakunle Obademi's CareerLaunch proposal with selected idea
 
 - Olakunle Obademi (team lead) — [@bbrain777](https://github.com/bbrain777)
 - Saleh Ntege — [@salehish](https://github.com/salehish)
+- Alex Koje Okhitoya — [@Lexmantherfirst](https://github.com/Lexmantherfirst)
 
 Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT).
 
@@ -22,6 +23,8 @@ Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda ti
 - Job-search expense tracking
 - Dashboard analytics and basic administration
 - Automated tests, accessibility review, documentation, and deployment
+
+Optional enhancement: a voice-enabled mock-interview experience based on Alex's Cloudflare RealtimeKit experimentation, attempted only after the core MVP is complete.
 
 The MVP intentionally excludes a complete customer, inventory, product, sales, or accounting system, as well as job-board scraping, automatic applications, inbox access, employer accounts, external ATS integrations, and AI hiring decisions.
 
@@ -43,4 +46,4 @@ The MVP intentionally excludes a complete customer, inventory, product, sales, o
 
 ## Course document
 
-The submission-ready project-selection document is `CareerLaunch-Project-Selection-Olakunle-Obademi-Saleh-Ntege.docx`.
+The submission-ready project-selection document is `CareerLaunch-Project-Selection-Team.docx`.
