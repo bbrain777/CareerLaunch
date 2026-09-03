@@ -24,8 +24,6 @@ Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda ti
 - Dashboard analytics and basic administration
 - Automated tests, accessibility review, documentation, and deployment
 
-Optional enhancement: a voice-enabled mock-interview experience based on Alex's Cloudflare RealtimeKit experimentation, attempted only after the core MVP is complete.
-
 The MVP intentionally excludes a complete customer, inventory, product, sales, or accounting system, as well as job-board scraping, automatic applications, inbox access, employer accounts, external ATS integrations, and AI hiring decisions.
 
 ## Proposed technology
