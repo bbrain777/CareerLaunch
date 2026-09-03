@@ -8,7 +8,7 @@ The project combines Olakunle Obademi's CareerLaunch proposal with selected idea
 
 - Olakunle Obademi (team lead) — [@bbrain777](https://github.com/bbrain777)
 - Saleh Ntege — [@salehish](https://github.com/salehish)
-- Alex Koje Okhitoya — [@Lexmantherfirst](https://github.com/Lexmantherfirst)
+- Alex Koje Okhitoya — [@lexmanthefirst](https://github.com/lexmanthefirst)
 
 Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT).
 
