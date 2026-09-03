@@ -9,7 +9,7 @@ The project combines Olakunle Obademi's CareerLaunch proposal with selected idea
 - Olakunle Obademi (team lead) — [@bbrain777](https://github.com/bbrain777)
 - Saleh Ntege — [@salehish](https://github.com/salehish)
 
-Synchronous meeting time: To be confirmed by both team members.
+Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT).
 
 ## Four-week MVP
 
