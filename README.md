@@ -42,6 +42,16 @@ The MVP intentionally excludes a complete customer, inventory, product, sales, o
 3. Add reminders, documents, interview preparation, career resources, expenses, and analytics.
 4. Complete administration, tests, accessibility review, deployment, and documentation.
 
+## Team workflow
+
+- Finalize the technology stack and responsibilities during the Saturday team meeting.
+- Create a separate branch for each assigned feature.
+- Open a pull request for team review before merging work into main.
+- Use **prototype/dashboard** only as a preserved visual and technical reference.
+- Keep **main** limited to agreed and reviewed team work.
+
+See **docs/TEAM-PLANNING.md** for the meeting checklist and **CONTRIBUTING.md** for the branch and pull-request workflow.
+
 ## Course document
 
 The submission-ready project-selection document is `CareerLaunch-Project-Selection-Team.docx`.
