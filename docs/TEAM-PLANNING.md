@@ -3,7 +3,7 @@
 ## Meeting
 
 - Schedule: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT)
-- Participants: Olakunle Obademi, Saleh Ntege, and Alex Koje Okhitoya
+- Participants: Olakunle Obademi, Saleh Ntege, Alex Koje Okhitoya, and Samar Mohammed Walakabouh Salah Mahmoud Abbas
 
 ## Decisions for the first meeting
 
@@ -34,6 +34,7 @@ Assign responsibilities according to each member's interests and experience:
 - Olakunle:
 - Saleh:
 - Alex:
+- Samar:
 
 Each member should own meaningful implementation work while also reviewing teammates' pull requests.
 
