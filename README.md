@@ -56,3 +56,8 @@ See **docs/TEAM-PLANNING.md** for the meeting checklist and **CONTRIBUTING.md** 
 ## Course document
 
 The submission-ready project-selection document is `CareerLaunch-Project-Selection-Team.docx`.
+
+## Team Quotes
+
+> "The only way to do great work is to love what you do." - Steve Jobs
+> *(Added by Samar)*
