@@ -93,3 +93,6 @@ The submission-ready project-selection document is `CareerLaunch-Project-Selecti
 
 > "The only way to do great work is to love what you do." - Steve Jobs
 > *(Added by Samar)*
+
+> "Sight shows you what is. Vision shows you what can be." - Olakunle Tayo Obademi
+> *(Added by Olakunle)*
