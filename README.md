@@ -96,3 +96,6 @@ The submission-ready project-selection document is `CareerLaunch-Project-Selecti
 
 > "Sight shows you what is. Vision shows you what can be." - Olakunle Tayo Obademi
 > *(Added by Olakunle)*
+
+> "Overthinking issues doesn't make them less easy to solve." - Stephanie Akas
+> *(Added by Alex)*
