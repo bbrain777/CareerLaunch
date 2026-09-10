@@ -99,3 +99,5 @@ The submission-ready project-selection document is `CareerLaunch-Project-Selecti
 
 > "Overthinking issues doesn't make them less easy to solve." - Stephanie Akas
 > *(Added by Alex)*
+> "Success is the sum of small efforts, repeated day in and day out." - Robert Collier
+> *(Added by Saleh Ntege)*
