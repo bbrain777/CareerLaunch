@@ -13,38 +13,6 @@ The project combines Olakunle Obademi's CareerLaunch proposal with selected idea
 
 Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT).
 
-## Local development
-
-Requirements: Node.js 20 or newer.
-
-From the repository root:
-
-~~~powershell
-npm.cmd install
-npm.cmd run dev
-~~~
-
-Open **http://localhost:5173**. The web application runs on port 5173 and proxies API requests to the Express server on port 4000.
-
-Run the automated tests:
-
-~~~powershell
-npm.cmd test
-~~~
-
-Create production builds:
-
-~~~powershell
-npm.cmd run build
-~~~
-
-### Project structure
-
-- **apps/web** - React and TypeScript interface built with Vite
-- **apps/api** - Express and TypeScript REST API
-
-The current starter uses sample in-memory data so the team can run it immediately. PostgreSQL, Prisma, authentication, and persistent CRUD workflows will be added during the implementation sprints.
-
 ## Four-week MVP
 
 - Secure registration, authentication, profiles, and authorization
