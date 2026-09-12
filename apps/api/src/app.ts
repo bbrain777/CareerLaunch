@@ -1,7 +1,7 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import { applications, upcomingTasks } from "./data.js";
+import { applications, informationalInterviews, upcomingTasks } from "./data.js";
 
 export const app = express();
 
@@ -18,6 +18,10 @@ app.get("/api/health", (_request, response) => {
 
 app.get("/api/applications", (_request, response) => {
   response.json({ applications });
+});
+
+app.get("/api/informational-interviews", (_request, response) => {
+  response.json({ informationalInterviews });
 });
 
 app.get("/api/dashboard", (_request, response) => {
@@ -40,7 +44,8 @@ app.get("/api/dashboard", (_request, response) => {
       responseRate: 25
     },
     applications,
-    upcomingTasks
+    upcomingTasks,
+    informationalInterviews
   });
 });
 

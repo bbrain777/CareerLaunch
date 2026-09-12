@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatStatus, pipelineStatuses } from "./status";
-import type { DashboardData, JobApplication } from "./types";
+import type { DashboardData, InformationalInterview, JobApplication } from "./types";
 
 const fallbackData: DashboardData = {
   metrics: {
@@ -10,8 +10,15 @@ const fallbackData: DashboardData = {
     responseRate: 0
   },
   applications: [],
-  upcomingTasks: []
+  upcomingTasks: [],
+  informationalInterviews: []
 };
+
+const todayLabel = new Intl.DateTimeFormat("en-GB", {
+  weekday: "long",
+  day: "numeric",
+  month: "long"
+}).format(new Date());
 
 function App() {
   const [data, setData] = useState<DashboardData>(fallbackData);
@@ -67,6 +74,9 @@ function App() {
           <a className="nav-link" href="#contacts">
             <span aria-hidden="true">♙</span> Contacts
           </a>
+          <a className="nav-link" href="#informational-interviews">
+            <span aria-hidden="true">II</span> Informational interviews
+          </a>
           <a className="nav-link" href="#documents">
             <span aria-hidden="true">▤</span> Documents
           </a>
@@ -88,7 +98,7 @@ function App() {
       <main id="top">
         <header className="topbar">
           <div>
-            <span className="eyebrow">Thursday, September 3</span>
+            <span className="eyebrow">{todayLabel}</span>
             <h1>Welcome back, Olakunle</h1>
           </div>
           <button className="primary-button" type="button">
@@ -216,6 +226,21 @@ function App() {
             </div>
           </aside>
         </div>
+
+        <section className="panel interview-panel" id="informational-interviews">
+          <div className="panel-heading">
+            <div>
+              <span className="eyebrow">Build professional relationships</span>
+              <h2>Informational interviews</h2>
+            </div>
+            <button className="text-button" type="button">Add interview</button>
+          </div>
+          <div className="interview-grid">
+            {data.informationalInterviews.map((interview) => (
+              <InformationalInterviewCard interview={interview} key={interview.id} />
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );
@@ -257,6 +282,56 @@ function ApplicationCard({ application }: { application: JobApplication }) {
           →
         </button>
       </div>
+    </article>
+  );
+}
+
+function InformationalInterviewCard({ interview }: { interview: InformationalInterview }) {
+  const scheduledFor = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(interview.scheduledFor));
+  const nextFollowUp = interview.nextFollowUp
+    ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(
+        new Date(interview.nextFollowUp + "T12:00:00")
+      )
+    : "Not scheduled";
+
+  return (
+    <article className="interview-card">
+      <div className="interview-card-heading">
+        <div>
+          <span className="status-label">{interview.status.toUpperCase()}</span>
+          <h3>{interview.contactName}</h3>
+          <p>{interview.role} · {interview.company}</p>
+        </div>
+        <time dateTime={interview.scheduledFor}>{scheduledFor}</time>
+      </div>
+      <div className="interview-details">
+        <div>
+          <strong>Preparation</strong>
+          <span>{interview.preparationQuestions.length} questions ready</span>
+        </div>
+        <div>
+          <strong>Follow-up</strong>
+          <span>{nextFollowUp}</span>
+        </div>
+        <div>
+          <strong>Next action</strong>
+          <span>{interview.recommendedAction ?? "Capture notes after the conversation"}</span>
+        </div>
+      </div>
+      {interview.keyTakeaway && (
+        <p className="interview-takeaway"><strong>Key takeaway:</strong> {interview.keyTakeaway}</p>
+      )}
+      {interview.referral && (
+        <p className="interview-referral"><strong>Referral:</strong> {interview.referral}</p>
+      )}
+      <p className="interview-referral">
+        <strong>Thank-you:</strong> {interview.thankYouSent ? "Sent" : "Pending"}
+      </p>
     </article>
   );
 }

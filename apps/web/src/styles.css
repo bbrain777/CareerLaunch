@@ -609,6 +609,78 @@ h1 {
   justify-content: space-between;
 }
 
+.interview-panel {
+  margin-top: 18px;
+  padding: 24px;
+}
+
+.interview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.interview-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fbfa;
+}
+
+.interview-card-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.interview-card-heading h3 {
+  margin: 5px 0 3px;
+  font-size: 16px;
+}
+
+.interview-card-heading p,
+.interview-card-heading time {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.interview-card-heading time {
+  white-space: nowrap;
+}
+
+.interview-details {
+  margin-top: 15px;
+  display: grid;
+  grid-template-columns: minmax(90px, 0.7fr) minmax(80px, 0.6fr) minmax(0, 1.7fr);
+  gap: 10px;
+}
+
+.interview-details div {
+  padding: 10px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.interview-details strong,
+.interview-details span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.interview-details span {
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.interview-takeaway,
+.interview-referral {
+  margin: 12px 0 0;
+  color: #53645f;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -674,6 +746,11 @@ h1 {
 
   .search-field {
     width: 100%;
+  }
+
+  .interview-grid,
+  .interview-details {
+    grid-template-columns: 1fr;
   }
 }
 

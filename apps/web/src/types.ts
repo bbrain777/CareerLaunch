@@ -23,6 +23,21 @@ export interface UpcomingTask {
   type: string;
 }
 
+export interface InformationalInterview {
+  id: number;
+  contactName: string;
+  role: string;
+  company: string;
+  scheduledFor: string;
+  status: "Preparing" | "Scheduled" | "Completed";
+  preparationQuestions: string[];
+  keyTakeaway?: string;
+  recommendedAction?: string;
+  referral?: string;
+  thankYouSent: boolean;
+  nextFollowUp?: string;
+}
+
 export interface DashboardData {
   metrics: {
     activeApplications: number;
@@ -32,4 +47,5 @@ export interface DashboardData {
   };
   applications: JobApplication[];
   upcomingTasks: UpcomingTask[];
+  informationalInterviews: InformationalInterview[];
 }
