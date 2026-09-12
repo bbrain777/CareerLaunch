@@ -199,48 +199,49 @@ function App() {
             )}
           </section>
 
-          <aside className="panel tasks-panel">
-            <div className="panel-heading">
-              <div>
-                <span className="eyebrow">Stay on schedule</span>
-                <h2>Upcoming</h2>
+          <div className="right-rail">
+            <aside className="panel tasks-panel">
+              <div className="panel-heading">
+                <div>
+                  <span className="eyebrow">Stay on schedule</span>
+                  <h2>Upcoming</h2>
+                </div>
+                <button className="text-button" type="button">View all</button>
               </div>
-              <button className="text-button" type="button">View all</button>
-            </div>
-            <div className="task-list">
-              {data.upcomingTasks.map((task) => (
-                <article className="task" key={task.id}>
-                  <span className={"task-icon " + task.type.toLowerCase()}>✓</span>
-                  <div>
-                    <strong>{task.title}</strong>
-                    <span>{task.due}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-            <div className="preparation-card" id="resources">
-              <span className="eyebrow">Interview preparation</span>
-              <h3>Ready for your next conversation?</h3>
-              <p>Review practice questions and build a focused preparation checklist.</p>
-              <button type="button">Start preparing <span aria-hidden="true">→</span></button>
-            </div>
-          </aside>
-        </div>
+              <div className="task-list">
+                {data.upcomingTasks.map((task) => (
+                  <article className="task" key={task.id}>
+                    <span className={"task-icon " + task.type.toLowerCase()}>✓</span>
+                    <div>
+                      <strong>{task.title}</strong>
+                      <span>{task.due}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="preparation-card" id="resources">
+                <span className="eyebrow">Interview preparation</span>
+                <p>Review questions and build a focused preparation checklist.</p>
+                <button type="button">Start preparing <span aria-hidden="true">→</span></button>
+              </div>
+            </aside>
 
-        <section className="panel interview-panel" id="informational-interviews">
-          <div className="panel-heading">
-            <div>
-              <span className="eyebrow">Build professional relationships</span>
-              <h2>Informational interviews</h2>
-            </div>
-            <button className="text-button" type="button">Add interview</button>
+            <section className="panel interview-panel" id="informational-interviews">
+              <div className="panel-heading">
+                <div>
+                  <span className="eyebrow">Professional relationships</span>
+                  <h2>Informational interviews</h2>
+                </div>
+                <button className="text-button" type="button">Add</button>
+              </div>
+              <div className="interview-grid">
+                {data.informationalInterviews.map((interview) => (
+                  <InformationalInterviewCard interview={interview} key={interview.id} />
+                ))}
+              </div>
+            </section>
           </div>
-          <div className="interview-grid">
-            {data.informationalInterviews.map((interview) => (
-              <InformationalInterviewCard interview={interview} key={interview.id} />
-            ))}
-          </div>
-        </section>
+        </div>
       </main>
     </div>
   );
