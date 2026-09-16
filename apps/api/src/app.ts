@@ -2,12 +2,15 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { applications, informationalInterviews, upcomingTasks } from "./data.js";
+import { applicationRouter } from "./routes/applicationRoutes.js";
 
 export const app = express();
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/applications-db", applicationRouter);
 
 app.get("/api/health", (_request, response) => {
   response.json({

@@ -1,0 +1,904 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.application",
+    "label": "Create table \"application\"",
+    "summary": "Creates table \"application\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "application"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"application\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"application\"",
+        "sql": "CREATE TABLE \"public\".\"application\" (\n  \"appliedAt\" timestamptz,\n  \"company\" text NOT NULL,\n  \"contactId\" int4,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"deadline\" timestamptz,\n  \"employerId\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"location\" text,\n  \"notes\" text,\n  \"position\" text NOT NULL,\n  \"status\" text DEFAULT 'SAVED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"application_status_check_ddba36d8\" CHECK (\"status\" IN ('SAVED', 'PREPARING', 'APPLIED', 'INTERVIEW', 'OFFER', 'CLOSED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"application\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.contact",
+    "label": "Create table \"contact\"",
+    "summary": "Creates table \"contact\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "contact"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"contact\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contact\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"contact\"",
+        "sql": "CREATE TABLE \"public\".\"contact\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text,\n  \"employerId\" int4,\n  \"firstName\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"jobTitle\" text,\n  \"lastContacted\" timestamptz,\n  \"lastName\" text,\n  \"nextFollowUp\" timestamptz,\n  \"notes\" text,\n  \"phone\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"contact\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contact\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.employer",
+    "label": "Create table \"employer\"",
+    "summary": "Creates table \"employer\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "employer"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"employer\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"employer\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"employer\"",
+        "sql": "CREATE TABLE \"public\".\"employer\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"industry\" text,\n  \"location\" text,\n  \"name\" text NOT NULL,\n  \"notes\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"website\" text,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"employer\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"employer\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.task",
+    "label": "Create table \"task\"",
+    "summary": "Creates table \"task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"task\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"task\"",
+        "sql": "CREATE TABLE \"public\".\"task\" (\n  \"applicationId\" int4,\n  \"contactId\" int4,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"dueDate\" timestamptz,\n  \"id\" SERIAL NOT NULL,\n  \"status\" text DEFAULT 'PENDING' NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"task_status_check_c62c2a0e\" CHECK (\"status\" IN ('PENDING', 'COMPLETED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"task\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.user",
+    "label": "Create table \"user\"",
+    "summary": "Creates table \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"user\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"user\"",
+        "sql": "CREATE TABLE \"public\".\"user\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"firstName\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"lastName\" text,\n  \"passwordHash\" text NOT NULL,\n  \"role\" text DEFAULT 'STUDENT' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"user\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_email_key",
+    "label": "Add unique constraint on \"user\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_email_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.application.application_contactId_idx_ec98db2a",
+    "label": "Create index \"application_contactId_idx_ec98db2a\" on \"application\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "application_contactId_idx_ec98db2a",
+        "table": "application"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"application_contactId_idx_ec98db2a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application_contactId_idx_ec98db2a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"application_contactId_idx_ec98db2a\"",
+        "sql": "CREATE INDEX \"application_contactId_idx_ec98db2a\" ON \"public\".\"application\" (\"contactId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"application_contactId_idx_ec98db2a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application_contactId_idx_ec98db2a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.application.application_employerId_idx_599302e4",
+    "label": "Create index \"application_employerId_idx_599302e4\" on \"application\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "application_employerId_idx_599302e4",
+        "table": "application"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"application_employerId_idx_599302e4\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application_employerId_idx_599302e4\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"application_employerId_idx_599302e4\"",
+        "sql": "CREATE INDEX \"application_employerId_idx_599302e4\" ON \"public\".\"application\" (\"employerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"application_employerId_idx_599302e4\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application_employerId_idx_599302e4\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.application.application_userId_idx_a489d58a",
+    "label": "Create index \"application_userId_idx_a489d58a\" on \"application\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "application_userId_idx_a489d58a",
+        "table": "application"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"application_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"application_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"application_userId_idx_a489d58a\" ON \"public\".\"application\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"application_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"application_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.contact.contact_employerId_idx_599302e4",
+    "label": "Create index \"contact_employerId_idx_599302e4\" on \"contact\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "contact_employerId_idx_599302e4",
+        "table": "contact"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"contact_employerId_idx_599302e4\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contact_employerId_idx_599302e4\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"contact_employerId_idx_599302e4\"",
+        "sql": "CREATE INDEX \"contact_employerId_idx_599302e4\" ON \"public\".\"contact\" (\"employerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"contact_employerId_idx_599302e4\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contact_employerId_idx_599302e4\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.contact.contact_userId_idx_a489d58a",
+    "label": "Create index \"contact_userId_idx_a489d58a\" on \"contact\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "contact_userId_idx_a489d58a",
+        "table": "contact"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"contact_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contact_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"contact_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"contact_userId_idx_a489d58a\" ON \"public\".\"contact\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"contact_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"contact_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.task.task_applicationId_idx_8158f91a",
+    "label": "Create index \"task_applicationId_idx_8158f91a\" on \"task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "task_applicationId_idx_8158f91a",
+        "table": "task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"task_applicationId_idx_8158f91a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task_applicationId_idx_8158f91a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"task_applicationId_idx_8158f91a\"",
+        "sql": "CREATE INDEX \"task_applicationId_idx_8158f91a\" ON \"public\".\"task\" (\"applicationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"task_applicationId_idx_8158f91a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task_applicationId_idx_8158f91a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.task.task_contactId_idx_ec98db2a",
+    "label": "Create index \"task_contactId_idx_ec98db2a\" on \"task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "task_contactId_idx_ec98db2a",
+        "table": "task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"task_contactId_idx_ec98db2a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task_contactId_idx_ec98db2a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"task_contactId_idx_ec98db2a\"",
+        "sql": "CREATE INDEX \"task_contactId_idx_ec98db2a\" ON \"public\".\"task\" (\"contactId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"task_contactId_idx_ec98db2a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task_contactId_idx_ec98db2a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.task.task_userId_idx_a489d58a",
+    "label": "Create index \"task_userId_idx_a489d58a\" on \"task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "task_userId_idx_a489d58a",
+        "table": "task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"task_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"task_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"task_userId_idx_a489d58a\" ON \"public\".\"task\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"task_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"task_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.application.application_userId_fkey",
+    "label": "Add foreign key \"application_userId_fkey\" on \"application\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "application_userId_fkey",
+        "table": "application"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"application_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "application_userId_fkey",
+          "public",
+          "\"public\".\"application\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"application_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"application\"\nADD CONSTRAINT \"application_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"application_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "application_userId_fkey",
+          "public",
+          "\"public\".\"application\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.application.application_employerId_fkey",
+    "label": "Add foreign key \"application_employerId_fkey\" on \"application\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "application_employerId_fkey",
+        "table": "application"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"application_employerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "application_employerId_fkey",
+          "public",
+          "\"public\".\"application\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"application_employerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"application\"\nADD CONSTRAINT \"application_employerId_fkey\"\nFOREIGN KEY (\"employerId\")\nREFERENCES \"public\".\"employer\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"application_employerId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "application_employerId_fkey",
+          "public",
+          "\"public\".\"application\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.application.application_contactId_fkey",
+    "label": "Add foreign key \"application_contactId_fkey\" on \"application\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "application_contactId_fkey",
+        "table": "application"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"application_contactId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "application_contactId_fkey",
+          "public",
+          "\"public\".\"application\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"application_contactId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"application\"\nADD CONSTRAINT \"application_contactId_fkey\"\nFOREIGN KEY (\"contactId\")\nREFERENCES \"public\".\"contact\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"application_contactId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "application_contactId_fkey",
+          "public",
+          "\"public\".\"application\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.contact.contact_userId_fkey",
+    "label": "Add foreign key \"contact_userId_fkey\" on \"contact\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "contact_userId_fkey",
+        "table": "contact"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"contact_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "contact_userId_fkey",
+          "public",
+          "\"public\".\"contact\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"contact_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"contact\"\nADD CONSTRAINT \"contact_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"contact_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "contact_userId_fkey",
+          "public",
+          "\"public\".\"contact\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.contact.contact_employerId_fkey",
+    "label": "Add foreign key \"contact_employerId_fkey\" on \"contact\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "contact_employerId_fkey",
+        "table": "contact"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"contact_employerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "contact_employerId_fkey",
+          "public",
+          "\"public\".\"contact\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"contact_employerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"contact\"\nADD CONSTRAINT \"contact_employerId_fkey\"\nFOREIGN KEY (\"employerId\")\nREFERENCES \"public\".\"employer\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"contact_employerId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "contact_employerId_fkey",
+          "public",
+          "\"public\".\"contact\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.task.task_userId_fkey",
+    "label": "Add foreign key \"task_userId_fkey\" on \"task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "task_userId_fkey",
+        "table": "task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"task_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "task_userId_fkey",
+          "public",
+          "\"public\".\"task\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"task_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"task\"\nADD CONSTRAINT \"task_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"task_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "task_userId_fkey",
+          "public",
+          "\"public\".\"task\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.task.task_applicationId_fkey",
+    "label": "Add foreign key \"task_applicationId_fkey\" on \"task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "task_applicationId_fkey",
+        "table": "task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"task_applicationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "task_applicationId_fkey",
+          "public",
+          "\"public\".\"task\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"task_applicationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"task\"\nADD CONSTRAINT \"task_applicationId_fkey\"\nFOREIGN KEY (\"applicationId\")\nREFERENCES \"public\".\"application\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"task_applicationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "task_applicationId_fkey",
+          "public",
+          "\"public\".\"task\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.task.task_contactId_fkey",
+    "label": "Add foreign key \"task_contactId_fkey\" on \"task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "task_contactId_fkey",
+        "table": "task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"task_contactId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "task_contactId_fkey",
+          "public",
+          "\"public\".\"task\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"task_contactId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"task\"\nADD CONSTRAINT \"task_contactId_fkey\"\nFOREIGN KEY (\"contactId\")\nREFERENCES \"public\".\"contact\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"task_contactId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "task_contactId_fkey",
+          "public",
+          "\"public\".\"task\""
+        ]
+      }
+    ]
+  }
+]
