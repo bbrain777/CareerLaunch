@@ -2,12 +2,14 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { applications, informationalInterviews, upcomingTasks } from "./data.js";
+import { authRouter } from "./routes/auth.js"; // <-- New import
 
 export const app = express();
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use("/api/auth", authRouter); // <-- New route connection
 
 app.get("/api/health", (_request, response) => {
   response.json({
