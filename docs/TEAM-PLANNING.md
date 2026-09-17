@@ -7,8 +7,6 @@
 
 ## Decisions for the first meeting
 
-Record the team's decisions before implementation begins.
-
 ### 1. Minimum viable product
 
 - Confirm the features required for the four-week MVP.
@@ -17,43 +15,45 @@ Record the team's decisions before implementation begins.
 
 ### 2. Technology stack
 
-The proposal currently suggests React with TypeScript, Node.js with Express, PostgreSQL, and Prisma. Confirm or revise each choice as a team:
+The Sprint 1 implementation uses the following agreed baseline:
 
-- Frontend:
-- Backend:
-- Database and data access:
-- Authentication:
-- File storage:
-- Testing:
-- Deployment:
+- Frontend: React, TypeScript, and Vite
+- Backend: Node.js, Express, and TypeScript
+- Database and data access: PostgreSQL and Prisma
+- Authentication: bcrypt password hashing and JSON Web Tokens
+- File storage: managed cloud storage, to be selected in a later sprint
+- Testing: Vitest, Supertest, and the Node test runner
+- Deployment: cloud provider to be selected after the MVP workflows are integrated
 
 ### 3. Responsibilities
 
-Assign responsibilities according to each member's interests and experience:
+Each member owns implementation and reviews work that affects their area:
 
-- Olakunle:
-- Saleh:
-- Alex:
-- Samar:
+- Olakunle: architecture, CI, pull-request review, and integration
+- Saleh: PostgreSQL/Prisma schema, migrations, seed data, and repositories
+- Alex: React shell, account screens, responsive behavior, and accessibility
+- Samar: authentication, API tests, setup documentation, and Trello maintenance
 
 Each member should own meaningful implementation work while also reviewing teammates' pull requests.
 
 ### 4. Working agreements
 
-- Communication channel:
-- Expected response time:
-- Pull-request reviewer:
-- Definition of done:
-- How blockers will be raised:
+- Communication channel: Microsoft Teams CareerLaunch channel and the Trello sprint board
+- Expected response time: acknowledge team questions within one working day
+- Pull-request reviewer: Olakunle coordinates review; the relevant feature owner also reviews cross-area changes
+- Definition of done: tests and production builds pass, documentation is updated, and a teammate approves the pull request
+- How blockers will be raised: post the blocker in Teams and on the relevant Trello card as soon as it is known
 
 ### 5. Sprint 1 tasks
 
-- Repository and development setup:
-- Data model:
-- Authentication and roles:
-- Application navigation:
-- Testing baseline:
-- Documentation:
+- Repository and development setup: npm workspaces with separate React and Express applications
+- Data model: Prisma/PostgreSQL foundation owned by Saleh
+- Authentication and roles: authentication foundations owned by Samar; authorization continues in Sprint 2
+- Application navigation: responsive shell and account screens owned by Alex
+- Testing baseline: root test/build commands enforced by GitHub Actions
+- Documentation: README, contribution workflow, architecture decisions, and sprint risks recorded
+
+See `ARCHITECTURE.md` for the system boundaries, integration contract, definition of done, and current risks.
 
 ## Preserved prototype
 
