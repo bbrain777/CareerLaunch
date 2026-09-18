@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { db } from "../db.js";
+import { getDb } from "../db.js";
 import { applicationRepository } from "./applicationRepository.js";
 
-describe("applicationRepository", () => {
+describe.skipIf(!process.env["DATABASE_URL"])("applicationRepository", () => {
     it("finds applications for a user", async () => {
+        const db = getDb();
         const user = await db.orm.public.User
             .where({ email: "saleh@example.com" })
             .first();
@@ -17,6 +18,7 @@ describe("applicationRepository", () => {
     });
 
     it("creates, finds, updates, and deletes an application", async () => {
+        const db = getDb();
         const user = await db.orm.public.User
             .where({ email: "saleh@example.com" })
             .first();

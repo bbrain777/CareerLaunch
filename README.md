@@ -19,24 +19,31 @@ Requirements: Node.js 20 or newer.
 
 From the repository root:
 
-~~~powershell
+```powershell
 npm.cmd install
 npm.cmd run dev
-~~~
+```
 
 Open **http://localhost:5173**. The web application runs on port 5173 and proxies API requests to the Express server on port 4000.
 
 Run the automated tests:
 
-~~~powershell
+```powershell
 npm.cmd test
-~~~
+```
 
 Create production builds:
 
-~~~powershell
+```powershell
 npm.cmd run build
-~~~
+```
+
+### Authentication Setup
+
+The API uses JSON Web Tokens (JWT) for secure routes. By default, local development uses a fallback secret key so you can run the app immediately.
+
+To use a custom key, create a `.env` file inside the `apps/api` folder and add:
+`JWT_SECRET=your_custom_secret_key_here`
 
 ### Project structure
 
@@ -83,7 +90,7 @@ The MVP intentionally excludes a complete customer, inventory, product, sales, o
 - Use **prototype/dashboard** only as a preserved visual and technical reference.
 - Keep **main** limited to agreed and reviewed team work.
 
-See **docs/TEAM-PLANNING.md** for the meeting checklist and **CONTRIBUTING.md** for the branch and pull-request workflow.
+See **docs/ARCHITECTURE.md** for system and integration decisions, **docs/TEAM-PLANNING.md** for team agreements, and **CONTRIBUTING.md** for the branch and pull-request workflow.
 
 ## Course document
 
@@ -92,12 +99,12 @@ The submission-ready project-selection document is `CareerLaunch-Project-Selecti
 ## Team Quotes
 
 > "The only way to do great work is to love what you do." - Steve Jobs
-> *(Added by Samar)*
+> _(Added by Samar)_
 
 > "Sight shows you what is. Vision shows you what can be." - Olakunle Tayo Obademi
-> *(Added by Olakunle)*
+> _(Added by Olakunle)_
 
 > "Overthinking issues doesn't make them less easy to solve." - Stephanie Akas
-> *(Added by Alex)*
+> _(Added by Alex)_
 > "Success is the sum of small efforts, repeated day in and day out." - Robert Collier
-> *(Added by Saleh Ntege)*
+> _(Added by Saleh Ntege)_

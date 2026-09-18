@@ -1,7 +1,8 @@
 import { Temporal } from "temporal-polyfill";
-import { db } from "./db.js";
+import { getDb } from "./db.js";
 
 async function main() {
+    const db = getDb();
     console.log("Seeding CareerLaunch database...");
 
     // Clear existing seed data so the script can be safely run again.
