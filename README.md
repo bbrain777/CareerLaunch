@@ -90,7 +90,7 @@ The MVP intentionally excludes a complete customer, inventory, product, sales, o
 - Use **prototype/dashboard** only as a preserved visual and technical reference.
 - Keep **main** limited to agreed and reviewed team work.
 
-See **docs/TEAM-PLANNING.md** for the meeting checklist and **CONTRIBUTING.md** for the branch and pull-request workflow.
+See **docs/ARCHITECTURE.md** for system and integration decisions, **docs/TEAM-PLANNING.md** for team agreements, and **CONTRIBUTING.md** for the branch and pull-request workflow.
 
 ## Course document
 
