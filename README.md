@@ -15,7 +15,7 @@ Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda ti
 
 ## Local development
 
-Requirements: Node.js 20 or newer.
+Requirements: Node.js 22.18 or newer.
 
 From the repository root:
 
