@@ -2,6 +2,7 @@ import {
   createRouter,
   createRoute,
   createRootRoute,
+  Navigate,
   Outlet,
   useRouterState
 } from "@tanstack/react-router";
@@ -13,16 +14,25 @@ import { InformationalInterviewsPage } from "./pages/InformationalInterviewsPage
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { useAuth } from "./lib/auth";
+import { isPublicAuthPath, requiresLogin } from "./lib/auth-routing";
 
 function RootComponent() {
+  const { token, loading } = useAuth();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
 
-  const isAuthRoute = pathname === "/login" || pathname === "/signup";
+  if (loading) {
+    return <div className="route-loading" role="status">Checking your session…</div>;
+  }
 
-  if (isAuthRoute) {
-    return <Outlet />;
+  if (requiresLogin(pathname, token, loading)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isPublicAuthPath(pathname)) {
+    return token ? <Navigate to="/" replace /> : <Outlet />;
   }
 
   return (

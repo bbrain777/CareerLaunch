@@ -6,11 +6,15 @@ import {
   useCallback,
   ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface AuthUser {
   id: number;
   email: string;
   name?: string;
+  currentRole?: string;
+  targetRole?: string;
+  weeklyGoal?: number;
 }
 
 interface AuthContextType {
@@ -28,6 +32,7 @@ const USER_KEY = "careerlaunch_user";
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem(TOKEN_KEY)
   );
@@ -47,11 +52,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
-  }, []);
+    void queryClient.invalidateQueries();
+  }, [queryClient]);
 
   const logout = useCallback(async () => {
+    const storedToken = localStorage.getItem(TOKEN_KEY);
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: storedToken ? { Authorization: `Bearer ${storedToken}` } : undefined,
+      });
     } catch {
       // Best-effort remote call
     } finally {
@@ -59,8 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(USER_KEY);
       setToken(null);
       setUser(null);
+      queryClient.clear();
     }
-  }, []);
+  }, [queryClient]);
 
   const updateUser = useCallback((updated: AuthUser) => {
     localStorage.setItem(USER_KEY, JSON.stringify(updated));
@@ -85,15 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           if (data.user) {
-            setUser((prev) => {
-              const updated = {
-                id: data.user.userId ?? prev?.id ?? 1,
-                email: data.user.email ?? prev?.email ?? "",
-                name: prev?.name || data.user.name || "User",
-              };
-              localStorage.setItem(USER_KEY, JSON.stringify(updated));
-              return updated;
-            });
+            localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+            setUser(data.user);
           }
         } else {
           localStorage.removeItem(TOKEN_KEY);

@@ -25,6 +25,7 @@ export function SignupPage() {
         name: fullName,
         email,
         password,
+        targetRole,
       });
 
       login(data.token, data.user);

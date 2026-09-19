@@ -12,9 +12,9 @@ export function ProfilePage() {
   const [formData, setFormData] = useState({
     fullName: user?.name || "User",
     email: user?.email || "",
-    role: "Senior Software Engineer",
-    targetRole: "Lead Fullstack Engineer / Tech Lead",
-    weeklyGoal: "5",
+    role: user?.currentRole || "",
+    targetRole: user?.targetRole || "",
+    weeklyGoal: String(user?.weeklyGoal || 5),
   });
 
   const activeUser = profileData?.user || user;
@@ -25,6 +25,9 @@ export function ProfilePage() {
         ...prev,
         fullName: activeUser.name || prev.fullName,
         email: activeUser.email || prev.email,
+        role: activeUser.currentRole || "",
+        targetRole: activeUser.targetRole || "",
+        weeklyGoal: String(activeUser.weeklyGoal || 5),
       }));
     }
   }, [activeUser]);
@@ -36,17 +39,15 @@ export function ProfilePage() {
   const handleSave = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (activeUser) {
-      const updatedUser = {
-        ...activeUser,
-        name: formData.fullName,
-        email: formData.email,
-      };
-      updateUser(updatedUser);
       try {
         const response = await updateProfileMutation.mutateAsync({
-          fullName: formData.fullName,
+          name: formData.fullName,
           email: formData.email,
+          currentRole: formData.role,
+          targetRole: formData.targetRole,
+          weeklyGoal: Number(formData.weeklyGoal),
         });
+        updateUser(response.user);
 
         appToastManager.add({
           title: "Profile saved",
@@ -57,9 +58,9 @@ export function ProfilePage() {
         });
       } catch (err: any) {
         appToastManager.add({
-          title: "Profile updated locally",
-          description: "Saved locally to your browser session.",
-          variant: "info",
+          title: "Profile update failed",
+          description: err.message || "Your changes could not be saved.",
+          variant: "error",
         });
       }
     }
@@ -78,17 +79,18 @@ export function ProfilePage() {
         </div>
       </div>
 
-      <div className="profile-card">
-        <h2 className="profile-card-title">
-          Personal information
-        </h2>
+      <form onSubmit={handleSave} className="space-y-4">
+        <div className="profile-card">
+          <h2 className="profile-card-title">
+            Personal information
+          </h2>
 
-        <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Full name">
               <Input
                 id="fullName"
                 type="text"
+                required
                 value={formData.fullName}
                 onChange={(e) => handleChange("fullName", e.target.value)}
                 className="form-input"
@@ -99,6 +101,7 @@ export function ProfilePage() {
               <Input
                 id="email"
                 type="email"
+                required
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
                 className="form-input"
@@ -115,45 +118,48 @@ export function ProfilePage() {
               className="form-input"
             />
           </Field>
-
-          <div className="pt-2 flex justify-end">
-            <button
-              type="submit"
-              className="btn-primary-auth !w-auto !px-6"
-            >
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="profile-card">
-        <h2 className="profile-card-title">
-          Career targets
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Target role">
-            <Input
-              id="targetRole"
-              type="text"
-              value={formData.targetRole}
-              onChange={(e) => handleChange("targetRole", e.target.value)}
-              className="form-input"
-            />
-          </Field>
-
-          <Field label="Target weekly applications">
-            <Input
-              id="weeklyGoal"
-              type="number"
-              value={formData.weeklyGoal}
-              onChange={(e) => handleChange("weeklyGoal", e.target.value)}
-              className="form-input"
-            />
-          </Field>
         </div>
-      </div>
+
+        <div className="profile-card">
+          <h2 className="profile-card-title">
+            Career targets
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field label="Target role">
+              <Input
+                id="targetRole"
+                type="text"
+                value={formData.targetRole}
+                onChange={(e) => handleChange("targetRole", e.target.value)}
+                className="form-input"
+              />
+            </Field>
+
+            <Field label="Target weekly applications">
+              <Input
+                id="weeklyGoal"
+                type="number"
+                min="1"
+                required
+                value={formData.weeklyGoal}
+                onChange={(e) => handleChange("weeklyGoal", e.target.value)}
+                className="form-input"
+              />
+            </Field>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={updateProfileMutation.isPending}
+            className="btn-primary-auth !w-auto !px-6"
+          >
+            {updateProfileMutation.isPending ? "Saving..." : "Save profile"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

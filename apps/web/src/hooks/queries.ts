@@ -65,10 +65,12 @@ export function useInterviewsQuery() {
  * Fetch current authenticated user's profile
  */
 export function useProfileQuery() {
+  const hasToken = Boolean(localStorage.getItem("careerlaunch_token"));
   return useQuery({
     queryKey: queryKeys.profile,
     queryFn: () => api.get<{ user: AuthUser }>("/api/auth/profile"),
     retry: false,
+    enabled: hasToken,
   });
 }
 
@@ -76,7 +78,7 @@ export function useProfileQuery() {
 
 interface LoginCredentials {
   email: string;
-  password?: string;
+  password: string;
 }
 
 interface AuthResponse {
@@ -89,40 +91,26 @@ interface AuthResponse {
  * Login mutation
  */
 export function useLoginMutation() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (credentials: LoginCredentials) =>
       api.post<AuthResponse>("/api/auth/login", credentials),
-    onSuccess: () => {
-      // Invalidate and refetch all user-related data
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
-      queryClient.invalidateQueries({ queryKey: queryKeys.applications });
-    },
   });
 }
 
 interface RegisterCredentials {
   name: string;
   email: string;
-  password?: string;
+  password: string;
+  targetRole?: string;
 }
 
 /**
  * Registration mutation
  */
 export function useSignupMutation() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (credentials: RegisterCredentials) =>
       api.post<AuthResponse>("/api/auth/register", credentials),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.profile });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
-      queryClient.invalidateQueries({ queryKey: queryKeys.applications });
-    },
   });
 }
 
@@ -133,7 +121,13 @@ export function useUpdateProfileMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (updated: { fullName: string; email: string }) =>
+    mutationFn: (updated: {
+      name: string;
+      email: string;
+      currentRole?: string;
+      targetRole?: string;
+      weeklyGoal?: number;
+    }) =>
       api.put<{ user: AuthUser }>("/api/auth/profile", updated),
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.profile, data);
