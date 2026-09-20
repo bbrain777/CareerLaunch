@@ -19,21 +19,34 @@ export function MetricCard({ label, value, suffix = "", detail, accent }: Metric
   );
 }
 
-export function ApplicationCard({ application }: { application: JobApplication }) {
-  const deadline = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short"
-  }).format(new Date(application.deadline + "T12:00:00"));
+export function ApplicationCard({
+  application,
+  onOpen,
+}: {
+  application: JobApplication;
+  onOpen?: () => void;
+}) {
+  const deadline = application.deadline
+    ? new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "short"
+      }).format(new Date(application.deadline + "T12:00:00"))
+    : null;
 
   return (
     <article className="application-card">
       <span className="status-label">{formatStatus(application.status)}</span>
       <h4>{application.position}</h4>
       <strong>{application.company}</strong>
-      <span className="location">{application.location}</span>
+      <span className="location">{application.location || "Location not specified"}</span>
       <div className="card-footer">
-        <span>Due {deadline}</span>
-        <button type="button" className="card-action" aria-label={"Open " + application.position}>
+        <span>{deadline ? `Due ${deadline}` : "No deadline"}</span>
+        <button
+          type="button"
+          className="card-action"
+          aria-label={"Open " + application.position}
+          onClick={onOpen ?? (() => window.location.assign("/applications"))}
+        >
           Open
         </button>
       </div>

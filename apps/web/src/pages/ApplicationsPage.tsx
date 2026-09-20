@@ -1,14 +1,26 @@
-import { useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import { Search01Icon } from "hugeicons-react";
 import { pipelineStatuses } from "../status";
 import { ApplicationCard } from "../components/Cards";
 import { Button, Select, Loader } from "../components/ui";
-import { useApplicationsQuery } from "../hooks/queries";
+import {
+  useApplicationsQuery,
+  useCreateApplicationMutation,
+  useDeleteApplicationMutation,
+  useUpdateApplicationMutation,
+} from "../hooks/queries";
+import type { ApplicationInput, ApplicationStatus, JobApplication } from "../types";
+
+type EditorState = { mode: "create" } | { mode: "edit"; application: JobApplication };
 
 export function ApplicationsPage() {
   const { data: applications = [], isLoading: loading, error: queryError } = useApplicationsQuery();
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const createApplication = useCreateApplicationMutation();
+  const updateApplication = useUpdateApplicationMutation();
+  const deleteApplication = useDeleteApplicationMutation();
 
   const error = queryError ? "Unable to load applications. Ensure the API server is running." : "";
 
@@ -39,12 +51,54 @@ export function ApplicationsPage() {
           <span className="eyebrow">Pipeline management</span>
           <h1>Job applications</h1>
         </div>
-        <Button variant="primary" className="topbar-add-btn">
+        <Button
+          variant="primary"
+          className="topbar-add-btn"
+          onClick={() => setEditor({ mode: "create" })}
+        >
           Add application
         </Button>
       </header>
 
       {error && <div className="error-banner" role="alert">{error}</div>}
+
+      {editor && (
+        <ApplicationEditor
+          key={editor.mode === "edit" ? editor.application.id : "new"}
+          application={editor.mode === "edit" ? editor.application : undefined}
+          saving={createApplication.isPending || updateApplication.isPending}
+          deleting={deleteApplication.isPending}
+          error={
+            (createApplication.error instanceof Error && createApplication.error.message) ||
+            (updateApplication.error instanceof Error && updateApplication.error.message) ||
+            (deleteApplication.error instanceof Error && deleteApplication.error.message) ||
+            ""
+          }
+          onCancel={() => setEditor(null)}
+          onSave={async (input) => {
+            if (editor.mode === "edit") {
+              await updateApplication.mutateAsync({
+                id: editor.application.id,
+                changes: input,
+              });
+            } else {
+              await createApplication.mutateAsync(input);
+            }
+            setEditor(null);
+          }}
+          onDelete={
+            editor.mode === "edit"
+              ? async () => {
+                  if (!window.confirm(`Delete the ${editor.application.position} application?`)) {
+                    return;
+                  }
+                  await deleteApplication.mutateAsync(editor.application.id);
+                  setEditor(null);
+                }
+              : undefined
+          }
+        />
+      )}
 
       <section className="panel">
         <div className="panel-heading applications-toolbar">
@@ -95,7 +149,11 @@ export function ApplicationsPage() {
                   </div>
                   {statusApps.length ? (
                     statusApps.map((application) => (
-                      <ApplicationCard application={application} key={application.id} />
+                      <ApplicationCard
+                        application={application}
+                        key={application.id}
+                        onOpen={() => setEditor({ mode: "edit", application })}
+                      />
                     ))
                   ) : (
                     <p className="empty-state" style={{ padding: "16px 4px", fontSize: "12px" }}>
@@ -109,5 +167,145 @@ export function ApplicationsPage() {
         )}
       </section>
     </>
+  );
+}
+
+function ApplicationEditor({
+  application,
+  saving,
+  deleting,
+  error,
+  onSave,
+  onDelete,
+  onCancel,
+}: {
+  application?: JobApplication;
+  saving: boolean;
+  deleting: boolean;
+  error: string;
+  onSave: (input: ApplicationInput) => Promise<void>;
+  onDelete?: () => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [company, setCompany] = useState(application?.company ?? "");
+  const [position, setPosition] = useState(application?.position ?? "");
+  const [location, setLocation] = useState(application?.location ?? "");
+  const [status, setStatus] = useState<ApplicationStatus>(application?.status ?? "Saved");
+  const [deadline, setDeadline] = useState(application?.deadline ?? "");
+  const [notes, setNotes] = useState(application?.notes ?? "");
+  const [submissionError, setSubmissionError] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmissionError("");
+
+    try {
+      await onSave({
+        company: company.trim(),
+        position: position.trim(),
+        location: location.trim() || null,
+        status,
+        deadline: deadline || null,
+        notes: notes.trim() || null,
+      });
+    } catch (caught) {
+      setSubmissionError(caught instanceof Error ? caught.message : "Unable to save application");
+    }
+  }
+
+  async function handleDelete() {
+    if (!onDelete) return;
+    setSubmissionError("");
+    try {
+      await onDelete();
+    } catch (caught) {
+      setSubmissionError(caught instanceof Error ? caught.message : "Unable to delete application");
+    }
+  }
+
+  return (
+    <div className="application-editor-backdrop">
+      <section
+        className="application-editor"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="application-editor-title"
+      >
+        <div className="application-editor-heading">
+          <div>
+            <span className="eyebrow">Application pipeline</span>
+            <h2 id="application-editor-title">
+              {application ? "Edit application" : "Add application"}
+            </h2>
+          </div>
+          <button type="button" className="text-button" onClick={onCancel}>Close</button>
+        </div>
+
+        {(submissionError || error) && (
+          <div className="error-banner" role="alert">{submissionError || error}</div>
+        )}
+
+        <form className="application-form" onSubmit={handleSubmit}>
+          <label>
+            <span>Company</span>
+            <input value={company} onChange={(event) => setCompany(event.target.value)} required />
+          </label>
+          <label>
+            <span>Position</span>
+            <input value={position} onChange={(event) => setPosition(event.target.value)} required />
+          </label>
+          <label>
+            <span>Location</span>
+            <input value={location} onChange={(event) => setLocation(event.target.value)} />
+          </label>
+          <label>
+            <span>Status</span>
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value as ApplicationStatus)}
+            >
+              {pipelineStatuses.map((pipelineStatus) => (
+                <option key={pipelineStatus} value={pipelineStatus}>{pipelineStatus}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Deadline</span>
+            <input
+              type="date"
+              value={deadline}
+              onChange={(event) => setDeadline(event.target.value)}
+            />
+          </label>
+          <label className="application-form-notes">
+            <span>Notes</span>
+            <textarea
+              rows={4}
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
+          </label>
+
+          <div className="application-form-actions">
+            {onDelete && (
+              <button
+                type="button"
+                className="danger-button"
+                disabled={saving || deleting}
+                onClick={() => void handleDelete()}
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            )}
+            <button type="button" className="secondary-button" onClick={onCancel}>
+              Cancel
+            </button>
+            <button type="submit" className="primary-button" disabled={saving || deleting}>
+              {saving ? "Saving..." : application ? "Save changes" : "Add application"}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   );
 }

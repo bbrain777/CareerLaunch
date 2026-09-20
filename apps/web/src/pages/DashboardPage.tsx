@@ -11,7 +11,7 @@ import type { DashboardData } from "../types";
 import { MetricCard, ApplicationCard, InformationalInterviewCard } from "../components/Cards";
 import { Button, Loader } from "../components/ui";
 import { useAuth } from "../lib/auth";
-import { useDashboardQuery } from "../hooks/queries";
+import { useApplicationsQuery, useDashboardQuery, useTasksQuery } from "../hooks/queries";
 
 const fallbackData: DashboardData = {
   metrics: {
@@ -45,11 +45,36 @@ function getTaskIcon(type: string) {
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const { data: dashboardData, isLoading: loading, error: queryError } = useDashboardQuery();
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useDashboardQuery();
+  const {
+    data: applications = [],
+    isLoading: applicationsLoading,
+    error: applicationsError,
+  } = useApplicationsQuery();
+  const {
+    data: tasks = [],
+    isLoading: tasksLoading,
+    error: tasksError,
+  } = useTasksQuery();
   const [query, setQuery] = useState("");
 
-  const data = dashboardData || fallbackData;
-  const error = queryError ? "The API is unavailable. Confirm that both local servers are running." : "";
+  const dashboard = dashboardData || fallbackData;
+  const activeStatuses = new Set(["Saved", "Preparing", "Applied", "Interview"]);
+  const data: DashboardData = {
+    ...dashboard,
+    applications,
+    upcomingTasks: tasks,
+    metrics: {
+      ...dashboard.metrics,
+      activeApplications: applications.filter((application) => activeStatuses.has(application.status)).length,
+      interviews: applications.filter((application) => application.status === "Interview").length,
+      offers: applications.filter((application) => application.status === "Offer").length,
+    },
+  };
+  const loading = dashboardLoading || applicationsLoading || tasksLoading;
+  const error = dashboardError || applicationsError || tasksError
+    ? "The API is unavailable. Confirm that both local servers are running and you are signed in."
+    : "";
   const firstName = user?.name ? user.name.split(" ")[0] : "there";
 
   const filteredApplications = useMemo(() => {
@@ -189,7 +214,14 @@ export function DashboardPage() {
                   </span>
                   <div>
                     <strong>{task.title}</strong>
-                    <span>{task.due}</span>
+                    <span>
+                      {task.due
+                        ? new Intl.DateTimeFormat("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          }).format(new Date(`${task.due}T12:00:00`))
+                        : "No due date"}
+                    </span>
                   </div>
                 </article>
               ))}

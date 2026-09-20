@@ -1,36 +1,165 @@
 import { Router } from "express";
+import { Temporal } from "temporal-polyfill";
+import {
+  authenticatedUserId,
+  requireAuth,
+  type AuthRequest,
+} from "../middleware/auth.js";
 import {
   applicationRepository,
-  CreateApplicationInput,
+  type CreateApplicationInput,
 } from "../repositories/applicationRepository.js";
 
 export const applicationRouter = Router();
 
-// Get all applications for a user
-applicationRouter.get("/", async (request, response) => {
-  const userId = Number(request.query.userId);
+const databaseStatuses = [
+  "SAVED",
+  "PREPARING",
+  "APPLIED",
+  "INTERVIEW",
+  "OFFER",
+  "CLOSED",
+] as const;
 
-  if (!userId) {
-    return response.status(400).json({
-      message: "userId is required",
-    });
+type DatabaseStatus = (typeof databaseStatuses)[number];
+
+const clientStatusByDatabaseStatus: Record<DatabaseStatus, string> = {
+  SAVED: "Saved",
+  PREPARING: "Preparing",
+  APPLIED: "Applied",
+  INTERVIEW: "Interview",
+  OFFER: "Offer",
+  CLOSED: "Closed",
+};
+
+function parseId(value: string | string[] | undefined): number | undefined {
+  if (typeof value !== "string") return undefined;
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : undefined;
+}
+
+function parseStatus(value: unknown): DatabaseStatus | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim().toUpperCase();
+  return databaseStatuses.find((status) => status === normalized);
+}
+
+function parseDate(value: unknown): Temporal.Instant | null | undefined {
+  if (value === null) return null;
+  if (typeof value !== "string" || !value.trim()) return undefined;
+
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value.trim())
+    ? `${value.trim()}T00:00:00Z`
+    : value.trim();
+
+  try {
+    return Temporal.Instant.from(normalized);
+  } catch {
+    return undefined;
   }
+}
+
+function dateOnly(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const serialized = value instanceof Date ? value.toISOString() : String(value);
+  return serialized.slice(0, 10);
+}
+
+function serializeApplication(application: Record<string, any>) {
+  const status = parseStatus(application.status);
+
+  return {
+    ...application,
+    status: status ? clientStatusByDatabaseStatus[status] : application.status,
+    deadline: dateOnly(application.deadline),
+    appliedAt: dateOnly(application.appliedAt),
+    createdAt: application.createdAt ? String(application.createdAt) : undefined,
+    updatedAt: application.updatedAt ? String(application.updatedAt) : undefined,
+  };
+}
+
+function applicationInput(
+  body: Record<string, unknown>,
+  partial = false,
+): { data?: Partial<CreateApplicationInput>; message?: string } {
+  const data: Partial<CreateApplicationInput> = {};
+
+  if (!partial || Object.hasOwn(body, "company")) {
+    if (typeof body.company !== "string" || !body.company.trim()) {
+      return { message: "company is required" };
+    }
+    data.company = body.company.trim();
+  }
+
+  if (!partial || Object.hasOwn(body, "position")) {
+    if (typeof body.position !== "string" || !body.position.trim()) {
+      return { message: "position is required" };
+    }
+    data.position = body.position.trim();
+  }
+
+  for (const field of ["location", "notes"] as const) {
+    if (Object.hasOwn(body, field)) {
+      const value = body[field];
+      if (value !== null && typeof value !== "string") {
+        return { message: `${field} must be a string or null` };
+      }
+      data[field] = typeof value === "string" ? value.trim() : null;
+    }
+  }
+
+  if (Object.hasOwn(body, "status")) {
+    const status = parseStatus(body.status);
+    if (!status) {
+      return { message: `status must be one of: ${databaseStatuses.join(", ")}` };
+    }
+    data.status = status;
+  }
+
+  for (const field of ["deadline", "appliedAt"] as const) {
+    if (Object.hasOwn(body, field)) {
+      const date = parseDate(body[field]);
+      if (date === undefined) {
+        return { message: `${field} must be a valid date or null` };
+      }
+      data[field] = date;
+    }
+  }
+
+  for (const field of ["employerId", "contactId"] as const) {
+    if (Object.hasOwn(body, field)) {
+      const value = body[field];
+      if (value === null) {
+        data[field] = null;
+      } else if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+        data[field] = value;
+      } else {
+        return { message: `${field} must be a positive integer or null` };
+      }
+    }
+  }
+
+  return { data };
+}
+
+applicationRouter.use(requireAuth);
+
+// Get all applications for a user
+applicationRouter.get("/", async (request: AuthRequest, response) => {
+  const userId = authenticatedUserId(request)!;
 
   const applications = await applicationRepository.findAllByUserId(userId);
 
-  response.json({ applications });
+  response.json({ applications: applications.map(serializeApplication) });
 });
 
 // Get one application for a user
-applicationRouter.get("/:id", async (request, response) => {
-  const id = Number(request.params.id);
-  const userId = Number(request.query.userId);
-
-  if (!userId) {
-    return response.status(400).json({
-      message: "userId is required",
-    });
+applicationRouter.get("/:id", async (request: AuthRequest, response) => {
+  const id = parseId(request.params.id);
+  if (!id) {
+    return response.status(400).json({ message: "id must be a positive integer" });
   }
+  const userId = authenticatedUserId(request)!;
 
   const application = await applicationRepository.findById(id, userId);
 
@@ -40,87 +169,63 @@ applicationRouter.get("/:id", async (request, response) => {
     });
   }
 
-  response.json({ application });
+  response.json({ application: serializeApplication(application) });
 });
 
 // Create an application
-applicationRouter.post("/", async (request, response) => {
-  const userId = Number(request.body.userId);
-
-  if (!userId) {
-    return response.status(400).json({
-      message: "userId is required",
-    });
+applicationRouter.post("/", async (request: AuthRequest, response) => {
+  const userId = authenticatedUserId(request)!;
+  const parsed = applicationInput(request.body);
+  if (!parsed.data) {
+    return response.status(400).json({ message: parsed.message });
   }
 
-  const data: CreateApplicationInput = {
-    company: request.body.company,
-    position: request.body.position,
-    location: request.body.location,
-    status: request.body.status,
-    deadline: request.body.deadline
-      ? new Date(request.body.deadline)
-      : undefined,
-    appliedAt: request.body.appliedAt
-      ? new Date(request.body.appliedAt)
-      : undefined,
-    notes: request.body.notes,
-    employerId: request.body.employerId,
-    contactId: request.body.contactId,
-  };
+  const application = await applicationRepository.create(
+    userId,
+    parsed.data as CreateApplicationInput,
+  );
 
-  if (!data.company || !data.position) {
-    return response.status(400).json({
-      message: "company and position are required",
-    });
-  }
-
-  const application = await applicationRepository.create(userId, data);
-
-  response.status(201).json({ application });
+  response.status(201).json({ application: serializeApplication(application) });
 });
 
 // Update an application
-applicationRouter.patch("/:id", async (request, response) => {
-  const id = Number(request.params.id);
-  const userId = Number(request.body.userId);
+applicationRouter.patch("/:id", async (request: AuthRequest, response) => {
+  const id = parseId(request.params.id);
+  if (!id) {
+    return response.status(400).json({ message: "id must be a positive integer" });
+  }
+  const userId = authenticatedUserId(request)!;
 
-  if (!userId) {
-    return response.status(400).json({
-      message: "userId is required",
-    });
+  const existing = await applicationRepository.findById(id, userId);
+  if (!existing) {
+    return response.status(404).json({ message: "Application not found" });
   }
 
-  const data: Partial<CreateApplicationInput> = {
-    company: request.body.company,
-    position: request.body.position,
-    location: request.body.location,
-    status: request.body.status,
-    deadline: request.body.deadline
-      ? new Date(request.body.deadline)
-      : undefined,
-    appliedAt: request.body.appliedAt
-      ? new Date(request.body.appliedAt)
-      : undefined,
-    notes: request.body.notes,
-    employerId: request.body.employerId,
-    contactId: request.body.contactId,
-  };
+  const parsed = applicationInput(request.body, true);
+  if (!parsed.data) {
+    return response.status(400).json({ message: parsed.message });
+  }
 
-  const application = await applicationRepository.update(id, userId, data);
+  const application = await applicationRepository.update(id, userId, parsed.data);
 
-  response.json({ application });
+  if (!application) {
+    return response.status(404).json({ message: "Application not found" });
+  }
+
+  response.json({ application: serializeApplication(application) });
 });
 
 // Delete an application
-applicationRouter.delete("/:id", async (request, response) => {
-  const id = Number(request.params.id);
-  const userId = Number(request.query.userId);
+applicationRouter.delete("/:id", async (request: AuthRequest, response) => {
+  const id = parseId(request.params.id);
+  if (!id) {
+    return response.status(400).json({ message: "id must be a positive integer" });
+  }
+  const userId = authenticatedUserId(request)!;
 
-  if (!userId) {
-    return response.status(400).json({
-      message: "userId is required",
-    });
+  const existing = await applicationRepository.findById(id, userId);
+  if (!existing) {
+    return response.status(404).json({ message: "Application not found" });
   }
 
   await applicationRepository.delete(id, userId);

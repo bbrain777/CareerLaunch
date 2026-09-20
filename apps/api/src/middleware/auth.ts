@@ -6,6 +6,15 @@ export interface AuthRequest extends Request {
   user?: string | jwt.JwtPayload;
 }
 
+export function authenticatedUserId(req: AuthRequest): number | undefined {
+  if (!req.user || typeof req.user === "string") return undefined;
+
+  const userId = req.user.userId;
+  return typeof userId === "number" && Number.isInteger(userId) && userId > 0
+    ? userId
+    : undefined;
+}
+
 // In a real app, this comes from a hidden .env file. We use a fallback for local testing.
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-careerlaunch-key";
 

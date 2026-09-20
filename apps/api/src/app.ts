@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { applications, informationalInterviews, upcomingTasks } from "./data.js";
 import { applicationRouter } from "./routes/applicationRoutes.js";
 import { authRouter } from "./routes/auth.js";
+import { taskRouter } from "./routes/taskRoutes.js";
 
 export const app = express();
 
@@ -11,17 +12,14 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRouter);
-app.use("/api/applications-db", applicationRouter);
+app.use("/api/applications", applicationRouter);
+app.use("/api/tasks", taskRouter);
 
 app.get("/api/health", (_request, response) => {
   response.json({
     status: "ok",
     service: "careerlaunch-api"
   });
-});
-
-app.get("/api/applications", (_request, response) => {
-  response.json({ applications });
 });
 
 app.get("/api/informational-interviews", (_request, response) => {

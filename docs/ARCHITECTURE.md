@@ -31,7 +31,12 @@ Current route foundations:
 
 - `GET /api/health`
 - `GET /api/dashboard`
-- `GET /api/applications`
+- `GET /api/applications` (authenticated, PostgreSQL-backed)
+- `GET /api/applications/:id` (authenticated, owner-scoped)
+- `POST /api/applications` (authenticated; ownership comes from the JWT)
+- `PATCH /api/applications/:id` (authenticated, owner-scoped)
+- `DELETE /api/applications/:id` (authenticated, owner-scoped)
+- `GET /api/tasks` (authenticated, owner-scoped follow-ups and application tasks)
 - `GET /api/informational-interviews`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
@@ -72,3 +77,35 @@ Open items for later feature work:
 - Deployment and managed file storage choices are intentionally deferred to later sprints.
 
 These risks do not block the Sprint 1 baseline, but the security items block a public production release.
+
+## Sprint 2 application integration contract
+
+The application pipeline now uses `/api/applications` as its canonical endpoint. The temporary
+`/api/applications-db` path and the sample-data application route have been removed.
+
+- Every application request requires `Authorization: Bearer <token>`.
+- The API derives `userId` only from the verified JWT. A `userId` supplied in the query string or
+  request body is ignored and cannot be used to access another user's records.
+- Database statuses (`SAVED`, `PREPARING`, `APPLIED`, `INTERVIEW`, `OFFER`, `CLOSED`) are returned
+  in the title-case values already used by the web pipeline.
+- `deadline` and `appliedAt` are returned as `YYYY-MM-DD` strings or `null` so the client can render
+  dates consistently without timezone shifts.
+- Create and update requests accept the title-case client statuses or their uppercase database
+  equivalents. Invalid statuses, dates, identifiers, and missing required fields return HTTP 400
+  with a JSON `message`.
+- Reads, updates, and deletes that do not match both the requested record and authenticated owner
+  return HTTP 404.
+- The web query client attaches the stored bearer token automatically. Application query and CRUD
+  mutation hooks share one cache key, so successful changes invalidate and refresh the pipeline.
+- The dashboard reads the same authenticated application query as the application page and derives
+  active, interview, and offer totals from that dataset.
+- The application page provides create, edit, status/deadline update, and delete controls backed by
+  the authenticated CRUD endpoints. Successful mutations invalidate the shared application cache.
+- Follow-up and application tasks come from the PostgreSQL `Task` model through `/api/tasks`; the
+  dashboard no longer relies on sample task data for its upcoming-work list.
+- When `DATABASE_URL` is configured, registration, login, and profile lookup use PostgreSQL users,
+  so the JWT `userId` is the same foreign-key identity used by applications, contacts, and tasks.
+  The in-memory user store remains available only for isolated development and automated tests that
+  intentionally run without a database.
+- Seeded development accounts use the password `password123`; production environments must use
+  separately registered accounts and a strong `JWT_SECRET`.
