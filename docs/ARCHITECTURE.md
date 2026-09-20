@@ -36,6 +36,7 @@ Current route foundations:
 - `POST /api/applications` (authenticated; ownership comes from the JWT)
 - `PATCH /api/applications/:id` (authenticated, owner-scoped)
 - `DELETE /api/applications/:id` (authenticated, owner-scoped)
+- `GET /api/tasks` (authenticated, owner-scoped follow-ups and application tasks)
 - `GET /api/informational-interviews`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
@@ -98,3 +99,13 @@ The application pipeline now uses `/api/applications` as its canonical endpoint.
   mutation hooks share one cache key, so successful changes invalidate and refresh the pipeline.
 - The dashboard reads the same authenticated application query as the application page and derives
   active, interview, and offer totals from that dataset.
+- The application page provides create, edit, status/deadline update, and delete controls backed by
+  the authenticated CRUD endpoints. Successful mutations invalidate the shared application cache.
+- Follow-up and application tasks come from the PostgreSQL `Task` model through `/api/tasks`; the
+  dashboard no longer relies on sample task data for its upcoming-work list.
+- When `DATABASE_URL` is configured, registration, login, and profile lookup use PostgreSQL users,
+  so the JWT `userId` is the same foreign-key identity used by applications, contacts, and tasks.
+  The in-memory user store remains available only for isolated development and automated tests that
+  intentionally run without a database.
+- Seeded development accounts use the password `password123`; production environments must use
+  separately registered accounts and a strong `JWT_SECRET`.

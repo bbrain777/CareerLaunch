@@ -1,9 +1,11 @@
 import { Temporal } from "temporal-polyfill";
+import bcrypt from "bcrypt";
 import { getDb } from "./db.js";
 
 async function main() {
     const db = getDb();
     console.log("Seeding CareerLaunch database...");
+    const seedPasswordHash = await bcrypt.hash("password123", 10);
 
     // Clear existing seed data so the script can be safely run again.
     await db.orm.public.Task.where({}).deleteAll();
@@ -15,7 +17,7 @@ async function main() {
     // Users
     const saleh = await db.orm.public.User.create({
         email: "saleh@example.com",
-        passwordHash: "seed-password-hash",
+        passwordHash: seedPasswordHash,
         firstName: "Saleh",
         lastName: "Ntege",
         role: "STUDENT",
@@ -23,7 +25,7 @@ async function main() {
 
     const student = await db.orm.public.User.create({
         email: "student@example.com",
-        passwordHash: "seed-password-hash",
+        passwordHash: seedPasswordHash,
         firstName: "John",
         lastName: "Doe",
         role: "STUDENT",

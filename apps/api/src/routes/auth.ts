@@ -1,6 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { getDb } from "../db.js";
 import {
   authenticatedUserId,
   requireAuth,
@@ -22,6 +23,97 @@ interface StoredUser {
 
 const users: StoredUser[] = [];
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-careerlaunch-key";
+
+function usesDatabase(): boolean {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+function splitName(name: string) {
+  const [firstName, ...remaining] = name.trim().split(/\s+/);
+  return {
+    firstName,
+    lastName: remaining.length ? remaining.join(" ") : null,
+  };
+}
+
+function databaseUserToStored(user: Record<string, any>): StoredUser {
+  return {
+    id: Number(user.id),
+    email: String(user.email),
+    name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+    password: String(user.passwordHash),
+  };
+}
+
+async function findUserByEmail(email: string): Promise<StoredUser | undefined> {
+  if (!usesDatabase()) {
+    return users.find((user) => user.email === email);
+  }
+
+  const user = await getDb().orm.public.User.where({ email }).first();
+  return user ? databaseUserToStored(user) : undefined;
+}
+
+async function findUserById(id: number | undefined): Promise<StoredUser | undefined> {
+  if (!id) return undefined;
+  if (!usesDatabase()) {
+    return users.find((user) => user.id === id);
+  }
+
+  const user = await getDb().orm.public.User.where({ id }).first();
+  return user ? databaseUserToStored(user) : undefined;
+}
+
+async function createUser(input: {
+  email: string;
+  name: string;
+  password: string;
+  targetRole?: string;
+}): Promise<StoredUser> {
+  if (!usesDatabase()) {
+    const user: StoredUser = {
+      id: users.length + 1,
+      email: input.email,
+      name: input.name,
+      password: input.password,
+      targetRole: input.targetRole,
+      weeklyGoal: 5,
+    };
+    users.push(user);
+    return user;
+  }
+
+  const { firstName, lastName } = splitName(input.name);
+  const user = await getDb().orm.public.User.create({
+    email: input.email,
+    passwordHash: input.password,
+    firstName,
+    lastName,
+    role: "STUDENT",
+  });
+  return databaseUserToStored(user);
+}
+
+async function updateStoredUser(
+  user: StoredUser,
+  input: { name: string; email: string },
+): Promise<StoredUser> {
+  if (!usesDatabase()) {
+    user.name = input.name;
+    user.email = input.email;
+    return user;
+  }
+
+  const { firstName, lastName } = splitName(input.name);
+  const updated = await getDb().orm.public.User
+    .where({ id: user.id })
+    .update({ email: input.email, firstName, lastName });
+
+  if (!updated) {
+    throw new Error("Authenticated user no longer exists");
+  }
+  return databaseUserToStored(updated);
+}
 
 function publicUser(user: StoredUser) {
   const { password: _password, ...safeUser } = user;
@@ -47,7 +139,7 @@ authRouter.post("/register", async (req, res) => {
     const normalizedEmail = email.trim().toLowerCase();
 
     // Check if user already exists
-    const existingUser = users.find((user) => user.email === normalizedEmail);
+    const existingUser = await findUserByEmail(normalizedEmail);
     if (existingUser) {
       res.status(400).json({ message: "User already exists" });
       return;
@@ -57,15 +149,12 @@ authRouter.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Save the new user
-    const newUser: StoredUser = {
-      id: users.length + 1,
+    const newUser = await createUser({
       email: normalizedEmail,
       name: name.trim(),
       password: hashedPassword,
       targetRole: typeof targetRole === "string" ? targetRole.trim() : undefined,
-      weeklyGoal: 5
-    };
-    users.push(newUser);
+    });
 
     // Generate a session token
     const token = jwt.sign({ userId: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: "1h" });
@@ -87,7 +176,7 @@ authRouter.post("/login", async (req, res) => {
     }
 
     // Find the user
-    const user = users.find((candidate) => candidate.email === email.trim().toLowerCase());
+    const user = await findUserByEmail(email.trim().toLowerCase());
     if (!user) {
       res.status(401).json({ message: "Invalid email or password" });
       return;
@@ -117,9 +206,9 @@ authRouter.post("/logout", (req, res) => {
 });
 
 // 4. Profile Endpoint (Protected)
-authRouter.get("/profile", requireAuth, (req: AuthRequest, res) => {
+authRouter.get("/profile", requireAuth, async (req: AuthRequest, res) => {
   const userId = authenticatedUserId(req);
-  const user = users.find((candidate) => candidate.id === userId);
+  const user = await findUserById(userId);
 
   if (!user) {
     res.status(404).json({ message: "User profile not found" });
@@ -129,9 +218,9 @@ authRouter.get("/profile", requireAuth, (req: AuthRequest, res) => {
   res.status(200).json({ message: "Profile accessed successfully", user: publicUser(user) });
 });
 
-authRouter.put("/profile", requireAuth, (req: AuthRequest, res) => {
+authRouter.put("/profile", requireAuth, async (req: AuthRequest, res) => {
   const userId = authenticatedUserId(req);
-  const user = users.find((candidate) => candidate.id === userId);
+  let user = await findUserById(userId);
 
   if (!user) {
     res.status(404).json({ message: "User profile not found" });
@@ -145,16 +234,17 @@ authRouter.put("/profile", requireAuth, (req: AuthRequest, res) => {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  const duplicate = users.some(
-    (candidate) => candidate.id !== user.id && candidate.email === normalizedEmail
-  );
+  const emailOwner = await findUserByEmail(normalizedEmail);
+  const duplicate = Boolean(emailOwner && emailOwner.id !== user.id);
   if (duplicate) {
     res.status(409).json({ message: "Email is already in use" });
     return;
   }
 
-  user.name = name.trim();
-  user.email = normalizedEmail;
+  user = await updateStoredUser(user, {
+    name: name.trim(),
+    email: normalizedEmail,
+  });
   user.currentRole = typeof currentRole === "string" ? currentRole.trim() : undefined;
   user.targetRole = typeof targetRole === "string" ? targetRole.trim() : undefined;
   if (typeof weeklyGoal === "number" && Number.isInteger(weeklyGoal) && weeklyGoal > 0) {

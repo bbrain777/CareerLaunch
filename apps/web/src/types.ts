@@ -35,8 +35,12 @@ export interface ApplicationInput {
 export interface UpcomingTask {
   id: number;
   title: string;
-  due: string;
+  description?: string | null;
+  due: string | null;
   type: string;
+  status?: "Pending" | "Completed";
+  applicationId?: number | null;
+  contactId?: number | null;
 }
 
 export interface InformationalInterview {

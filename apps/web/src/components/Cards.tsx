@@ -19,7 +19,13 @@ export function MetricCard({ label, value, suffix = "", detail, accent }: Metric
   );
 }
 
-export function ApplicationCard({ application }: { application: JobApplication }) {
+export function ApplicationCard({
+  application,
+  onOpen,
+}: {
+  application: JobApplication;
+  onOpen?: () => void;
+}) {
   const deadline = application.deadline
     ? new Intl.DateTimeFormat("en-GB", {
         day: "numeric",
@@ -35,7 +41,12 @@ export function ApplicationCard({ application }: { application: JobApplication }
       <span className="location">{application.location || "Location not specified"}</span>
       <div className="card-footer">
         <span>{deadline ? `Due ${deadline}` : "No deadline"}</span>
-        <button type="button" className="card-action" aria-label={"Open " + application.position}>
+        <button
+          type="button"
+          className="card-action"
+          aria-label={"Open " + application.position}
+          onClick={onOpen ?? (() => window.location.assign("/applications"))}
+        >
           Open
         </button>
       </div>

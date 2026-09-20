@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { applications, informationalInterviews, upcomingTasks } from "./data.js";
 import { applicationRouter } from "./routes/applicationRoutes.js";
 import { authRouter } from "./routes/auth.js";
+import { taskRouter } from "./routes/taskRoutes.js";
 
 export const app = express();
 
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/applications", applicationRouter);
+app.use("/api/tasks", taskRouter);
 
 app.get("/api/health", (_request, response) => {
   response.json({

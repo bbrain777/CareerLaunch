@@ -5,6 +5,7 @@ import type {
   DashboardData,
   JobApplication,
   InformationalInterview,
+  UpcomingTask,
 } from "../types";
 import type { AuthUser } from "../lib/auth";
 
@@ -12,6 +13,7 @@ import type { AuthUser } from "../lib/auth";
 export const queryKeys = {
   dashboard: ["dashboard"] as const,
   applications: ["applications"] as const,
+  tasks: ["tasks"] as const,
   interviews: ["interviews"] as const,
   profile: ["profile"] as const,
 };
@@ -43,6 +45,16 @@ export function useApplicationsQuery() {
           ? result.applications
           : []
       ) as JobApplication[];
+    },
+  });
+}
+
+export function useTasksQuery() {
+  return useQuery({
+    queryKey: queryKeys.tasks,
+    queryFn: async () => {
+      const result = await api.get<{ tasks: UpcomingTask[] }>("/api/tasks");
+      return result.tasks;
     },
   });
 }
