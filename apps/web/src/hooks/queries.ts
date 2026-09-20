@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
-import type { DashboardData, JobApplication, InformationalInterview } from "../types";
+import type {
+  ApplicationInput,
+  DashboardData,
+  JobApplication,
+  InformationalInterview,
+} from "../types";
 import type { AuthUser } from "../lib/auth";
 
 // --- Query Keys ---
@@ -39,6 +44,35 @@ export function useApplicationsQuery() {
           : []
       ) as JobApplication[];
     },
+  });
+}
+
+export function useCreateApplicationMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (application: ApplicationInput) =>
+      api.post<{ application: JobApplication }>("/api/applications", application),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.applications }),
+  });
+}
+
+export function useUpdateApplicationMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: number; changes: Partial<ApplicationInput> }) =>
+      api.patch<{ application: JobApplication }>(`/api/applications/${id}`, changes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.applications }),
+  });
+}
+
+export function useDeleteApplicationMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/api/applications/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.applications }),
   });
 }
 

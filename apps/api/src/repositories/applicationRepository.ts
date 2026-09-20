@@ -1,15 +1,16 @@
 import { getDb } from "../db.js";
+import type { Temporal } from "temporal-polyfill";
 
 export type CreateApplicationInput = {
   company: string;
   position: string;
-  location?: string;
+  location?: string | null;
   status?: "SAVED" | "PREPARING" | "APPLIED" | "INTERVIEW" | "OFFER" | "CLOSED";
-  deadline?: Date;
-  appliedAt?: Date;
-  notes?: string;
-  employerId?: number;
-  contactId?: number;
+  deadline?: Temporal.Instant | null;
+  appliedAt?: Temporal.Instant | null;
+  notes?: string | null;
+  employerId?: number | null;
+  contactId?: number | null;
 };
 
 export type UpdateApplicationInput = Partial<CreateApplicationInput>;

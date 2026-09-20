@@ -1,7 +1,11 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { requireAuth, AuthRequest } from "../middleware/auth.js";
+import {
+  authenticatedUserId,
+  requireAuth,
+  AuthRequest,
+} from "../middleware/auth.js";
 
 export const authRouter = Router();
 
@@ -22,11 +26,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "super-secret-careerlaunch-key";
 function publicUser(user: StoredUser) {
   const { password: _password, ...safeUser } = user;
   return safeUser;
-}
-
-function authenticatedUserId(req: AuthRequest): number | undefined {
-  if (!req.user || typeof req.user === "string") return undefined;
-  return typeof req.user.userId === "number" ? req.user.userId : undefined;
 }
 
 // 1. Registration Endpoint

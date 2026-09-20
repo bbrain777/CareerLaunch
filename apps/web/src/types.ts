@@ -10,10 +10,26 @@ export interface JobApplication {
   id: number;
   company: string;
   position: string;
-  location: string;
+  location: string | null;
   status: ApplicationStatus;
-  deadline: string;
-  updatedAt: string;
+  deadline: string | null;
+  appliedAt?: string | null;
+  notes?: string | null;
+  employerId?: number | null;
+  contactId?: number | null;
+  updatedAt?: string;
+}
+
+export interface ApplicationInput {
+  company: string;
+  position: string;
+  location?: string | null;
+  status?: ApplicationStatus;
+  deadline?: string | null;
+  appliedAt?: string | null;
+  notes?: string | null;
+  employerId?: number | null;
+  contactId?: number | null;
 }
 
 export interface UpcomingTask {
