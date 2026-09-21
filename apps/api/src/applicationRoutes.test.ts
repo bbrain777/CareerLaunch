@@ -3,6 +3,8 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "./app.js";
 import { applicationRepository } from "./repositories/applicationRepository.js";
+import { contactRepository } from "./repositories/contactRepository.js";
+import { employerRepository } from "./repositories/employerRepository.js";
 
 const token = jwt.sign(
   { userId: 42, email: "owner@example.com" },
@@ -106,6 +108,27 @@ describe("authenticated application integration", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toContain("status must be one of");
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("rejects employer or contact references owned by another user", async () => {
+    vi.spyOn(employerRepository, "findById").mockResolvedValue(null);
+    const contactLookup = vi.spyOn(contactRepository, "findById");
+    const create = vi.spyOn(applicationRepository, "create");
+
+    const response = await request(app)
+      .post("/api/applications")
+      .set(authorization)
+      .send({
+        company: "CareerLaunch Labs",
+        position: "Software Engineer",
+        employerId: 3,
+        contactId: 9,
+      });
+
+    expect(response.status).toBe(400);
+    expect(employerRepository.findById).toHaveBeenCalledWith(3, 42);
+    expect(contactLookup).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
   });
 

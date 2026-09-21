@@ -55,6 +55,11 @@ Each member should own meaningful implementation work while also reviewing teamm
 
 See `ARCHITECTURE.md` for the system boundaries, integration contract, definition of done, and current risks.
 
+### Sprint 2 status
+
+- Samar: authenticated, owner-scoped employer and contact CRUD; input and follow-up validation; search; API tests; and setup/API documentation.
+- Database integration: employers now carry an optional migration-safe `userId`; all newly created and seeded employers are owned, and legacy unowned rows are not returned by authenticated routes.
+
 ## Preserved prototype
 
 The **prototype/dashboard** branch contains the runnable dashboard prototype created before responsibilities were assigned. It is a reference only. The team may reuse, revise, or reject its implementation after agreeing on the architecture.

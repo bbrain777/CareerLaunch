@@ -38,19 +38,30 @@ Create production builds:
 npm.cmd run build
 ```
 
-### Authentication Setup
+### API and authentication setup
 
-The API uses JSON Web Tokens (JWT) for secure routes. By default, local development uses a fallback secret key so you can run the app immediately.
+The API uses PostgreSQL for persistent records and JSON Web Tokens (JWT) for secure routes. Create `apps/api/.env` with a PostgreSQL connection and a local JWT secret:
 
-To use a custom key, create a `.env` file inside the `apps/api` folder and add:
-`JWT_SECRET=your_custom_secret_key_here`
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
+JWT_SECRET=replace_with_a_long_random_local_secret
+```
+
+Apply pending database migrations before starting the API:
+
+```powershell
+cd apps/api
+npx.cmd prisma db migrate
+```
+
+Application, employer, and contact endpoints require `Authorization: Bearer <token>`. Employer and contact CRUD operations derive ownership only from the authenticated JWT. List endpoints accept a case-insensitive `search` query, for example `/api/contacts?search=recruiter`.
 
 ### Project structure
 
 - **apps/web** - React and TypeScript interface built with Vite
 - **apps/api** - Express and TypeScript REST API
 
-The current starter uses sample in-memory data so the team can run it immediately. PostgreSQL, Prisma, authentication, and persistent CRUD workflows will be added during the implementation sprints.
+The API uses the Prisma data contract in `apps/api/prisma` and PostgreSQL-backed CRUD repositories. Authentication falls back to an in-memory store only for isolated development and automated tests when `DATABASE_URL` is not configured.
 
 ## Four-week MVP
 

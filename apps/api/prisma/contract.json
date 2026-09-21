@@ -539,6 +539,13 @@
                   "kind": "scalar"
                 }
               },
+              "userId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "website": {
                 "nullable": true,
                 "type": {
@@ -577,6 +584,22 @@
                   "model": "Contact",
                   "namespace": "public"
                 }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -601,6 +624,9 @@
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
                 },
                 "website": {
                   "column": "website"
@@ -863,6 +889,21 @@
                 },
                 "to": {
                   "model": "Contact",
+                  "namespace": "public"
+                }
+              },
+              "employers": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Employer",
                   "namespace": "public"
                 }
               },
@@ -1280,12 +1321,13 @@
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
                   "nativeType": "timestamptz",
                   "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
                 },
                 "website": {
                   "codecId": "pg/text@1",
@@ -1293,8 +1335,35 @@
                   "nullable": true
                 }
               },
-              "foreignKeys": [],
-              "indexes": [],
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "employer"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "employer_userId_idx_a489d58a",
+                  "prefix": "employer_userId_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -1517,10 +1586,6 @@
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
                   "nativeType": "timestamptz",
                   "nullable": false
                 }
@@ -1566,10 +1631,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "32c30eb16bce93f65fd9ffec253961c053a2e8ed91899542a98382f09548aed2"
+    "storageHash": "fd0abfe791a4ec77f8890bf5c537257ad304e5a9d8457d8a141844d15769b986"
   },
   "execution": {
-    "executionHash": "358e0c01ade251d0cc6171052632c136fbdc5ed93b479f840cc508b492c4ef0d",
+    "executionHash": "ac5e23ad7dd1e22f3545c864f402459c7ced61f5b9ea1d60426d13d590f390df",
     "mutations": {
       "defaults": [
         {
@@ -1614,7 +1679,37 @@
           "ref": {
             "column": "updatedAt",
             "namespace": "public",
+            "table": "employer"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
             "table": "task"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "user"
           }
         }
       ]

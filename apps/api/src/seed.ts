@@ -33,6 +33,7 @@ async function main() {
 
     // Employers
     const techCorp = await db.orm.public.Employer.create({
+        userId: saleh.id,
         name: "TechCorp Uganda",
         website: "https://example.com",
         industry: "Technology",
@@ -41,6 +42,7 @@ async function main() {
     });
 
     const brightPath = await db.orm.public.Employer.create({
+        userId: saleh.id,
         name: "BrightPath Solutions",
         industry: "Information Technology",
         location: "Kampala, Uganda",
@@ -48,6 +50,7 @@ async function main() {
     });
 
     const horizon = await db.orm.public.Employer.create({
+        userId: saleh.id,
         name: "Horizon Health",
         industry: "Healthcare Technology",
         location: "Kampala, Uganda",
