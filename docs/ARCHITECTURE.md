@@ -42,6 +42,8 @@ Current route foundations:
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/profile`
+- `GET /api/employers` & `POST /api/employers` (authenticated, owner-scoped validation)
+- `GET /api/contacts` & `POST /api/contacts` (authenticated, owner-scoped, follow-up validation)
 
 ## Team ownership
 

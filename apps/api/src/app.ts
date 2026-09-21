@@ -5,6 +5,8 @@ import { applications, informationalInterviews, upcomingTasks } from "./data.js"
 import { applicationRouter } from "./routes/applicationRoutes.js";
 import { authRouter } from "./routes/auth.js";
 import { taskRouter } from "./routes/taskRoutes.js";
+import { employerRouter } from "./routes/employerRoutes.js";
+import { contactRouter } from "./routes/contactRoutes.js";
 
 export const app = express();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/applications", applicationRouter);
 app.use("/api/tasks", taskRouter);
+app.use("/api/employers", employerRouter);
+app.use("/api/contacts", contactRouter);
 
 app.get("/api/health", (_request, response) => {
   response.json({
