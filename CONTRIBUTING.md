@@ -2,7 +2,7 @@
 
 ## Before implementation
 
-The team will confirm the technology stack, architecture, responsibilities, and first-sprint tasks during the Saturday meeting. Do not treat the preserved dashboard prototype as the final architecture.
+The team will confirm the technology stack, architecture, responsibilities, and sprint tasks during the Tuesday meeting at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT). Do not treat the preserved dashboard prototype as the final architecture.
 
 ## Branch workflow
 
