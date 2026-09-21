@@ -26,7 +26,6 @@ The browser communicates only with the API. The web application must not connect
 - Protected requests send `Authorization: Bearer <token>`.
 - Shared status values must match `apps/web/src/types.ts` until a shared package is introduced.
 - Database and API changes should preserve the current client response shapes or update the client in the same pull request.
-
 Current route foundations:
 
 - `GET /api/health`
@@ -43,7 +42,9 @@ Current route foundations:
 - `POST /api/auth/logout`
 - `GET /api/auth/profile`
 - `GET /api/employers` & `POST /api/employers` (authenticated, owner-scoped validation)
+- `PATCH /api/employers/:id` & `DELETE /api/employers/:id` (authenticated, owner-scoped)
 - `GET /api/contacts` & `POST /api/contacts` (authenticated, owner-scoped, follow-up validation)
+- `PATCH /api/contacts/:id` & `DELETE /api/contacts/:id` (authenticated, owner-scoped)
 
 ## Team ownership
 
