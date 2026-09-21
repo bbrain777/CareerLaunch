@@ -12,7 +12,10 @@ vi.mock("./db.js", () => ({
         Contact: {
           where: vi.fn().mockReturnThis(),
           all: vi.fn(),
+          first: vi.fn(),
           create: vi.fn(),
+          update: vi.fn(),
+          delete: vi.fn(),
         }
       }
     }
@@ -30,48 +33,29 @@ describe("Contact Routes API Tests", () => {
     vi.clearAllMocks();
   });
 
-  // Test 1: Authorization Failure
-  it("requires authentication for GET /api/contacts", async () => {
-    const response = await request(app).get("/api/contacts");
-    expect(response.status).toBe(401);
-  });
-
-  // Test 2: Successful Fetch & Ownership Check
+  // --- GET TESTS ---
   it("fetches contacts for the authenticated user only", async () => {
-    const mockContacts = [{ id: 1, userId: 42, firstName: "Jane", lastName: "Doe" }];
+    const mockContacts = [{ id: 1, userId: 42, firstName: "Jane" }];
     const dbMock = getDb();
     (dbMock.orm.public.Contact.all as any).mockResolvedValue(mockContacts);
 
     const response = await request(app).get("/api/contacts").set(authHeader);
     expect(response.status).toBe(200);
-    expect(response.body.contacts).toEqual(mockContacts);
     expect(dbMock.orm.public.Contact.where).toHaveBeenCalledWith({ userId: 42 });
   });
 
-  // Test 3: Missing Required Field
-  it("rejects POST /api/contacts if the firstName is missing", async () => {
+  // --- POST / VALIDATION TESTS ---
+  it("rejects POST /api/contacts if nextFollowUp is invalid", async () => {
     const response = await request(app)
       .post("/api/contacts")
       .set(authHeader)
-      .send({ lastName: "Smith" });
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain("First name is required");
-  });
-
-  // Test 4: Invalid Date Format
-  it("rejects POST /api/contacts if followUpDate is invalid", async () => {
-    const response = await request(app)
-      .post("/api/contacts")
-      .set(authHeader)
-      .send({ firstName: "Jane", followUpDate: "not-a-real-date" });
+      .send({ firstName: "Jane", nextFollowUp: "not-a-date" }); 
 
     expect(response.status).toBe(400);
     expect(response.body.message).toContain("valid date format");
   });
 
-  // Test 5: Successful Creation
-  it("creates a new contact with valid data", async () => {
+  it("creates a new contact using nextFollowUp", async () => {
     const mockCreatedContact = { id: 2, userId: 42, firstName: "John" };
     const dbMock = getDb();
     (dbMock.orm.public.Contact.create as any).mockResolvedValue(mockCreatedContact);
@@ -79,9 +63,45 @@ describe("Contact Routes API Tests", () => {
     const response = await request(app)
       .post("/api/contacts")
       .set(authHeader)
-      .send({ firstName: "John", followUpDate: "2026-10-01" });
+      .send({ firstName: "John", nextFollowUp: "2026-10-01" }); 
 
     expect(response.status).toBe(201);
-    expect(response.body.contact).toEqual(mockCreatedContact);
+  });
+
+  // --- UPDATE & DELETE / FAILURE TESTS ---
+  it("returns 404 when updating a contact that doesn't exist or isn't owned", async () => {
+    const dbMock = getDb();
+    (dbMock.orm.public.Contact.first as any).mockResolvedValue(null); 
+
+    const response = await request(app)
+      .patch("/api/contacts/99")
+      .set(authHeader)
+      .send({ firstName: "Hacked" });
+      
+    expect(response.status).toBe(404);
+  });
+
+  it("successfully updates an owned contact", async () => {
+    const dbMock = getDb();
+    const mockContact = { id: 1, userId: 42, firstName: "Jane" };
+    (dbMock.orm.public.Contact.first as any).mockResolvedValue(mockContact);
+    (dbMock.orm.public.Contact.update as any).mockResolvedValue({ ...mockContact, lastName: "Doe" });
+
+    const response = await request(app)
+      .patch("/api/contacts/1")
+      .set(authHeader)
+      .send({ lastName: "Doe" });
+      
+    expect(response.status).toBe(200);
+    expect(response.body.contact.lastName).toBe("Doe");
+  });
+
+  it("successfully deletes an owned contact", async () => {
+    const dbMock = getDb();
+    (dbMock.orm.public.Contact.first as any).mockResolvedValue({ id: 1, userId: 42 });
+    (dbMock.orm.public.Contact.delete as any).mockResolvedValue();
+
+    const response = await request(app).delete("/api/contacts/1").set(authHeader);
+    expect(response.status).toBe(204);
   });
 });

@@ -3,30 +3,24 @@ import { requireAuth, authenticatedUserId, type AuthRequest } from "../middlewar
 import { getDb } from "../db.js";
 
 export const employerRouter = Router();
-
-// 1. Enforce Authorization: Only logged-in users can access these routes
 employerRouter.use(requireAuth);
 
-// 2. GET: Fetch only the employers belonging to the authenticated user
+// GET: Fetch only the logged-in user's employers
 employerRouter.get("/", async (req: AuthRequest, res) => {
-  const userId = authenticatedUserId(req)!; // Securely grabs the ID from the token
-
-  // Enforce ownership: Filter database results by the logged-in user's ID
+  const userId = authenticatedUserId(req)!;
   const employers = await getDb().orm.public.Employer.where({ userId }).all();
   res.json({ employers });
 });
 
-// 3. POST: Create a new employer linked securely to the user
+// POST: Create a new employer
 employerRouter.post("/", async (req: AuthRequest, res) => {
   const userId = authenticatedUserId(req)!;
   const { name, industry, website } = req.body;
 
-  // Input Validation: Ensure name exists and is a valid string
   if (!name || typeof name !== "string" || !name.trim()) {
     return res.status(400).json({ message: "Employer name is required and must be a text string." });
   }
 
-  // Create the record securely tied to the user's ID
   const newEmployer = await getDb().orm.public.Employer.create({
     userId, 
     name: name.trim(),
@@ -35,4 +29,32 @@ employerRouter.post("/", async (req: AuthRequest, res) => {
   });
 
   res.status(201).json({ employer: newEmployer });
+});
+
+// PATCH: Update an existing employer (enforcing ownership)
+employerRouter.patch("/:id", async (req: AuthRequest, res) => {
+  const userId = authenticatedUserId(req)!;
+  const employerId = Number(req.params.id);
+  
+  const existingEmployer = await getDb().orm.public.Employer.where({ id: employerId, userId }).first();
+  if (!existingEmployer) {
+    return res.status(404).json({ message: "Employer not found or unauthorized." });
+  }
+
+  const updatedEmployer = await getDb().orm.public.Employer.update({ id: employerId }, req.body);
+  res.json({ employer: updatedEmployer });
+});
+
+// DELETE: Delete an employer (enforcing ownership)
+employerRouter.delete("/:id", async (req: AuthRequest, res) => {
+  const userId = authenticatedUserId(req)!;
+  const employerId = Number(req.params.id);
+
+  const existingEmployer = await getDb().orm.public.Employer.where({ id: employerId, userId }).first();
+  if (!existingEmployer) {
+    return res.status(404).json({ message: "Employer not found or unauthorized." });
+  }
+
+  await getDb().orm.public.Employer.delete({ id: employerId });
+  res.status(204).send();
 });

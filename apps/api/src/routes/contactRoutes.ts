@@ -3,23 +3,20 @@ import { requireAuth, authenticatedUserId, type AuthRequest } from "../middlewar
 import { getDb } from "../db.js";
 
 export const contactRouter = Router();
-
-// 1. Enforce Authorization: Protect these routes
 contactRouter.use(requireAuth);
 
-// 2. GET: Securely fetch only the logged-in user's contacts
+// GET: Fetch only the logged-in user's contacts
 contactRouter.get("/", async (req: AuthRequest, res) => {
   const userId = authenticatedUserId(req)!;
   const contacts = await getDb().orm.public.Contact.where({ userId }).all();
   res.json({ contacts });
 });
 
-// 3. POST: Create a new contact with strict input validation
+// POST: Create a new contact
 contactRouter.post("/", async (req: AuthRequest, res) => {
   const userId = authenticatedUserId(req)!;
-  const { firstName, lastName, email, followUpDate, notes } = req.body;
+  const { firstName, lastName, email, nextFollowUp, notes } = req.body;
 
-  // --- Validate Contact Details ---
   if (!firstName || typeof firstName !== "string" || !firstName.trim()) {
     return res.status(400).json({ message: "First name is required and must be text." });
   }
@@ -28,25 +25,50 @@ contactRouter.post("/", async (req: AuthRequest, res) => {
     return res.status(400).json({ message: "If provided, email must be a valid format." });
   }
 
-  // --- Validate Follow-up Fields & Dates ---
   let parsedFollowUp = null;
-  if (followUpDate) {
-    // Check if it's a valid date string
-    if (typeof followUpDate !== "string" || isNaN(Date.parse(followUpDate))) {
-      return res.status(400).json({ message: "Follow-up date must be a valid date format (e.g., YYYY-MM-DD)." });
+  if (nextFollowUp) {
+    if (typeof nextFollowUp !== "string" || isNaN(Date.parse(nextFollowUp))) {
+      return res.status(400).json({ message: "Next follow-up must be a valid date format (e.g., YYYY-MM-DD)." });
     }
-    parsedFollowUp = new Date(followUpDate);
+    parsedFollowUp = new Date(nextFollowUp);
   }
 
-  // Securely create the contact tied to the user
   const newContact = await getDb().orm.public.Contact.create({
     userId,
     firstName: firstName.trim(),
     lastName: typeof lastName === "string" ? lastName.trim() : null,
     email: typeof email === "string" ? email.trim() : null,
-    followUpDate: parsedFollowUp,
+    nextFollowUp: parsedFollowUp,
     notes: typeof notes === "string" ? notes.trim() : null,
   });
 
   res.status(201).json({ contact: newContact });
+});
+
+// PATCH: Update an existing contact (enforcing ownership)
+contactRouter.patch("/:id", async (req: AuthRequest, res) => {
+  const userId = authenticatedUserId(req)!;
+  const contactId = Number(req.params.id);
+  
+  const existingContact = await getDb().orm.public.Contact.where({ id: contactId, userId }).first();
+  if (!existingContact) {
+    return res.status(404).json({ message: "Contact not found or unauthorized." });
+  }
+
+  const updatedContact = await getDb().orm.public.Contact.update({ id: contactId }, req.body);
+  res.json({ contact: updatedContact });
+});
+
+// DELETE: Delete a contact (enforcing ownership)
+contactRouter.delete("/:id", async (req: AuthRequest, res) => {
+  const userId = authenticatedUserId(req)!;
+  const contactId = Number(req.params.id);
+
+  const existingContact = await getDb().orm.public.Contact.where({ id: contactId, userId }).first();
+  if (!existingContact) {
+    return res.status(404).json({ message: "Contact not found or unauthorized." });
+  }
+
+  await getDb().orm.public.Contact.delete({ id: contactId });
+  res.status(204).send();
 });

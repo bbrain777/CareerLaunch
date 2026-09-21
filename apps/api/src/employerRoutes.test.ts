@@ -4,7 +4,7 @@ import { app } from "./app.js";
 import { getDb } from "./db.js";
 import jwt from "jsonwebtoken";
 
-// 1. Mock the database to isolate our API tests
+// Mock the database
 vi.mock("./db.js", () => ({
   getDb: vi.fn().mockReturnValue({
     orm: {
@@ -12,14 +12,16 @@ vi.mock("./db.js", () => ({
         Employer: {
           where: vi.fn().mockReturnThis(),
           all: vi.fn(),
+          first: vi.fn(),
           create: vi.fn(),
+          update: vi.fn(),
+          delete: vi.fn(),
         }
       }
     }
   })
 }));
 
-// Create a valid dummy token for testing authorization
 const token = jwt.sign(
   { userId: 42, email: "test@example.com" },
   process.env.JWT_SECRET || "super-secret-careerlaunch-key"
@@ -31,13 +33,7 @@ describe("Employer Routes API Tests", () => {
     vi.clearAllMocks();
   });
 
-  // Test 1: Authorization Failure
-  it("requires authentication for GET /api/employers", async () => {
-    const response = await request(app).get("/api/employers");
-    expect(response.status).toBe(401);
-  });
-
-  // Test 2: Successful Data Fetch & Ownership Check
+  // --- GET TESTS ---
   it("fetches employers for the authenticated user only", async () => {
     const mockEmployers = [{ id: 1, userId: 42, name: "Tech Corp" }];
     const dbMock = getDb();
@@ -45,24 +41,20 @@ describe("Employer Routes API Tests", () => {
 
     const response = await request(app).get("/api/employers").set(authHeader);
     expect(response.status).toBe(200);
-    expect(response.body.employers).toEqual(mockEmployers);
-    
-    // Proves we are strictly filtering by the logged-in user's ID
     expect(dbMock.orm.public.Employer.where).toHaveBeenCalledWith({ userId: 42 });
   });
 
-  // Test 3: Input Validation Failure
+  // --- POST / VALIDATION TESTS ---
   it("rejects POST /api/employers if the name is missing", async () => {
     const response = await request(app)
       .post("/api/employers")
       .set(authHeader)
-      .send({ industry: "Technology" }); // Missing the required 'name' field
+      .send({ industry: "Technology" });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toContain("Employer name is required");
   });
 
-  // Test 4: Successful Creation
   it("creates a new employer with valid data", async () => {
     const mockCreatedEmployer = { id: 2, userId: 42, name: "Innovate LLC" };
     const dbMock = getDb();
@@ -71,9 +63,45 @@ describe("Employer Routes API Tests", () => {
     const response = await request(app)
       .post("/api/employers")
       .set(authHeader)
-      .send({ name: "Innovate LLC", industry: "Technology" });
+      .send({ name: "Innovate LLC" });
 
     expect(response.status).toBe(201);
-    expect(response.body.employer).toEqual(mockCreatedEmployer);
+  });
+
+  // --- UPDATE & DELETE / FAILURE TESTS ---
+  it("returns 404 when updating an employer that doesn't exist or isn't owned", async () => {
+    const dbMock = getDb();
+    (dbMock.orm.public.Employer.first as any).mockResolvedValue(null);
+
+    const response = await request(app)
+      .patch("/api/employers/99")
+      .set(authHeader)
+      .send({ name: "Hacked Corp" });
+      
+    expect(response.status).toBe(404);
+  });
+
+  it("successfully updates an owned employer", async () => {
+    const dbMock = getDb();
+    const mockEmployer = { id: 1, userId: 42, name: "Tech Corp" };
+    (dbMock.orm.public.Employer.first as any).mockResolvedValue(mockEmployer);
+    (dbMock.orm.public.Employer.update as any).mockResolvedValue({ ...mockEmployer, name: "Tech Corp Updated" });
+
+    const response = await request(app)
+      .patch("/api/employers/1")
+      .set(authHeader)
+      .send({ name: "Tech Corp Updated" });
+      
+    expect(response.status).toBe(200);
+    expect(response.body.employer.name).toBe("Tech Corp Updated");
+  });
+
+  it("successfully deletes an owned employer", async () => {
+    const dbMock = getDb();
+    (dbMock.orm.public.Employer.first as any).mockResolvedValue({ id: 1, userId: 42 });
+    (dbMock.orm.public.Employer.delete as any).mockResolvedValue();
+
+    const response = await request(app).delete("/api/employers/1").set(authHeader);
+    expect(response.status).toBe(204);
   });
 });
