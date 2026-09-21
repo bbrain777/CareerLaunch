@@ -46,6 +46,8 @@ Current route foundations:
 - `GET /api/contacts` & `POST /api/contacts` (authenticated, owner-scoped, follow-up validation)
 - `PATCH /api/contacts/:id` & `DELETE /api/contacts/:id` (authenticated, owner-scoped)
 
+Employer and contact list routes accept an optional case-insensitive `search` query. Employer ownership is stored as `Employer.userId`; existing unowned rows remain inaccessible, while all API-created and seeded employers receive the authenticated owner. Contact requests may reference only an employer owned by the same user. Create and update routes construct allow-listed payloads, so clients cannot override `userId` or write unknown fields.
+
 ## Team ownership
 
 - Olakunle: architecture, CI, pull-request review, and cross-branch integration

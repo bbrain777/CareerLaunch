@@ -1,74 +1,154 @@
 import { Router } from "express";
-import { requireAuth, authenticatedUserId, type AuthRequest } from "../middleware/auth.js";
-import { getDb } from "../db.js";
+import { Temporal } from "temporal-polyfill";
+import {
+  authenticatedUserId,
+  requireAuth,
+  type AuthRequest,
+} from "../middleware/auth.js";
+import {
+  contactRepository,
+  type ContactInput,
+} from "../repositories/contactRepository.js";
+import { employerRepository } from "../repositories/employerRepository.js";
 
 export const contactRouter = Router();
+
+function parseId(value: string | string[] | undefined): number | undefined {
+  if (typeof value !== "string") return undefined;
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : undefined;
+}
+
+function parseDate(value: unknown): Temporal.Instant | null | undefined {
+  if (value === null) return null;
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value.trim())
+    ? `${value.trim()}T00:00:00Z`
+    : value.trim();
+  try {
+    return Temporal.Instant.from(normalized);
+  } catch {
+    return undefined;
+  }
+}
+
+function contactInput(
+  body: Record<string, unknown>,
+  partial = false,
+): { data?: ContactInput; message?: string } {
+  const data: ContactInput = {};
+
+  if (!partial || Object.hasOwn(body, "firstName")) {
+    if (typeof body.firstName !== "string" || !body.firstName.trim()) {
+      return { message: "firstName is required" };
+    }
+    data.firstName = body.firstName.trim();
+  }
+
+  for (const field of ["lastName", "phone", "jobTitle", "notes"] as const) {
+    if (!Object.hasOwn(body, field)) continue;
+    const value = body[field];
+    if (value !== null && typeof value !== "string") {
+      return { message: `${field} must be a string or null` };
+    }
+    data[field] = typeof value === "string" ? value.trim() : null;
+  }
+
+  if (Object.hasOwn(body, "email")) {
+    const value = body.email;
+    if (value !== null && typeof value !== "string") {
+      return { message: "email must be a string or null" };
+    }
+    const email = typeof value === "string" ? value.trim() : null;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { message: "email must be valid" };
+    }
+    data.email = email;
+  }
+
+  for (const field of ["lastContacted", "nextFollowUp"] as const) {
+    if (!Object.hasOwn(body, field)) continue;
+    const date = parseDate(body[field]);
+    if (date === undefined) return { message: `${field} must be a valid date or null` };
+    data[field] = date;
+  }
+
+  if (Object.hasOwn(body, "employerId")) {
+    const value = body.employerId;
+    if (value === null) data.employerId = null;
+    else if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+      data.employerId = value;
+    } else return { message: "employerId must be a positive integer or null" };
+  }
+
+  return { data };
+}
+
+function matchesSearch(contact: Record<string, unknown>, search: string) {
+  return ["firstName", "lastName", "email", "phone", "jobTitle", "notes"].some(
+    (field) => String(contact[field] ?? "").toLowerCase().includes(search),
+  );
+}
+
+async function ownsEmployer(userId: number, employerId: number | null | undefined) {
+  return employerId === undefined || employerId === null ||
+    Boolean(await employerRepository.findById(employerId, userId));
+}
+
 contactRouter.use(requireAuth);
 
-// GET: Fetch only the logged-in user's contacts
-contactRouter.get("/", async (req: AuthRequest, res) => {
-  const userId = authenticatedUserId(req)!;
-  const contacts = await getDb().orm.public.Contact.where({ userId }).all();
-  res.json({ contacts });
-});
-
-// POST: Create a new contact
-contactRouter.post("/", async (req: AuthRequest, res) => {
-  const userId = authenticatedUserId(req)!;
-  const { firstName, lastName, email, nextFollowUp, notes } = req.body;
-
-  if (!firstName || typeof firstName !== "string" || !firstName.trim()) {
-    return res.status(400).json({ message: "First name is required and must be text." });
-  }
-
-  if (email && (typeof email !== "string" || !email.includes("@"))) {
-    return res.status(400).json({ message: "If provided, email must be a valid format." });
-  }
-
-  let parsedFollowUp = null;
-  if (nextFollowUp) {
-    if (typeof nextFollowUp !== "string" || isNaN(Date.parse(nextFollowUp))) {
-      return res.status(400).json({ message: "Next follow-up must be a valid date format (e.g., YYYY-MM-DD)." });
-    }
-    parsedFollowUp = new Date(nextFollowUp);
-  }
-
-  const newContact = await getDb().orm.public.Contact.create({
-    userId,
-    firstName: firstName.trim(),
-    lastName: typeof lastName === "string" ? lastName.trim() : null,
-    email: typeof email === "string" ? email.trim() : null,
-    nextFollowUp: parsedFollowUp,
-    notes: typeof notes === "string" ? notes.trim() : null,
+contactRouter.get("/", async (request: AuthRequest, response) => {
+  const userId = authenticatedUserId(request)!;
+  const contacts = await contactRepository.findAllByUserId(userId);
+  const search = typeof request.query.search === "string"
+    ? request.query.search.trim().toLowerCase()
+    : "";
+  response.json({
+    contacts: search ? contacts.filter((contact) => matchesSearch(contact, search)) : contacts,
   });
-
-  res.status(201).json({ contact: newContact });
 });
 
-// PATCH: Update an existing contact (enforcing ownership)
-contactRouter.patch("/:id", async (req: AuthRequest, res) => {
-  const userId = authenticatedUserId(req)!;
-  const contactId = Number(req.params.id);
-  
-  const existingContact = await getDb().orm.public.Contact.where({ id: contactId, userId }).first();
-  if (!existingContact) {
-    return res.status(404).json({ message: "Contact not found or unauthorized." });
+contactRouter.post("/", async (request: AuthRequest, response) => {
+  const userId = authenticatedUserId(request)!;
+  const parsed = contactInput(request.body);
+  if (!parsed.data) return response.status(400).json({ message: parsed.message });
+  if (!(await ownsEmployer(userId, parsed.data.employerId))) {
+    return response.status(400).json({ message: "employerId must reference an owned employer" });
   }
 
-  const updatedContact = await getDb().orm.public.Contact.update({ id: contactId }, req.body);
-  res.json({ contact: updatedContact });
+  const contact = await contactRepository.create(
+    userId,
+    parsed.data as ContactInput & { firstName: string },
+  );
+  response.status(201).json({ contact });
 });
 
-// DELETE: Delete a contact (enforcing ownership)
-contactRouter.delete("/:id", async (req: AuthRequest, res) => {
-  const userId = authenticatedUserId(req)!;
-  const contactId = Number(req.params.id);
-
-  const existingContact = await getDb().orm.public.Contact.where({ id: contactId, userId }).first();
-  if (!existingContact) {
-    return res.status(404).json({ message: "Contact not found or unauthorized." });
+contactRouter.patch("/:id", async (request: AuthRequest, response) => {
+  const id = parseId(request.params.id);
+  if (!id) return response.status(400).json({ message: "id must be a positive integer" });
+  const userId = authenticatedUserId(request)!;
+  if (!(await contactRepository.findById(id, userId))) {
+    return response.status(404).json({ message: "Contact not found" });
   }
 
-  await getDb().orm.public.Contact.delete({ id: contactId });
-  res.status(204).send();
+  const parsed = contactInput(request.body, true);
+  if (!parsed.data) return response.status(400).json({ message: parsed.message });
+  if (!(await ownsEmployer(userId, parsed.data.employerId))) {
+    return response.status(400).json({ message: "employerId must reference an owned employer" });
+  }
+
+  const contact = await contactRepository.update(id, userId, parsed.data);
+  response.json({ contact });
+});
+
+contactRouter.delete("/:id", async (request: AuthRequest, response) => {
+  const id = parseId(request.params.id);
+  if (!id) return response.status(400).json({ message: "id must be a positive integer" });
+  const userId = authenticatedUserId(request)!;
+  if (!(await contactRepository.findById(id, userId))) {
+    return response.status(404).json({ message: "Contact not found" });
+  }
+
+  await contactRepository.delete(id, userId);
+  response.status(204).send();
 });

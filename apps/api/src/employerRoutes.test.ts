@@ -1,107 +1,112 @@
-import request from "supertest";
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { app } from "./app.js";
-import { getDb } from "./db.js";
 import jwt from "jsonwebtoken";
-
-// Mock the database
-vi.mock("./db.js", () => ({
-  getDb: vi.fn().mockReturnValue({
-    orm: {
-      public: {
-        Employer: {
-          where: vi.fn().mockReturnThis(),
-          all: vi.fn(),
-          first: vi.fn(),
-          create: vi.fn(),
-          update: vi.fn(),
-          delete: vi.fn(),
-        }
-      }
-    }
-  })
-}));
+import request from "supertest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { app } from "./app.js";
+import { employerRepository } from "./repositories/employerRepository.js";
 
 const token = jwt.sign(
-  { userId: 42, email: "test@example.com" },
-  process.env.JWT_SECRET || "super-secret-careerlaunch-key"
+  { userId: 42, email: "owner@example.com" },
+  process.env.JWT_SECRET || "super-secret-careerlaunch-key",
 );
-const authHeader = { Authorization: `Bearer ${token}` };
+const authorization = { Authorization: `Bearer ${token}` };
 
-describe("Employer Routes API Tests", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+const employer = {
+  id: 7,
+  userId: 42,
+  name: "CareerLaunch Labs",
+  industry: "Technology",
+  location: "London",
+  website: "https://example.com",
+  notes: null,
+};
+
+describe("authenticated employer routes", () => {
+  beforeEach(() => vi.restoreAllMocks());
+
+  it("requires a bearer token", async () => {
+    const findAll = vi.spyOn(employerRepository, "findAllByUserId");
+    const response = await request(app).get("/api/employers");
+    expect(response.status).toBe(401);
+    expect(findAll).not.toHaveBeenCalled();
   });
 
-  // --- GET TESTS ---
-  it("fetches employers for the authenticated user only", async () => {
-    const mockEmployers = [{ id: 1, userId: 42, name: "Tech Corp" }];
-    const dbMock = getDb();
-    (dbMock.orm.public.Employer.all as any).mockResolvedValue(mockEmployers);
+  it("uses JWT ownership and supports search", async () => {
+    vi.spyOn(employerRepository, "findAllByUserId").mockResolvedValue([
+      employer,
+      { ...employer, id: 8, name: "Health Group", industry: "Healthcare" },
+    ] as any);
 
-    const response = await request(app).get("/api/employers").set(authHeader);
+    const response = await request(app)
+      .get("/api/employers?search=technology&userId=999")
+      .set(authorization);
+
     expect(response.status).toBe(200);
-    expect(dbMock.orm.public.Employer.where).toHaveBeenCalledWith({ userId: 42 });
+    expect(employerRepository.findAllByUserId).toHaveBeenCalledWith(42);
+    expect(response.body.employers).toEqual([employer]);
   });
 
-  // --- POST / VALIDATION TESTS ---
-  it("rejects POST /api/employers if the name is missing", async () => {
+  it("creates an owned employer and ignores a body userId", async () => {
+    vi.spyOn(employerRepository, "create").mockResolvedValue(employer as any);
     const response = await request(app)
       .post("/api/employers")
-      .set(authHeader)
-      .send({ industry: "Technology" });
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain("Employer name is required");
-  });
-
-  it("creates a new employer with valid data", async () => {
-    const mockCreatedEmployer = { id: 2, userId: 42, name: "Innovate LLC" };
-    const dbMock = getDb();
-    (dbMock.orm.public.Employer.create as any).mockResolvedValue(mockCreatedEmployer);
-
-    const response = await request(app)
-      .post("/api/employers")
-      .set(authHeader)
-      .send({ name: "Innovate LLC" });
+      .set(authorization)
+      .send({ userId: 999, name: " CareerLaunch Labs ", website: "https://example.com" });
 
     expect(response.status).toBe(201);
+    expect(employerRepository.create).toHaveBeenCalledWith(42, {
+      name: "CareerLaunch Labs",
+      website: "https://example.com",
+    });
   });
 
-  // --- UPDATE & DELETE / FAILURE TESTS ---
-  it("returns 404 when updating an employer that doesn't exist or isn't owned", async () => {
-    const dbMock = getDb();
-    (dbMock.orm.public.Employer.first as any).mockResolvedValue(null);
-
+  it("rejects invalid employer input", async () => {
+    const create = vi.spyOn(employerRepository, "create");
     const response = await request(app)
-      .patch("/api/employers/99")
-      .set(authHeader)
-      .send({ name: "Hacked Corp" });
-      
+      .post("/api/employers")
+      .set(authorization)
+      .send({ name: "", website: "javascript:alert(1)" });
+    expect(response.status).toBe(400);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("does not update an employer owned by another user", async () => {
+    vi.spyOn(employerRepository, "findById").mockResolvedValue(null);
+    const update = vi.spyOn(employerRepository, "update");
+    const response = await request(app)
+      .patch("/api/employers/7")
+      .set(authorization)
+      .send({ name: "Changed" });
     expect(response.status).toBe(404);
+    expect(employerRepository.findById).toHaveBeenCalledWith(7, 42);
+    expect(update).not.toHaveBeenCalled();
   });
 
-  it("successfully updates an owned employer", async () => {
-    const dbMock = getDb();
-    const mockEmployer = { id: 1, userId: 42, name: "Tech Corp" };
-    (dbMock.orm.public.Employer.first as any).mockResolvedValue(mockEmployer);
-    (dbMock.orm.public.Employer.update as any).mockResolvedValue({ ...mockEmployer, name: "Tech Corp Updated" });
-
+  it("updates only validated employer fields", async () => {
+    vi.spyOn(employerRepository, "findById").mockResolvedValue(employer as any);
+    vi.spyOn(employerRepository, "update").mockResolvedValue({
+      ...employer,
+      name: "Updated",
+    } as any);
     const response = await request(app)
-      .patch("/api/employers/1")
-      .set(authHeader)
-      .send({ name: "Tech Corp Updated" });
-      
+      .patch("/api/employers/7")
+      .set(authorization)
+      .send({ name: "Updated", userId: 999 });
     expect(response.status).toBe(200);
-    expect(response.body.employer.name).toBe("Tech Corp Updated");
+    expect(employerRepository.update).toHaveBeenCalledWith(7, 42, { name: "Updated" });
   });
 
-  it("successfully deletes an owned employer", async () => {
-    const dbMock = getDb();
-    (dbMock.orm.public.Employer.first as any).mockResolvedValue({ id: 1, userId: 42 });
-    (dbMock.orm.public.Employer.delete as any).mockResolvedValue();
+  it("rejects invalid ids", async () => {
+    const response = await request(app)
+      .delete("/api/employers/not-a-number")
+      .set(authorization);
+    expect(response.status).toBe(400);
+  });
 
-    const response = await request(app).delete("/api/employers/1").set(authHeader);
+  it("deletes only an owned employer", async () => {
+    vi.spyOn(employerRepository, "findById").mockResolvedValue(employer as any);
+    vi.spyOn(employerRepository, "delete").mockResolvedValue(undefined as any);
+    const response = await request(app).delete("/api/employers/7").set(authorization);
     expect(response.status).toBe(204);
+    expect(employerRepository.delete).toHaveBeenCalledWith(7, 42);
   });
 });

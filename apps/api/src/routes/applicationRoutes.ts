@@ -9,6 +9,8 @@ import {
   applicationRepository,
   type CreateApplicationInput,
 } from "../repositories/applicationRepository.js";
+import { contactRepository } from "../repositories/contactRepository.js";
+import { employerRepository } from "../repositories/employerRepository.js";
 
 export const applicationRouter = Router();
 
@@ -142,6 +144,29 @@ function applicationInput(
   return { data };
 }
 
+async function ownsRelatedRecords(
+  userId: number,
+  data: Partial<CreateApplicationInput>,
+) {
+  if (
+    data.employerId !== undefined &&
+    data.employerId !== null &&
+    !(await employerRepository.findById(data.employerId, userId))
+  ) {
+    return false;
+  }
+
+  if (
+    data.contactId !== undefined &&
+    data.contactId !== null &&
+    !(await contactRepository.findById(data.contactId, userId))
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 applicationRouter.use(requireAuth);
 
 // Get all applications for a user
@@ -179,6 +204,11 @@ applicationRouter.post("/", async (request: AuthRequest, response) => {
   if (!parsed.data) {
     return response.status(400).json({ message: parsed.message });
   }
+  if (!(await ownsRelatedRecords(userId, parsed.data))) {
+    return response.status(400).json({
+      message: "employerId and contactId must reference records owned by the authenticated user",
+    });
+  }
 
   const application = await applicationRepository.create(
     userId,
@@ -204,6 +234,11 @@ applicationRouter.patch("/:id", async (request: AuthRequest, response) => {
   const parsed = applicationInput(request.body, true);
   if (!parsed.data) {
     return response.status(400).json({ message: parsed.message });
+  }
+  if (!(await ownsRelatedRecords(userId, parsed.data))) {
+    return response.status(400).json({
+      message: "employerId and contactId must reference records owned by the authenticated user",
+    });
   }
 
   const application = await applicationRepository.update(id, userId, parsed.data);
