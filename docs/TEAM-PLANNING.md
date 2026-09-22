@@ -2,7 +2,7 @@
 
 ## Meeting
 
-- Schedule: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT)
+- Schedule: Tuesdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT), beginning September 22, 2026, so the team can stay aligned with course-required deadlines.
 - Participants: Olakunle Obademi, Saleh Ntege, Alex Koje Okhitoya, and Samar Mohammed Walakabouh Salah Mahmoud Abbas
 
 ## Decisions for the first meeting

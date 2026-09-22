@@ -11,7 +11,7 @@ The project combines Olakunle Obademi's CareerLaunch proposal with selected idea
 - Alex Koje Okhitoya — [@lexmanthefirst](https://github.com/lexmanthefirst)
 - Samar Mohammed Walakabouh Salah Mahmoud Abbas — [@sameljawabryBYUI](https://github.com/sameljawabryBYUI)
 
-Synchronous meeting time: Saturdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT).
+Synchronous meeting time: Tuesdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT), beginning September 22, 2026. The team changed the schedule to stay aligned with course-required deadlines.
 
 ## Local development
 
@@ -95,7 +95,7 @@ The MVP intentionally excludes a complete customer, inventory, product, sales, o
 
 ## Team workflow
 
-- Finalize the technology stack and responsibilities during the Saturday team meeting.
+- Finalize the technology stack and responsibilities during the Tuesday team meeting.
 - Create a separate branch for each assigned feature.
 - Open a pull request for team review before merging work into main.
 - Use **prototype/dashboard** only as a preserved visual and technical reference.
