@@ -2,7 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import type {
   ApplicationInput,
+  Contact,
+  ContactInput,
   DashboardData,
+  Employer,
+  EmployerInput,
   JobApplication,
   InformationalInterview,
   UpcomingTask,
@@ -16,6 +20,8 @@ export const queryKeys = {
   tasks: ["tasks"] as const,
   interviews: ["interviews"] as const,
   profile: ["profile"] as const,
+  employers: ["employers"] as const,
+  contacts: ["contacts"] as const,
 };
 
 // --- Queries ---
@@ -56,6 +62,90 @@ export function useTasksQuery() {
       const result = await api.get<{ tasks: UpcomingTask[] }>("/api/tasks");
       return result.tasks;
     },
+  });
+}
+
+/**
+ * Fetch all employers
+ */
+export function useEmployersQuery() {
+  return useQuery({
+    queryKey: queryKeys.employers,
+    queryFn: async () => {
+      const result = await api.get<{ employers: Employer[] }>("/api/employers");
+      return result.employers;
+    },
+  });
+}
+
+/**
+ * Fetch all contacts
+ */
+export function useContactsQuery() {
+  return useQuery({
+    queryKey: queryKeys.contacts,
+    queryFn: async () => {
+      const result = await api.get<{ contacts: Contact[] }>("/api/contacts");
+      return result.contacts;
+    },
+  });
+}
+
+export function useCreateEmployerMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (employer: EmployerInput) =>
+      api.post<{ employer: Employer }>("/api/employers", employer),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.employers }),
+  });
+}
+
+export function useUpdateEmployerMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: number; changes: Partial<EmployerInput> }) =>
+      api.patch<{ employer: Employer }>(`/api/employers/${id}`, changes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.employers }),
+  });
+}
+
+export function useDeleteEmployerMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/api/employers/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.employers }),
+  });
+}
+
+export function useCreateContactMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (contact: ContactInput) =>
+      api.post<{ contact: Contact }>("/api/contacts", contact),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.contacts }),
+  });
+}
+
+export function useUpdateContactMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: number; changes: Partial<ContactInput> }) =>
+      api.patch<{ contact: Contact }>(`/api/contacts/${id}`, changes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.contacts }),
+  });
+}
+
+export function useDeleteContactMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/api/contacts/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.contacts }),
   });
 }
 

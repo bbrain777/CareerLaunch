@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home01Icon, Briefcase01Icon, UserSquareIcon, UserIcon, Logout01Icon } from "hugeicons-react";
+import { Home01Icon, Briefcase01Icon, UserSquareIcon, UserIcon, Logout01Icon, Building01Icon, Contact01Icon } from "hugeicons-react";
 import { CaretUpDownIcon } from "@phosphor-icons/react";
 import {
   SidebarProvider,
@@ -63,17 +63,37 @@ export function SidebarLayout({ children }: SidebarProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  icon={Briefcase01Icon}
-                  isActive={currentPath === "/applications"}
-                  render={<Link to="/applications" />}
-                >
-                  Applications
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+<SidebarMenuItem>
+                  <SidebarMenuButton
+                    icon={Briefcase01Icon}
+                    isActive={currentPath === "/applications"}
+                    render={<Link to="/applications" />}
+                  >
+                    Applications
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
-              <SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    icon={Building01Icon}
+                    isActive={currentPath === "/employers"}
+                    render={<Link to="/employers" />}
+                  >
+                    Employers
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    icon={Contact01Icon}
+                    isActive={currentPath === "/contacts"}
+                    render={<Link to="/contacts" />}
+                  >
+                    Contacts
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
                 <SidebarMenuButton
                   icon={UserSquareIcon}
                   isActive={currentPath === "/informational-interviews"}

@@ -2,11 +2,26 @@ import { type FormEvent, useMemo, useState } from "react";
 import { Search01Icon } from "hugeicons-react";
 import { pipelineStatuses } from "../status";
 import { ApplicationCard } from "../components/Cards";
-import { Button, Select, Loader } from "../components/ui";
+import {
+  Button,
+  DatePickerField,
+  Field,
+  Input,
+  InputArea,
+  Label,
+  Loader,
+  Select,
+  Dialog,
+  DialogRoot,
+  DialogTitle,
+  DialogDescription,
+} from "../components/ui";
 import {
   useApplicationsQuery,
+  useContactsQuery,
   useCreateApplicationMutation,
   useDeleteApplicationMutation,
+  useEmployersQuery,
   useUpdateApplicationMutation,
 } from "../hooks/queries";
 import type { ApplicationInput, ApplicationStatus, JobApplication } from "../types";
@@ -18,11 +33,22 @@ export function ApplicationsPage() {
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [editor, setEditor] = useState<EditorState | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
   const createApplication = useCreateApplicationMutation();
   const updateApplication = useUpdateApplicationMutation();
   const deleteApplication = useDeleteApplicationMutation();
 
   const error = queryError ? "Unable to load applications. Ensure the API server is running." : "";
+
+  const openCreate = () => {
+    setEditor({ mode: "create" });
+    setEditorKey((key) => key + 1);
+  };
+
+  const openEdit = (application: JobApplication) => {
+    setEditor({ mode: "edit", application });
+    setEditorKey((key) => key + 1);
+  };
 
   const filteredApplications = useMemo(() => {
     let result = applications;
@@ -54,7 +80,7 @@ export function ApplicationsPage() {
         <Button
           variant="primary"
           className="topbar-add-btn"
-          onClick={() => setEditor({ mode: "create" })}
+          onClick={openCreate}
         >
           Add application
         </Button>
@@ -62,43 +88,44 @@ export function ApplicationsPage() {
 
       {error && <div className="error-banner" role="alert">{error}</div>}
 
-      {editor && (
-        <ApplicationEditor
-          key={editor.mode === "edit" ? editor.application.id : "new"}
-          application={editor.mode === "edit" ? editor.application : undefined}
-          saving={createApplication.isPending || updateApplication.isPending}
-          deleting={deleteApplication.isPending}
-          error={
-            (createApplication.error instanceof Error && createApplication.error.message) ||
-            (updateApplication.error instanceof Error && updateApplication.error.message) ||
-            (deleteApplication.error instanceof Error && deleteApplication.error.message) ||
-            ""
+      <ApplicationEditor
+        key={editorKey}
+        application={editor?.mode === "edit" ? editor.application : undefined}
+        open={editor !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setEditor(null);
+        }}
+        saving={createApplication.isPending || updateApplication.isPending}
+        deleting={deleteApplication.isPending}
+        error={
+          (createApplication.error instanceof Error && createApplication.error.message) ||
+          (updateApplication.error instanceof Error && updateApplication.error.message) ||
+          (deleteApplication.error instanceof Error && deleteApplication.error.message) ||
+          ""
+        }
+        onSave={async (input) => {
+          if (editor?.mode === "edit") {
+            await updateApplication.mutateAsync({
+              id: editor.application.id,
+              changes: input,
+            });
+          } else {
+            await createApplication.mutateAsync(input);
           }
-          onCancel={() => setEditor(null)}
-          onSave={async (input) => {
-            if (editor.mode === "edit") {
-              await updateApplication.mutateAsync({
-                id: editor.application.id,
-                changes: input,
-              });
-            } else {
-              await createApplication.mutateAsync(input);
-            }
-            setEditor(null);
-          }}
-          onDelete={
-            editor.mode === "edit"
-              ? async () => {
-                  if (!window.confirm(`Delete the ${editor.application.position} application?`)) {
-                    return;
-                  }
-                  await deleteApplication.mutateAsync(editor.application.id);
-                  setEditor(null);
+          setEditor(null);
+        }}
+        onDelete={
+          editor?.mode === "edit"
+            ? async () => {
+                if (!window.confirm(`Delete the ${editor.application.position} application?`)) {
+                  return;
                 }
-              : undefined
-          }
-        />
-      )}
+                await deleteApplication.mutateAsync(editor.application.id);
+                setEditor(null);
+              }
+            : undefined
+        }
+      />
 
       <section className="panel">
         <div className="panel-heading applications-toolbar">
@@ -152,7 +179,7 @@ export function ApplicationsPage() {
                       <ApplicationCard
                         application={application}
                         key={application.id}
-                        onOpen={() => setEditor({ mode: "edit", application })}
+                        onOpen={() => openEdit(application)}
                       />
                     ))
                   ) : (
@@ -175,25 +202,48 @@ function ApplicationEditor({
   saving,
   deleting,
   error,
+  open,
+  onOpenChange,
   onSave,
   onDelete,
-  onCancel,
 }: {
   application?: JobApplication;
   saving: boolean;
   deleting: boolean;
   error: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSave: (input: ApplicationInput) => Promise<void>;
   onDelete?: () => Promise<void>;
-  onCancel: () => void;
 }) {
   const [company, setCompany] = useState(application?.company ?? "");
   const [position, setPosition] = useState(application?.position ?? "");
   const [location, setLocation] = useState(application?.location ?? "");
   const [status, setStatus] = useState<ApplicationStatus>(application?.status ?? "Saved");
   const [deadline, setDeadline] = useState(application?.deadline ?? "");
+  const [employerId, setEmployerId] = useState(
+    application?.employerId ? String(application.employerId) : "none"
+  );
+  const [contactId, setContactId] = useState(
+    application?.contactId ? String(application.contactId) : "none"
+  );
   const [notes, setNotes] = useState(application?.notes ?? "");
   const [submissionError, setSubmissionError] = useState("");
+  const { data: employers = [] } = useEmployersQuery();
+  const { data: contacts = [] } = useContactsQuery();
+
+  const employerOptions = [
+    { value: "none", label: "No employer" },
+    ...employers.map((employer) => ({ value: String(employer.id), label: employer.name })),
+  ];
+
+  const contactOptions = [
+    { value: "none", label: "No contact" },
+    ...contacts.map((contact) => ({
+      value: String(contact.id),
+      label: [contact.firstName, contact.lastName].filter(Boolean).join(" "),
+    })),
+  ];
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -206,6 +256,8 @@ function ApplicationEditor({
         location: location.trim() || null,
         status,
         deadline: deadline || null,
+        employerId: employerId && employerId !== "none" ? Number(employerId) : null,
+        contactId: contactId && contactId !== "none" ? Number(contactId) : null,
         notes: notes.trim() || null,
       });
     } catch (caught) {
@@ -224,80 +276,105 @@ function ApplicationEditor({
   }
 
   return (
-    <div className="application-editor-backdrop">
-      <section
-        className="application-editor"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="application-editor-title"
-      >
-        <div className="application-editor-heading">
-          <div>
-            <span className="eyebrow">Application pipeline</span>
-            <h2 id="application-editor-title">
-              {application ? "Edit application" : "Add application"}
-            </h2>
+    <DialogRoot open={open} onOpenChange={onOpenChange}>
+      <Dialog size="xl" className="p-6">
+        <div className="editor-dialog-body">
+          <DialogTitle>{application ? "Edit application" : "Add application"}</DialogTitle>
+          <DialogDescription>
+            {application
+              ? "Update the details for this job application."
+              : "Record a new opportunity in your pipeline."}
+          </DialogDescription>
+
+          {(submissionError || error) && (
+            <div className="error-banner mt-4" role="alert">{submissionError || error}</div>
+          )}
+
+          <form className="mt-4" onSubmit={handleSubmit}>
+            <div className="editor-form-grid">
+            <Field label="Company" required>
+              <Input
+                id="application-company"
+                value={company}
+                onChange={(event) => setCompany(event.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Position" required>
+              <Input
+                id="application-position"
+                value={position}
+                onChange={(event) => setPosition(event.target.value)}
+                required
+              />
+            </Field>
+            <Field label="Location">
+              <Input
+                id="application-location"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+              />
+            </Field>
+            <div>
+              <Label className="block mb-1.5">Status</Label>
+              <Select
+                aria-label="Status"
+                className="w-full"
+                value={status}
+                onValueChange={(value) => setStatus(value as ApplicationStatus)}
+                items={Object.fromEntries(pipelineStatuses.map((s) => [s, s]))}
+              />
+            </div>
+            <DatePickerField
+              label="Deadline"
+              value={deadline || null}
+              onValueChange={(value) => setDeadline(value ?? "")}
+            />
+            <div>
+              <Label className="block mb-1.5">Employer</Label>
+              <Select
+                aria-label="Employer"
+                className="w-full"
+                value={employerId}
+                onValueChange={setEmployerId}
+                options={employerOptions}
+              />
+            </div>
+            <div>
+              <Label className="block mb-1.5">Contact</Label>
+              <Select
+                aria-label="Contact"
+                className="w-full"
+                value={contactId}
+                onValueChange={setContactId}
+                options={contactOptions}
+              />
+            </div>
+            <div className="editor-span-2">
+              <Field label="Notes">
+                <InputArea
+                  id="application-notes"
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value)}
+                  autoResize
+                  minRows={3}
+                />
+              </Field>
+            </div>
           </div>
-          <button type="button" className="text-button" onClick={onCancel}>Close</button>
-        </div>
 
-        {(submissionError || error) && (
-          <div className="error-banner" role="alert">{submissionError || error}</div>
-        )}
-
-        <form className="application-form" onSubmit={handleSubmit}>
-          <label>
-            <span>Company</span>
-            <input value={company} onChange={(event) => setCompany(event.target.value)} required />
-          </label>
-          <label>
-            <span>Position</span>
-            <input value={position} onChange={(event) => setPosition(event.target.value)} required />
-          </label>
-          <label>
-            <span>Location</span>
-            <input value={location} onChange={(event) => setLocation(event.target.value)} />
-          </label>
-          <label>
-            <span>Status</span>
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value as ApplicationStatus)}
-            >
-              {pipelineStatuses.map((pipelineStatus) => (
-                <option key={pipelineStatus} value={pipelineStatus}>{pipelineStatus}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Deadline</span>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(event) => setDeadline(event.target.value)}
-            />
-          </label>
-          <label className="application-form-notes">
-            <span>Notes</span>
-            <textarea
-              rows={4}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-          </label>
-
-          <div className="application-form-actions">
+          <div className="editor-footer flex flex-wrap items-center justify-end gap-2">
             {onDelete && (
               <button
                 type="button"
-                className="danger-button"
+                className="danger-button mr-auto"
                 disabled={saving || deleting}
                 onClick={() => void handleDelete()}
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>
             )}
-            <button type="button" className="secondary-button" onClick={onCancel}>
+            <button type="button" className="secondary-button" onClick={() => onOpenChange(false)}>
               Cancel
             </button>
             <button type="submit" className="primary-button" disabled={saving || deleting}>
@@ -305,7 +382,8 @@ function ApplicationEditor({
             </button>
           </div>
         </form>
-      </section>
-    </div>
+        </div>
+      </Dialog>
+    </DialogRoot>
   );
 }

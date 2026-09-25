@@ -28,6 +28,10 @@ export {
   DialogTitle,
   DialogDescription,
   DialogClose,
+  DatePicker,
+  type DatePickerProps,
+  type DateRange,
+  type DayPickerProps,
   Popover,
   Tooltip,
   TooltipProvider,
@@ -55,5 +59,6 @@ export {
 
 export * from "./DropdownMenu";
 export * from "./Select";
+export * from "./DatePickerField";
 export * from "./sidebar";
 

@@ -32,6 +32,54 @@ export interface ApplicationInput {
   contactId?: number | null;
 }
 
+export interface Employer {
+  id: number;
+  name: string;
+  website: string | null;
+  industry: string | null;
+  location: string | null;
+  notes: string | null;
+  userId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface EmployerInput {
+  name: string;
+  website?: string | null;
+  industry?: string | null;
+  location?: string | null;
+  notes?: string | null;
+}
+
+export interface Contact {
+  id: number;
+  firstName: string;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+  jobTitle: string | null;
+  notes: string | null;
+  lastContacted: string | null;
+  nextFollowUp: string | null;
+  employerId: number | null;
+  userId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ContactInput {
+  firstName: string;
+  lastName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  jobTitle?: string | null;
+  notes?: string | null;
+  lastContacted?: string | null;
+  nextFollowUp?: string | null;
+  employerId?: number | null;
+}
+
 export interface UpcomingTask {
   id: number;
   title: string;
