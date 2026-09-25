@@ -40,7 +40,7 @@ export function SidebarLayout({ children }: SidebarProps) {
 
   return (
     <SidebarProvider defaultOpen width="18rem">
-      <Sidebar side="left" variant="sidebar" className="careerlaunch-sidebar">
+      <Sidebar side="left" variant="sidebar">
         <SidebarHeader>
           <Link to="/" className="brand" aria-label="CareerLaunch">
             <span className="brand-mark">
@@ -63,37 +63,37 @@ export function SidebarLayout({ children }: SidebarProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-<SidebarMenuItem>
-                  <SidebarMenuButton
-                    icon={Briefcase01Icon}
-                    isActive={currentPath === "/applications"}
-                    render={<Link to="/applications" />}
-                  >
-                    Applications
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  icon={Briefcase01Icon}
+                  isActive={currentPath === "/applications"}
+                  render={<Link to="/applications" />}
+                >
+                  Applications
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    icon={Building01Icon}
-                    isActive={currentPath === "/employers"}
-                    render={<Link to="/employers" />}
-                  >
-                    Employers
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  icon={Building01Icon}
+                  isActive={currentPath === "/employers"}
+                  render={<Link to="/employers" />}
+                >
+                  Employers
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    icon={Contact01Icon}
-                    isActive={currentPath === "/contacts"}
-                    render={<Link to="/contacts" />}
-                  >
-                    Contacts
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  icon={Contact01Icon}
+                  isActive={currentPath === "/contacts"}
+                  render={<Link to="/contacts" />}
+                >
+                  Contacts
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-                <SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   icon={UserSquareIcon}
                   isActive={currentPath === "/informational-interviews"}
@@ -122,6 +122,8 @@ export function SidebarLayout({ children }: SidebarProps) {
                 <DropdownMenu
                   align="start"
                   side="top"
+                  sideOffset={8}
+                  className="w-56"
                   trigger={
                     <button
                       type="button"
@@ -162,13 +164,41 @@ export function SidebarLayout({ children }: SidebarProps) {
       </Sidebar>
 
       <SidebarInset>
-        <div className="sidebar-trigger-bar">
+        <div className="sidebar-trigger-bar hidden sm:flex">
           <SidebarTrigger />
         </div>
         <div className="main-content-container">
           {children}
         </div>
       </SidebarInset>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[62px] items-center justify-around border-t border-white/10 bg-[#0e1e1b]/95 backdrop-blur-md px-1 pb-[env(safe-area-inset-bottom,0px)] md:hidden" aria-label="Mobile Navigation">
+        <Link to="/" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/" ? "text-white font-semibold" : "hover:text-white"}`}>
+          <Home01Icon size={19} />
+          <span>Dashboard</span>
+        </Link>
+        <Link to="/applications" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/applications" ? "text-white font-semibold" : "hover:text-white"}`}>
+          <Briefcase01Icon size={19} />
+          <span>Jobs</span>
+        </Link>
+        <Link to="/employers" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/employers" ? "text-white font-semibold" : "hover:text-white"}`}>
+          <Building01Icon size={19} />
+          <span>Employers</span>
+        </Link>
+        <Link to="/contacts" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/contacts" ? "text-white font-semibold" : "hover:text-white"}`}>
+          <Contact01Icon size={19} />
+          <span>Contacts</span>
+        </Link>
+        <Link to="/informational-interviews" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/informational-interviews" ? "text-white font-semibold" : "hover:text-white"}`}>
+          <UserSquareIcon size={19} />
+          <span>Interviews</span>
+        </Link>
+        <Link to="/profile" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/profile" ? "text-white font-semibold" : "hover:text-white"}`}>
+          <UserIcon size={19} />
+          <span>Profile</span>
+        </Link>
+      </nav>
     </SidebarProvider>
   );
 }

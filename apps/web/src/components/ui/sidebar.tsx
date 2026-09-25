@@ -25,8 +25,6 @@ import {
   type SidebarCollapsible,
 } from "@/components/ui/sidebar-core";
 
-// ─── Mobile sheet ────────────────────────────────────────────────────────────
-//
 // Built on Base UI Dialog rather than Base UI Drawer: Drawer's
 // swipe-to-dismiss writes inline `transform` + `--drawer-swipe-movement-*`
 // CSS vars onto its Popup and expects CSS-transition choreography (plus a
@@ -177,8 +175,6 @@ function SidebarSheet({ side, open, onClose, children }: SidebarSheetProps) {
   );
 }
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
-
 export interface SidebarProps
   extends Omit<
     HTMLAttributes<HTMLDivElement>,
@@ -258,8 +254,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
   }
 );
 Sidebar.displayName = "Sidebar";
-
-// ─── SidebarContent ──────────────────────────────────────────────────────────
 
 export interface SidebarContentProps extends HTMLAttributes<HTMLDivElement> {
   viewportClassName?: string;

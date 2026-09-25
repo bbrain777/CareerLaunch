@@ -304,7 +304,7 @@ function InformationalInterviewCard({ interview }: { interview: InformationalInt
     <article className="interview-card">
       <div className="interview-card-heading">
         <div>
-          <span className="status-label">{interview.status.toUpperCase()}</span>
+          <span className="status-label">{interview.status}</span>
           <h3>{interview.contactName}</h3>
           <p>{interview.role} · {interview.company}</p>
         </div>

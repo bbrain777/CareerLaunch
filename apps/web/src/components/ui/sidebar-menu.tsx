@@ -34,33 +34,18 @@ import type { IconComponent } from "@/lib/icon-context";
 import { resolveSlotTemplate, slotElement } from "@/components/ui/sidebar-core";
 import { FluidHoverHighlight } from "@/components/ui/fluid-hover-highlight";
 
-// SSR-safe layout effect (client components still server-render in Next).
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// ─── Menu scope ──────────────────────────────────────────────────────────────
-//
-// One scope per SidebarMenu tree: a single fluid-hover system plus the
-// traveling overlays — hover background, active background(s), focus ring —
-// that glide between every visible row, sub-menu rows included, so the hover
-// moves from a parent into its children as one continuous piece. Sub rows
-// live inside positioned ancestors, so their rects are accumulated into the
-// menu's own coordinate space by the fluid hover hook. The active background
-// stays one per level (the root rows, and each sub-menu) so a current section
-// and the current page inside it can both be lit, exactly as before.
 
 interface MenuScopeValue {
   registerRow: (el: HTMLElement) => () => void;
   setRowButton: (row: HTMLElement, button: HTMLElement | null) => void;
   setRowActive: (row: HTMLElement, active: boolean) => void;
   hoveredRowEl: HTMLElement | null;
-  /** Every visible active row, in DOM order — a parent section marker and
-   *  the current row inside its sub-tree can be active at once. */
   activeRows: HTMLElement[];
   firstRowEl: HTMLElement | null;
   hasActive: boolean;
-  /** A sub-menu toggled: rows changed visibility in place, so hover targets
-   *  and the visible active set must be recomputed. */
   refreshVisibility: () => void;
 }
 
@@ -68,17 +53,12 @@ const MenuScopeContext = createContext<MenuScopeValue | null>(null);
 
 interface MenuItemContextValue {
   rowRef: RefObject<HTMLLIElement | null>;
-  /** Ref callback for the row's <li> — also replays the row's active flag
-   *  to the scope, covering the windows where the ref is detached. */
   attachRow: (node: HTMLLIElement | null) => void;
   isHovered: boolean;
   isActiveRow: boolean;
-  /** True inside SidebarMenuSubItem — actions center on the shorter row. */
   isSubRow: boolean;
   setActive: (active: boolean) => void;
   setButtonEl: (el: HTMLElement | null) => void;
-  /** Trailing controls on this row, registered by the action / badge parts.
-   *  The button turns them into an exact padding-right reservation. */
   actionCount: number;
   actionsShowOnHover: boolean;
   hasBadge: boolean;
@@ -387,24 +367,12 @@ function useMenuScope(
   );
 
   const shape = useShape();
-  // Every active row gets its own background — the buttons' own text styling
-  // already lights each active row, so the overlays must match. Keys are the
-  // row's level (root, or its sub-menu) plus its occurrence within that
-  // level: the usual case — one active per level, e.g. a current section
-  // marker plus the current page inside its sub-tree — keeps a stable key,
-  // so the background GLIDES when the selection moves instead of remounting.
   const rowLevel = useCallback(
     (row: HTMLElement) =>
       row.closest('[data-sidebar="menu-sub"]') ?? containerRef.current,
     [containerRef]
   );
-  // A rect change has two causes with two right answers. The highlight moving
-  // to a DIFFERENT row springs — that's the glide. The same row itself moving
-  // — a sibling sub-tree collapsing above reflows every row below on every
-  // frame of its own spring — must snap, or the overlay chases the row it is
-  // sitting on with a trailing second spring. Targets are compared against
-  // the previous COMMIT (the effect below), not the previous render, so
-  // strict mode's double render can't eat a genuine row change.
+
   const prevTargetsRef = useRef<{
     hover: HTMLElement | null;
     focus: HTMLElement | null;
@@ -535,8 +503,6 @@ function useMenuScope(
   };
 }
 
-// ─── SidebarMenu ─────────────────────────────────────────────────────────────
-
 export interface SidebarMenuProps extends HTMLAttributes<HTMLUListElement> {
   /** Pins the menu's rows to one step of the size ladder. Omitted, they
    *  follow the surrounding SizeProvider. */
@@ -575,7 +541,7 @@ const SidebarMenu = forwardRef<HTMLUListElement, SidebarMenuProps>(
 );
 SidebarMenu.displayName = "SidebarMenu";
 
-// ─── SidebarMenuItem / SidebarMenuSubItem ────────────────────────────────────
+
 
 export type SidebarMenuItemProps = LiHTMLAttributes<HTMLLIElement>;
 
@@ -585,12 +551,6 @@ function useMenuRow(rowRef: RefObject<HTMLLIElement | null>, isSubRow = false) {
   const setRowButton = scope?.setRowButton;
   const setRowActive = scope?.setRowActive;
 
-  // The button's setActive effect can fire while this row's <li> ref is
-  // detached: a child's layout effects run before its parent's ref attaches
-  // — at mount, and on EVERY re-render whose inline ref identity changes
-  // (React detaches the old callback, nulling the ref, before the layout
-  // phase). The flag holds the truth through that window, and attachRow
-  // re-syncs the scope whenever the <li> lands.
   const activeFlagRef = useRef(false);
 
   useIsoLayoutEffect(() => {
@@ -599,8 +559,7 @@ function useMenuRow(rowRef: RefObject<HTMLLIElement | null>, isSubRow = false) {
     return registerRow(el);
   }, [registerRow, rowRef]);
 
-  /** The <li>'s ref callback: tracks the element and replays the active flag
-   *  the scope may have missed while the ref was detached. */
+
   const attachRow = useCallback(
     (node: HTMLLIElement | null) => {
       rowRef.current = node;
@@ -676,19 +635,9 @@ function useMenuRow(rowRef: RefObject<HTMLLIElement | null>, isSubRow = false) {
   );
 }
 
-// ─── Trailing-gutter math ────────────────────────────────────────────────────
-//
-// The label reserves exactly the trailing run it has to clear, plus one gap
-// — the same rule the section header's label follows, so a row's chevron and
-// a section header's chevron each sit one 4px gap from their action run.
-// A run is: the badge's 24px slot (rightmost when present), the action
-// cluster (24px apiece, 4px between), and a gap where both appear.
 const ROW_BASE_PAD = 8;
 const ROW_SLOT = 24;
 const ROW_GAP = 4;
-/** Where the run's rightmost element sits, measured from the row's right
- *  edge: a badge at right-2, an action cluster at right-1.5 (its wider box
- *  puts both on the same centre line). */
 const ROW_BADGE_INSET = 8;
 const ROW_ACTION_INSET = 6;
 
@@ -710,8 +659,7 @@ const SidebarMenuItem = forwardRef<HTMLLIElement, SidebarMenuItemProps>(
     const rowRef = useRef<HTMLLIElement>(null);
     const item = useMenuRow(rowRef);
     const { attachRow } = item;
-    // Stable ref callback: an inline one is detached and re-attached around
-    // every re-render, and child layout effects fire inside that null window.
+
     const refCb = useCallback(
       (node: HTMLLIElement | null) => {
         attachRow(node);
@@ -743,7 +691,6 @@ const SidebarMenuSubItem = forwardRef<HTMLLIElement, SidebarMenuSubItemProps>(
     const rowRef = useRef<HTMLLIElement>(null);
     const item = useMenuRow(rowRef, true);
     const { attachRow } = item;
-    // Stable ref callback — same reason as SidebarMenuItem's.
     const refCb = useCallback(
       (node: HTMLLIElement | null) => {
         attachRow(node);
@@ -768,13 +715,6 @@ const SidebarMenuSubItem = forwardRef<HTMLLIElement, SidebarMenuSubItemProps>(
 );
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem";
 
-// ─── Row label (ghost-span weight animation) ─────────────────────────────────
-
-/** Splits leading string children out as the label so it can get the
- *  ghost-span weight treatment; remaining element children (dots, trailing
- *  icons) render as flex siblings after it — outside the text-box-trimmed
- *  span, which would clip an inline SVG, and where `ml-auto` can push a
- *  trailing control to the row's end. */
 function MenuRowLabel({
   content,
   lit,
@@ -800,7 +740,7 @@ function MenuRowLabel({
     return (
       <span
         className={cn(
-          "flex min-w-0 flex-1 items-center gap-2 transition-colors duration-80",
+          "flex min-w-0 flex-1 items-center gap-2",
           lit ? "text-foreground" : "text-muted-foreground",
           textClass
         )}
@@ -814,7 +754,7 @@ function MenuRowLabel({
     <>
       <span
         className={cn(
-          "min-w-0 truncate text-left transition-colors duration-80",
+          "min-w-0 truncate text-left",
           lit ? "text-foreground" : "text-muted-foreground",
           emphasized && "font-semibold",
           textClass
@@ -827,16 +767,7 @@ function MenuRowLabel({
   );
 }
 
-// ─── SidebarMenuButton ───────────────────────────────────────────────────────
-
 export const sidebarMenuButtonVariants = cva(
-  // The trailing gutter is an exact reservation published by the row (see
-  // rowGutter): --row-gutter at rest, --row-gutter-hover once hover-revealed
-  // actions are showing. One rule per state instead of a class per
-  // count/badge/reveal combination.
-  // Disabled stays in the layout, and pointer events pass through it to the
-  // row, since a browser sends no mouse events to a disabled button: the
-  // container keeps seeing the moves, and fluid hover simply never lights it.
   "peer/menu-button relative z-10 flex w-full cursor-pointer select-none items-center gap-2 pl-2 text-left outline-none disabled:opacity-50 disabled:pointer-events-none transition-[padding] duration-80 pr-[var(--row-gutter)] group-hover/menu-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-item:pr-[var(--row-gutter-hover)] group-hover/menu-sub-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-sub-item:pr-[var(--row-gutter-hover)] group-has-[[data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/menu-item:pr-[var(--row-gutter-hover)] group-has-[[data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/menu-sub-item:pr-[var(--row-gutter-hover)]",
   {
     variants: {
@@ -852,17 +783,11 @@ export const sidebarMenuButtonVariants = cva(
 export interface SidebarMenuButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof sidebarMenuButtonVariants> {
+  variant?: "default" | "outline" | null;
   isActive?: boolean;
   size?: "default" | "sm" | "lg";
   icon?: IconComponent;
-  /** Semantic thread state for status-dot navigation. Drives the dot
-   *  visuals (`active`/`unread` → filled, `idle` → ring), stamps
-   *  `data-status` on the button, appends visually-hidden "unread" text for
-   *  screen readers, and `"active"` implies `isActive`. */
   status?: "active" | "unread" | "idle";
-  /** Visual-only dot in the icon column — the escape hatch when the
-   *  semantic `status` vocabulary doesn't fit. Overrides the dot derived
-   *  from `status`. Ignored when `icon` is set. */
   dot?: "filled" | "ring";
   render?: ReactElement;
   asChild?: boolean;
@@ -891,8 +816,7 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
     const sizeClasses = useSize();
     const buttonRef = useRef<HTMLElement | null>(null);
 
-    // status="active" implies the row-active treatment; an explicit dot
-    // overrides the status-derived one.
+
     const effectiveActive = isActive || status === "active";
 
     const setActive = item?.setActive;
@@ -917,10 +841,9 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
           : sizeClasses.variant === "compact"
             ? "h-7"
             : "h-8";
-    const textClass = size === "sm" ? "text-[12px]" : sizeClasses.text;
+    const textClass = size === "sm" ? "text-[14px]" : sizeClasses.text;
 
-    // Roving tabindex: the active rows' buttons are the menu's tab stops; with
-    // no active row, the menu's first row keeps it keyboard-reachable.
+
     const row = item?.rowRef.current ?? null;
     const tabIdx = effectiveActive
       ? 0
@@ -930,9 +853,6 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
           ? 0
           : -1;
 
-    // Exact trailing reservation: at rest, hover-revealed actions claim no
-    // width (the label owns the row); once revealed the row widens to
-    // --row-gutter-hover.
     const gutterHover = rowGutter(item?.actionCount ?? 0, item?.hasBadge ?? false);
     const gutterRest = item?.actionsShowOnHover
       ? rowGutter(0, item?.hasBadge ?? false)
@@ -951,7 +871,7 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
             size={sizeClasses.icon}
             strokeWidth={lit ? 2 : 1.5}
             className={cn(
-              "shrink-0 transition-[color,stroke-width] duration-80",
+              "shrink-0 transition-[stroke-width] duration-80",
               lit ? "text-foreground" : "text-muted-foreground"
             )}
           />
@@ -963,7 +883,7 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
           >
             <span
               className={cn(
-                "size-2 rounded-full transition-colors duration-80",
+                "size-2 rounded-full",
                 resolvedDot === "filled"
                   ? lit
                     ? "bg-foreground/60"
@@ -1011,8 +931,6 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
 );
 SidebarMenuButton.displayName = "SidebarMenuButton";
 
-// ─── SidebarMenuAction ───────────────────────────────────────────────────────
-
 export interface SidebarMenuActionProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   showOnHover?: boolean;
   render?: ReactElement;
@@ -1027,8 +945,7 @@ const SidebarMenuAction = forwardRef<HTMLButtonElement, SidebarMenuActionProps>(
     const inCluster = useContext(MenuActionsClusterContext);
     const { template, content } = resolveSlotTemplate(render, asChild, children);
 
-    // A lone action registers its own slot; inside a cluster the wrapper
-    // registers the whole count and each action flows in its row.
+
     const setActions = item?.setActions;
     useIsoLayoutEffect(() => {
       if (inCluster || !setActions) return;
@@ -1044,11 +961,6 @@ const SidebarMenuAction = forwardRef<HTMLButtonElement, SidebarMenuActionProps>(
         "data-sidebar": "menu-action",
         "data-show-on-hover": showOnHover ? "" : undefined,
         className: cn(
-          // right-1.5 centers the 24px hit-box on the same axis as the badge
-          // (right-2 + min-w-5): both land 18px from the row's right edge.
-          // With a badge on the same row the badge keeps that rightmost spot
-          // and the action slides left of it. Inside a cluster the wrapper
-          // owns the positioning and actions simply flow.
           inCluster
             ? "relative flex size-6 shrink-0 items-center justify-center text-muted-foreground outline-none"
             : "absolute right-1.5 z-10 flex size-6 items-center justify-center text-muted-foreground outline-none",
@@ -1058,17 +970,10 @@ const SidebarMenuAction = forwardRef<HTMLButtonElement, SidebarMenuActionProps>(
               : "group-has-[>[data-sidebar=menu-badge]]/menu-item:right-8.5"),
           !inCluster &&
             (item?.isSubRow || sizeClasses.variant === "compact" ? "top-0.5" : "top-1"),
-          "hover:bg-hover hover:text-foreground transition-[color,background-color,opacity] duration-80",
+          "hover:bg-hover hover:text-foreground transition-opacity duration-80",
           "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
-          // One icon size across the sidebar: row actions match the leading
-          // icons and the section header's actions, all on the size ladder.
-          // Normalize bare icons to the site's 1.5 stroke (library defaults
-          // vary), thickening to 2 on hover — Button's icon-only treatment.
           "[&_svg]:size-[var(--icon-size)] [&_svg]:shrink-0 [&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-80 hover:[&_svg]:stroke-[2]",
           shape.item,
-          // Reveal on the OWN row only. A sub action must not use the
-          // menu-item group — its nearest one is the parent li, which would
-          // light every sibling sub action on any hover inside the sub-tree.
           !inCluster &&
             showOnHover &&
             (item?.isSubRow
@@ -1093,8 +998,6 @@ const SidebarMenuAction = forwardRef<HTMLButtonElement, SidebarMenuActionProps>(
   }
 );
 SidebarMenuAction.displayName = "SidebarMenuAction";
-
-// ─── SidebarMenuActions ──────────────────────────────────────────────────────
 
 export interface SidebarMenuActionsProps extends HTMLAttributes<HTMLDivElement> {
   /** Hide the cluster until the row is hovered or focused. */
@@ -1146,8 +1049,6 @@ const SidebarMenuActions = forwardRef<HTMLDivElement, SidebarMenuActionsProps>(
 );
 SidebarMenuActions.displayName = "SidebarMenuActions";
 
-// ─── SidebarMenuBadge ────────────────────────────────────────────────────────
-
 export type SidebarMenuBadgeProps = HTMLAttributes<HTMLDivElement>;
 
 const SidebarMenuBadge = forwardRef<HTMLDivElement, SidebarMenuBadgeProps>(
@@ -1167,8 +1068,8 @@ const SidebarMenuBadge = forwardRef<HTMLDivElement, SidebarMenuBadgeProps>(
         data-sidebar="menu-badge"
         className={cn(
           "pointer-events-none absolute right-2 z-10 flex h-5 min-w-5 items-center justify-center px-1 tabular-nums",
-          sizeClasses.variant === "compact" ? "top-1 text-[10px]" : "top-1.5 text-[11px]",
-          "transition-[color,font-variation-settings] duration-80",
+          sizeClasses.variant === "compact" ? "top-1 text-[14px]" : "top-1.5 text-[14px]",
+          "transition-[font-variation-settings] duration-80",
           lit ? "text-foreground" : "text-muted-foreground",
           className
         )}
@@ -1181,8 +1082,6 @@ const SidebarMenuBadge = forwardRef<HTMLDivElement, SidebarMenuBadgeProps>(
   }
 );
 SidebarMenuBadge.displayName = "SidebarMenuBadge";
-
-// ─── SidebarMenuSkeleton ─────────────────────────────────────────────────────
 
 export interface SidebarMenuSkeletonProps extends HTMLAttributes<HTMLDivElement> {
   showIcon?: boolean;
@@ -1226,8 +1125,6 @@ const SidebarMenuSkeleton = forwardRef<HTMLDivElement, SidebarMenuSkeletonProps>
   }
 );
 SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton";
-
-// ─── SidebarMenuSub ──────────────────────────────────────────────────────────
 
 export interface SidebarMenuSubProps extends HTMLAttributes<HTMLUListElement> {
   /** Built-in measured-height collapse. Omitted, the sub-menu is always
@@ -1330,8 +1227,6 @@ const SidebarMenuSub = forwardRef<HTMLUListElement, SidebarMenuSubProps>(
 );
 SidebarMenuSub.displayName = "SidebarMenuSub";
 
-// ─── SidebarMenuSubButton ────────────────────────────────────────────────────
-
 export interface SidebarMenuSubButtonProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   isActive?: boolean;
   size?: "sm" | "md";
@@ -1403,7 +1298,7 @@ const SidebarMenuSubButton = forwardRef<HTMLAnchorElement, SidebarMenuSubButtonP
             size={sizeClasses.icon}
             strokeWidth={lit ? 2 : 1.5}
             className={cn(
-              "shrink-0 transition-[color,stroke-width] duration-80",
+              "shrink-0 transition-[stroke-width] duration-80",
               lit ? "text-foreground" : "text-muted-foreground"
             )}
           />
@@ -1414,7 +1309,7 @@ const SidebarMenuSubButton = forwardRef<HTMLAnchorElement, SidebarMenuSubButtonP
           content={content}
           lit={lit}
           emphasized={isActive}
-          textClass={size === "sm" ? "text-[12px]" : sizeClasses.text}
+          textClass={size === "sm" ? "text-[14px]" : sizeClasses.text}
         />
       </>
     );

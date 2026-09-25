@@ -34,8 +34,6 @@ import { surfaceClasses } from "@/lib/surface-classes";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
 export const SIDEBAR_COOKIE_NAME = "sidebar_state";
 export const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 export const SIDEBAR_WIDTH = "16rem";
@@ -51,8 +49,6 @@ export const SIDEBAR_MAX_WIDTH = 360;
  *  bottoming out — the same "throw it at the edge to dismiss" affordance
  *  native apps use. */
 export const SIDEBAR_COLLAPSE_SLOP = 56;
-
-// ─── Context ─────────────────────────────────────────────────────────────────
 
 export type SidebarSide = "left" | "right";
 export type SidebarVariant = "sidebar" | "floating" | "inset";
@@ -127,8 +123,6 @@ function useIsMobile(breakpoint: number): boolean {
   }, [breakpoint]);
   return !!isMobile;
 }
-
-// ─── SidebarProvider ─────────────────────────────────────────────────────────
 
 export interface SidebarProviderProps extends HTMLAttributes<HTMLDivElement> {
   defaultOpen?: boolean;
@@ -390,8 +384,6 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
 );
 SidebarProvider.displayName = "SidebarProvider";
 
-// ─── Slot helpers (render / asChild polymorphism) ────────────────────────────
-//
 // A local slot instead of a primitive-library one so every menu part exists in
 // exactly one flavor-neutral copy: Radix's Slot would leak into the Base UI
 // flavor, and Base UI's useRender the other way around. Supports both the
@@ -472,8 +464,6 @@ export function slotElement(
   merged.ref = composeRefs(props.ref, templateRef);
   return cloneElement(template, merged, content);
 }
-
-// ─── SidebarShell (shared desktop DOM for both flavors) ──────────────────────
 
 // Literal map so Tailwind's scanner emits the utilities: for the standard
 // breakpoints the shell is also hidden by CSS, avoiding a pre-hydration flash
@@ -847,8 +837,6 @@ const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
 );
 SidebarShell.displayName = "SidebarShell";
 
-// ─── SidebarTrigger ──────────────────────────────────────────────────────────
-
 export type SidebarTriggerProps = ButtonProps;
 
 /** Keystroke chip rendered inside the (inverted) tooltip surface. */
@@ -943,8 +931,6 @@ const SidebarTrigger = forwardRef<HTMLButtonElement, SidebarTriggerProps>(
   }
 );
 SidebarTrigger.displayName = "SidebarTrigger";
-
-// ─── SidebarRail ─────────────────────────────────────────────────────────────
 
 export interface SidebarRailProps extends HTMLAttributes<HTMLButtonElement> {
   /** Pin the tooltip open/closed; `undefined` leaves it on hover. */
@@ -1069,7 +1055,7 @@ const SidebarRail = forwardRef<HTMLButtonElement, SidebarRailProps>(
             // Hovering brightens the edge border the shell draws by default;
             // a pinned tooltip brightens it too, so the spotlight reads as
             // the hover it stands in for.
-            "after:absolute after:inset-y-0 after:w-px after:bg-transparent hover:after:bg-foreground/25 after:transition-colors after:duration-80",
+            "after:absolute after:inset-y-0 after:w-px after:bg-transparent hover:after:bg-foreground/25",
             tooltipOpen && "after:bg-foreground/25",
             side === "left" ? "after:right-0" : "after:left-0",
             className
@@ -1081,8 +1067,6 @@ const SidebarRail = forwardRef<HTMLButtonElement, SidebarRailProps>(
   }
 );
 SidebarRail.displayName = "SidebarRail";
-
-// ─── SidebarInset ────────────────────────────────────────────────────────────
 
 export type SidebarInsetProps = HTMLAttributes<HTMLElement>;
 
@@ -1115,8 +1099,6 @@ const SidebarInset = forwardRef<HTMLElement, SidebarInsetProps>(
 );
 SidebarInset.displayName = "SidebarInset";
 
-// ─── SidebarInput ────────────────────────────────────────────────────────────
-
 export type SidebarInputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 const SidebarInput = forwardRef<HTMLInputElement, SidebarInputProps>(
@@ -1131,7 +1113,7 @@ const SidebarInput = forwardRef<HTMLInputElement, SidebarInputProps>(
           // Mirrors the InputGroup field ladder: transparent at rest,
           // muted fill + border ring on hover, card fill when focused.
           "w-full bg-transparent px-3 text-foreground placeholder:text-muted-foreground outline-none",
-          "ring-1 ring-transparent transition-[background-color,box-shadow] duration-80",
+          "ring-1 ring-transparent transition-[box-shadow] duration-80",
           "hover:bg-muted/50 hover:ring-border",
           "focus:bg-card focus:ring-border",
           "focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
@@ -1146,8 +1128,6 @@ const SidebarInput = forwardRef<HTMLInputElement, SidebarInputProps>(
   }
 );
 SidebarInput.displayName = "SidebarInput";
-
-// ─── SidebarHeader / SidebarFooter / SidebarSeparator ────────────────────────
 
 export type SidebarSectionProps = HTMLAttributes<HTMLDivElement>;
 
@@ -1188,8 +1168,6 @@ const SidebarSeparator = forwardRef<HTMLDivElement, SidebarSectionProps>(
   )
 );
 SidebarSeparator.displayName = "SidebarSeparator";
-
-// ─── SidebarGroup family ─────────────────────────────────────────────────────
 
 // SSR-safe layout effect (client components still server-render in Next).
 const useIsoLayoutEffect =
@@ -1435,11 +1413,11 @@ const SidebarGroupLabel = forwardRef<HTMLDivElement, SidebarGroupLabelProps>(
               : undefined,
           className: cn(
             "flex h-8 w-full shrink-0 cursor-pointer select-none items-center gap-2 px-2 text-left text-muted-foreground/70 outline-none",
-            "transition-colors duration-80 hover:text-muted-foreground",
+            "hover:text-muted-foreground",
             group.actionsCount > 0 && "pr-[var(--group-actions-pad)]",
             "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
             shape.item,
-            sizeVariant === "compact" ? "text-[11px]" : "text-[12px]",
+            "text-[14px]",
             className
           ),
           ...props,
@@ -1490,7 +1468,7 @@ const SidebarGroupLabel = forwardRef<HTMLDivElement, SidebarGroupLabelProps>(
         "data-sidebar": "group-label",
         className: cn(
           "flex h-8 shrink-0 items-center gap-2 px-2 text-muted-foreground/70 outline-none",
-          sizeVariant === "compact" ? "text-[11px]" : "text-[12px]",
+          "text-[14px]",
           className
         ),
         ...props,
@@ -1530,7 +1508,7 @@ const SidebarGroupAction = forwardRef<HTMLButtonElement, SidebarGroupActionProps
             // 24px box's centre 26px from the sidebar's inner edge — the axis
             // the rows' badges and actions already sit on.
             : "absolute right-3.5 top-3 flex size-6 items-center justify-center text-muted-foreground outline-none",
-          "hover:bg-hover hover:text-foreground transition-colors duration-80",
+          "hover:bg-hover hover:text-foreground",
           "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
           // Normalize bare icons to the site's 1.5 stroke (library defaults
           // vary), thickening to 2 on hover — the same treatment Button's
