@@ -7,8 +7,6 @@ import { appToastManager } from "./lib/toast";
 import { router } from "./router";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "./lib/auth";
-import "@cloudflare/kumo/styles/standalone";
-import "@cloudflare/kumo/styles";
 import "./styles.css";
 
 createRoot(document.getElementById("root")!).render(
