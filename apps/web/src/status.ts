@@ -10,5 +10,5 @@ export const pipelineStatuses: ApplicationStatus[] = [
 ];
 
 export function formatStatus(status: ApplicationStatus): string {
-  return status.toUpperCase();
+  return status;
 }

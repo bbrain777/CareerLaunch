@@ -26,7 +26,11 @@ function RootComponent() {
   });
 
   if (loading) {
-    return <div className="route-loading" role="status">Checking your session…</div>;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-app)]">
+        <span className="page-loader" aria-hidden="true" />
+      </div>
+    );
   }
 
   if (requiresLogin(pathname, token, loading)) {

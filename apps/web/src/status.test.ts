@@ -15,6 +15,6 @@ describe("application status helpers", () => {
   });
 
   it("formats a status for compact labels", () => {
-    assert.equal(formatStatus("Interview"), "INTERVIEW");
+    assert.equal(formatStatus("Interview"), "Interview");
   });
 });
