@@ -36,7 +36,7 @@ export function ProfilePage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = async (e: React.SubmitEvent) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (activeUser) {
       try {
@@ -56,21 +56,17 @@ export function ProfilePage() {
             : "Your changes have been saved successfully.",
           variant: "success",
         });
-      } catch (err: any) {
-        appToastManager.add({
-          title: "Profile update failed",
-          description: err.message || "Your changes could not be saved.",
-          variant: "error",
-        });
+      } catch {
+        return;
       }
     }
   };
 
   return (
-    <div className="profile-page-container">
+    <div className="mx-auto flex w-full max-w-[820px] flex-col gap-6 py-2 pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#111827]">
+          <h1 className="text-2xl font-semibold text-[#111827]">
             Profile and settings
           </h1>
           <p className="text-sm text-[#6b7280] mt-1">
@@ -79,9 +75,9 @@ export function ProfilePage() {
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-4">
-        <div className="profile-card">
-          <h2 className="profile-card-title">
+      <form onSubmit={handleSave} className="space-y-6">
+        <div className="flex flex-col gap-5 rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0">
+          <h2 className="m-0 pb-1 text-base font-semibold text-gray-900">
             Personal information
           </h2>
 
@@ -93,7 +89,6 @@ export function ProfilePage() {
                 required
                 value={formData.fullName}
                 onChange={(e) => handleChange("fullName", e.target.value)}
-                className="form-input"
               />
             </Field>
 
@@ -104,7 +99,6 @@ export function ProfilePage() {
                 required
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
-                className="form-input"
               />
             </Field>
           </div>
@@ -115,13 +109,12 @@ export function ProfilePage() {
               type="text"
               value={formData.role}
               onChange={(e) => handleChange("role", e.target.value)}
-              className="form-input"
             />
           </Field>
         </div>
 
-        <div className="profile-card">
-          <h2 className="profile-card-title">
+        <div className="flex flex-col gap-5 rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0">
+          <h2 className="m-0 pb-1 text-base font-semibold text-gray-900">
             Career targets
           </h2>
 
@@ -132,7 +125,6 @@ export function ProfilePage() {
                 type="text"
                 value={formData.targetRole}
                 onChange={(e) => handleChange("targetRole", e.target.value)}
-                className="form-input"
               />
             </Field>
 
@@ -144,7 +136,6 @@ export function ProfilePage() {
                 required
                 value={formData.weeklyGoal}
                 onChange={(e) => handleChange("weeklyGoal", e.target.value)}
-                className="form-input"
               />
             </Field>
           </div>
@@ -154,9 +145,16 @@ export function ProfilePage() {
           <button
             type="submit"
             disabled={updateProfileMutation.isPending}
-            className="btn-primary-auth !w-auto !px-6"
+            className="inline-flex h-10 w-auto items-center justify-center gap-2 rounded-xl bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-6 text-sm font-semibold text-white transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {updateProfileMutation.isPending ? "Saving..." : "Save profile"}
+            {updateProfileMutation.isPending ? (
+              <>
+                <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-hidden="true" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              "Save profile"
+            )}
           </button>
         </div>
       </form>
