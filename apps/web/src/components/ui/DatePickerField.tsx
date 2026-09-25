@@ -57,7 +57,7 @@ export function DatePickerField({
             />
           }
         >
-          <span className={selected ? "" : "opacity-55"}>
+          <span className={`inline-flex items-center gap-2 pl-2 ${selected ? "" : "opacity-55"}`}>
             {selected ? formatDay.format(selected) : placeholder}
           </span>
         </Popover.Trigger>
@@ -65,14 +65,14 @@ export function DatePickerField({
           side="bottom"
           align="start"
           sideOffset={6}
-          className="p-3 z-60"
+          className="p-3"
         >
           <DatePicker
             mode="single"
             selected={selected}
             fromDate={fromDate}
             toDate={toDate}
-            onChange={(next) => onValueChange(next ? toISODate(next) : null)}
+            onChange={(next?: Date) => onValueChange(next ? toISODate(next) : null)}
           />
         </Popover.Content>
       </Popover>

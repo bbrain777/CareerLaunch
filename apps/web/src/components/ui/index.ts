@@ -1,8 +1,8 @@
 export {
-  Button,
-  type ButtonProps,
   Input,
   type InputProps,
+  ButtonGroup,
+  type ButtonGroupProps,
   InputArea,
   type InputAreaProps,
   InputGroup,
@@ -10,8 +10,9 @@ export {
   type CheckboxProps,
   Radio,
   RadioGroup,
-  type RadioGroupProps,
+  Select,
   Switch,
+  SensitiveInput,
   Field,
   type FieldProps,
   Label,
@@ -22,12 +23,6 @@ export {
   Grid,
   GridItem,
   type GridProps,
-  Dialog,
-  DialogRoot,
-  DialogTrigger,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
   DatePicker,
   type DatePickerProps,
   type DateRange,
@@ -57,8 +52,9 @@ export {
   safeRandomId
 } from "@cloudflare/kumo";
 
+export * from "./button";
+export * from "./Dialog";
 export * from "./DropdownMenu";
-export * from "./Select";
 export * from "./DatePickerField";
 export * from "./sidebar";
 
