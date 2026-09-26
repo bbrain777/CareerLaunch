@@ -9,6 +9,8 @@ import {
 import { SidebarLayout } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
+import { EmployersPage } from "./pages/EmployersPage";
+import { ContactsPage } from "./pages/ContactsPage";
 import { InformationalInterviewsPage } from "./pages/InformationalInterviewsPage";
 
 import { LoginPage } from "./pages/LoginPage";
@@ -24,7 +26,16 @@ function RootComponent() {
   });
 
   if (loading) {
-    return <div className="route-loading" role="status">Checking your session…</div>;
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-app)]"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="page-loader" aria-hidden="true" />
+        <span className="sr-only">Checking your session</span>
+      </div>
+    );
   }
 
   if (requiresLogin(pathname, token, loading)) {
@@ -82,6 +93,18 @@ const interviewsRoute = createRoute({
   component: InformationalInterviewsPage
 });
 
+const employersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/employers",
+  component: EmployersPage
+});
+
+const contactsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/contacts",
+  component: ContactsPage
+});
+
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
@@ -91,6 +114,8 @@ const profileRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   applicationsRoute,
+  employersRoute,
+  contactsRoute,
   interviewsRoute,
   profileRoute,
   loginRoute,

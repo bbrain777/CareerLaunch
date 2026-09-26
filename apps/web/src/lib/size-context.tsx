@@ -53,7 +53,7 @@ const sizeMap: Record<SizeVariant, SizeClasses> = {
     controlHeight: 36,
     segmentItem: "h-7",
     segmentPad: "p-1",
-    text: "text-[13px]",
+    text: "text-[14px]",
     px: "px-3",
     itemPx: "px-2",
     gap: "gap-2",
@@ -68,7 +68,7 @@ const sizeMap: Record<SizeVariant, SizeClasses> = {
     controlHeight: 28,
     segmentItem: "h-6",
     segmentPad: "p-0.5",
-    text: "text-[12px]",
+    text: "text-[14px]",
     px: "px-2.5",
     itemPx: "px-1.5",
     gap: "gap-1",
@@ -100,10 +100,10 @@ const typeScale = {
   /** Card titles, chat bubbles, emphasized rows. */
   subtitle: { default: 14, compact: 13 },
   /** Control labels and body copy — `SizeClasses.text`. */
-  body: { default: 13, compact: 12 },
+  body: { default: 14, compact: 14 },
   /** Secondary text: descriptions, meta rows, errors, eyebrows and group
    *  labels (the former overline role — an uppercase or muted caption). */
-  caption: { default: 12, compact: 11 },
+  caption: { default: 14, compact: 14 },
 } as const satisfies Record<string, TypeScaleStep>;
 
 type TypeScaleRole = keyof typeof typeScale;

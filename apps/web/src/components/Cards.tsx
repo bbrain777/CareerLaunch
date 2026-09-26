@@ -1,20 +1,33 @@
 import { formatStatus } from "../status";
 import type { JobApplication, InformationalInterview } from "../types";
 
+export type MetricAccent = "teal" | "violet" | "amber" | "blue";
+
 export interface MetricCardProps {
   label: string;
   value: number;
   suffix?: string;
   detail: string;
-  accent: string;
+  accent: MetricAccent;
 }
 
+const accentBg: Record<MetricAccent, string> = {
+  teal: "bg-[#e6f6f2] text-[#0a5c4d]",
+  violet: "bg-[#f3effe] text-[#6b21a8]",
+  amber: "bg-[#fef7ee] text-[#b45309]",
+  blue: "bg-[#edf5fe] text-[#1d4ed8]",
+};
+
 export function MetricCard({ label, value, suffix = "", detail, accent }: MetricCardProps) {
+  const bgClass = accentBg[accent] ?? "bg-white text-gray-900";
+
   return (
-    <article className={"metric-card " + accent}>
-      <span>{label}</span>
-      <strong>{value}{suffix}</strong>
-      <small>{detail}</small>
+    <article className={`rounded-2xl p-5 transition-all border-0 ring-0 ${bgClass}`}>
+      <span className="text-xs font-medium opacity-80">{label}</span>
+      <strong className="my-2 block text-3xl font-semibold">
+        {value}{suffix}
+      </strong>
+      <small className="block text-xs opacity-75 font-normal">{detail}</small>
     </article>
   );
 }
@@ -34,16 +47,22 @@ export function ApplicationCard({
     : null;
 
   return (
-    <article className="application-card">
-      <span className="status-label">{formatStatus(application.status)}</span>
-      <h4>{application.position}</h4>
-      <strong>{application.company}</strong>
-      <span className="location">{application.location || "Location not specified"}</span>
-      <div className="card-footer">
-        <span>{deadline ? `Due ${deadline}` : "No deadline"}</span>
+    <article className="rounded-xl bg-white p-4 transition-all border-0 ring-0 group">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-semibold text-[#0a5c4d] bg-[#e6f6f2] px-2 py-0.5 rounded-md">
+          {formatStatus(application.status)}
+        </span>
+        <span className="text-xs text-gray-500 font-medium">{deadline ? `Due ${deadline}` : ""}</span>
+      </div>
+      <h4 className="text-sm font-semibold text-gray-900 group-hover:text-[#0a5c4d] transition-colors">{application.position}</h4>
+      <p className="text-xs font-medium text-gray-600 mt-0.5">{application.company}</p>
+      {application.location && (
+        <span className="mt-1 block text-xs text-gray-400">{application.location}</span>
+      )}
+      <div className="mt-3 flex items-center justify-end">
         <button
           type="button"
-          className="card-action"
+          className="rounded-lg bg-gray-100 group-hover:bg-[#0a5c4d] group-hover:text-white px-3 py-1 text-xs font-medium text-gray-700 transition-all cursor-pointer border-0"
           aria-label={"Open " + application.position}
           onClick={onOpen ?? (() => window.location.assign("/applications"))}
         >
@@ -69,41 +88,45 @@ export function InformationalInterviewCard({ interview }: { interview: Informati
     : "Not scheduled";
 
   return (
-    <article className="interview-card">
-      <div className="interview-card-heading">
+    <article className="rounded-2xl bg-white p-4 border-0 ring-0">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="status-label">{interview.status}</span>
-          <h3>{interview.contactName}</h3>
-          <p>{interview.role} · {interview.company}</p>
+          <span className="inline-block mb-1 text-xs font-semibold text-[#0a5c4d] bg-[#e6f6f2] px-2 py-0.5 rounded-md">
+            {interview.status}
+          </span>
+          <h3 className="text-[15px] font-semibold">{interview.contactName}</h3>
+          <p className="text-[14px] text-[var(--text-muted)]">{interview.role} · {interview.company}</p>
         </div>
-        <time dateTime={interview.scheduledFor}>{scheduledFor}</time>
+        <time dateTime={interview.scheduledFor} className="whitespace-nowrap text-[12px] font-medium text-[var(--text-muted)]">
+          {scheduledFor}
+        </time>
       </div>
-      <div className="interview-details">
+      <div className="mt-4 grid grid-cols-2 gap-4">
         <div>
-          <strong>Preparation</strong>
-          <span>{interview.preparationQuestions.length} questions ready</span>
+          <strong className="block text-[13px] font-medium text-[var(--text-main)]">Preparation</strong>
+          <span className="text-[12px] text-[var(--text-muted)]">{interview.preparationQuestions.length} questions ready</span>
         </div>
         <div>
-          <strong>Follow-up</strong>
-          <span>{nextFollowUp}</span>
+          <strong className="block text-[13px] font-medium text-[var(--text-main)]">Follow-up</strong>
+          <span className="text-[12px] text-[var(--text-muted)]">{nextFollowUp}</span>
         </div>
         <div>
-          <strong>Next action</strong>
-          <span>{interview.recommendedAction ?? "Capture notes"}</span>
+          <strong className="block text-[13px] font-medium text-[var(--text-main)]">Next action</strong>
+          <span className="text-[12px] text-[var(--text-muted)]">{interview.recommendedAction ?? "Capture notes"}</span>
         </div>
       </div>
       {interview.keyTakeaway && (
-        <p className="interview-takeaway">
-          <strong>Key takeaway:</strong> {interview.keyTakeaway}
+        <p className="mt-3 rounded-[10px] bg-gray-50 px-3 py-2 text-[14px] text-gray-600">
+          <strong className="font-medium">Key takeaway:</strong> {interview.keyTakeaway}
         </p>
       )}
       {interview.referral && (
-        <p className="interview-referral">
-          <strong>Referral:</strong> {interview.referral}
+        <p className="mt-3 rounded-[10px] bg-gray-50 px-3 py-2 text-[14px] text-gray-600">
+          <strong className="font-medium">Referral:</strong> {interview.referral}
         </p>
       )}
-      <p className="interview-referral">
-        <strong>Thank-you note:</strong> {interview.thankYouSent ? "Sent" : "Pending"}
+      <p className="mt-3 rounded-[10px] bg-gray-50 px-3 py-2 text-[14px] text-gray-600">
+        <strong className="font-medium">Thank-you note:</strong> {interview.thankYouSent ? "Sent" : "Pending"}
       </p>
     </article>
   );

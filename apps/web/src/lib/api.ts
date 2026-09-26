@@ -1,12 +1,12 @@
 export class ApiError extends Error {
-  constructor(public status: number, message: string, public data?: any) {
+  constructor(public status: number, message: string, public data?: unknown) {
     super(message);
     this.name = "ApiError";
   }
 }
 
 interface RequestOptions extends Omit<RequestInit, "body"> {
-  body?: any;
+  body?: unknown;
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -27,7 +27,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     body:
       options.body && !(options.body instanceof FormData)
         ? JSON.stringify(options.body)
-        : options.body,
+        : (options.body as BodyInit | null | undefined),
   };
 
   const response = await fetch(endpoint, config);
@@ -36,7 +36,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     return {} as T;
   }
 
-  let data: any = null;
+  let data: unknown = null;
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
     try {
@@ -49,8 +49,9 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   if (!response.ok) {
+    const errorRecord = typeof data === "object" && data !== null ? (data as { message?: string }) : null;
     const errorMessage =
-      data?.message ||
+      errorRecord?.message ||
       (typeof data === "string" ? data : `Request failed with status ${response.status}`);
     throw new ApiError(response.status, errorMessage, data);
   }
@@ -62,13 +63,13 @@ export const api = {
   get: <T>(endpoint: string, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: "GET" }),
 
-  post: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  post: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: "POST", body }),
 
-  put: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  put: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: "PUT", body }),
 
-  patch: <T>(endpoint: string, body?: any, options?: RequestOptions) =>
+  patch: <T>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: "PATCH", body }),
 
   delete: <T>(endpoint: string, options?: RequestOptions) =>

@@ -14,10 +14,6 @@ import { spring } from "@/lib/springs";
 import { fontWeights } from "@/lib/font-weight";
 import { useShape } from "@/lib/shape-context";
 
-// ---------------------------------------------------------------------------
-// Portal container context
-// ---------------------------------------------------------------------------
-
 const TooltipPortalContainerContext = createContext<HTMLElement | null>(null);
 
 function TooltipPortalContainer({
@@ -33,10 +29,6 @@ function TooltipPortalContainer({
     </TooltipPortalContainerContext.Provider>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Provider
-// ---------------------------------------------------------------------------
 
 const DEFAULT_DELAY = 200;
 
@@ -76,10 +68,6 @@ function TooltipProvider({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 type TooltipSide = "top" | "right" | "bottom" | "left";
 
 interface TooltipProps {
@@ -104,10 +92,6 @@ interface TooltipProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-// ---------------------------------------------------------------------------
-// Animation helpers
-// ---------------------------------------------------------------------------
-
 function getSlideOffset(side: TooltipSide) {
   switch (side) {
     case "top":
@@ -120,10 +104,6 @@ function getSlideOffset(side: TooltipSide) {
       return { x: -4 };
   }
 }
-
-// ---------------------------------------------------------------------------
-// Tooltip
-// ---------------------------------------------------------------------------
 
 function Tooltip({
   content,
@@ -220,7 +200,7 @@ function Tooltip({
                       // Trim recenters the label; the padding bump only applies
                       // where text-box is supported, keeping the same overall
                       // height (~26px) as untrimmed browsers.
-                      "bg-foreground text-background text-[12px] px-2 py-1",
+                      "bg-foreground text-background text-[14px] px-2 py-1",
                       "[text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2",
                       shape.bg,
                       className
