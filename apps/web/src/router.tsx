@@ -27,8 +27,13 @@ function RootComponent() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-app)]">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--bg-app)]"
+        role="status"
+        aria-live="polite"
+      >
         <span className="page-loader" aria-hidden="true" />
+        <span className="sr-only">Checking your session</span>
       </div>
     );
   }

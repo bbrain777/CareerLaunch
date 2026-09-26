@@ -57,8 +57,18 @@ See `ARCHITECTURE.md` for the system boundaries, integration contract, definitio
 
 ### Sprint 2 status
 
+- Olakunle: integrated the authenticated application pipeline, owner-scoped application CRUD, dashboard metrics, and database-backed task data through PR #10.
 - Samar: authenticated, owner-scoped employer and contact CRUD; input and follow-up validation; search; API tests; and setup/API documentation.
 - Database integration: employers now carry an optional migration-safe `userId`; all newly created and seeded employers are owned, and legacy unowned rows are not returned by authenticated routes.
+- Alex: completed the responsive application, employer, and contact screens; React Query integration; accessible delete-confirmation dialogs; authentication-screen refinements; and the Tailwind/Kumo design-system migration through PR #14. The root session loader includes a screen-reader status announcement.
+
+### Sprint 2 remaining work
+
+- Review and integrate Saleh's employer-ownership migration contract in PR #13, resolving any overlap with the employer ownership already used by the API before merging.
+- Add browser or component tests for the application, employer, and contact create/edit/delete flows, validation errors, dialogs, and responsive navigation. Current automated web coverage verifies routing and status helpers but not the new interactive screens.
+- Revisit frontend bundle size. The verified production build succeeds, but the main JavaScript bundle exceeds Vite's 500 kB warning threshold; route-based code splitting is the recommended next optimization.
+- Confirm production `JWT_SECRET`, environment loading, deployment provider, and managed file-storage choice before a public release.
+- Keep pull-request descriptions current with actual test commands, screenshots for interface changes, and clearly recorded follow-up work. Cross-area changes still require review from the relevant feature owner.
 
 ## Preserved prototype
 
