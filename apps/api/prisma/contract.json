@@ -540,7 +540,7 @@
                 }
               },
               "userId": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -587,7 +587,7 @@
               },
               "user": {
                 "cardinality": "N:1",
-                "nullable": true,
+                "nullable": false,
                 "on": {
                   "localFields": [
                     "userId"
@@ -1327,7 +1327,7 @@
                 "userId": {
                   "codecId": "pg/int4@1",
                   "nativeType": "int4",
-                  "nullable": true
+                  "nullable": false
                 },
                 "website": {
                   "codecId": "pg/text@1",
@@ -1631,7 +1631,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "fd0abfe791a4ec77f8890bf5c537257ad304e5a9d8457d8a141844d15769b986"
+    "storageHash": "264a74de38e19630c81d4b0c903438e18fa6328a6918f96b22de574b0e8a0fd6"
   },
   "execution": {
     "executionHash": "ac5e23ad7dd1e22f3545c864f402459c7ced61f5b9ea1d60426d13d590f390df",
