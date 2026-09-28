@@ -7,9 +7,25 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+export function shouldNotifyQueryError(
+  error: unknown,
+  hasCachedData: boolean,
+  hasAuthToken: boolean,
+): boolean {
+  if (hasCachedData) return false;
+
+  // An authenticated query can finish after logout has removed the token.
+  // That expected race should not surface as an error on the public login page.
+  return !(error instanceof ApiError && error.status === 401 && !hasAuthToken);
+}
+
 const queryCache = new QueryCache({
   onError: (error, query) => {
-    if (query.state.data !== undefined) return;
+    if (!shouldNotifyQueryError(
+      error,
+      query.state.data !== undefined,
+      Boolean(localStorage.getItem("careerlaunch_token")),
+    )) return;
     notifyError(
       "Couldn't load data",
       errorMessage(error, "The API is unavailable. Ensure the API server is running.")
