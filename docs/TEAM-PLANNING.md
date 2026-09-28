@@ -70,6 +70,17 @@ See `ARCHITECTURE.md` for the system boundaries, integration contract, definitio
 - Confirm production `JWT_SECRET`, environment loading, deployment provider, and managed file-storage choice before a public release.
 - Keep pull-request descriptions current with actual test commands, screenshots for interface changes, and clearly recorded follow-up work. Cross-area changes still require review from the relevant feature owner.
 
+### Sprint 3 - Olakunle integration status
+
+- Replaced the public static dashboard payload with one authenticated, owner-scoped aggregation endpoint.
+- Connected live pipeline metrics, status summaries, applications, and reminder summaries in a consistent dashboard snapshot.
+- Coordinated application-deadline, recruiter/contact, interview-preparation, thank-you, and action-item reminders with overdue and due-this-week indicators.
+- Integrated dashboard cache refreshes with application and contact create, update, and delete workflows.
+- Added acceptance coverage for authentication, ownership, metric calculations, reminder classification, urgency ordering, and completed-task exclusion.
+- Verified the root production build and automated test suite. The existing Vite bundle-size warning remains follow-up work for Sprint 4.
+
+The demonstration checklist for this work is in `SPRINT-3-OLAKUNLE-DEMO.md`.
+
 ## Preserved prototype
 
 The **prototype/dashboard** branch contains the runnable dashboard prototype created before responsibilities were assigned. It is a reference only. The team may reuse, revise, or reject its implementation after agreeing on the architecture.

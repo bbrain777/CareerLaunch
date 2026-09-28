@@ -14,7 +14,7 @@ import type { ApplicationStatus, DashboardData } from "../types";
 import { MetricCard } from "../components/Cards";
 import { Select, Table } from "../components/ui";
 import { useAuth } from "../lib/auth";
-import { useApplicationsQuery, useDashboardQuery, useTasksQuery } from "../hooks/queries";
+import { useDashboardQuery } from "../hooks/queries";
 
 const fallbackData: DashboardData = {
   metrics: {
@@ -22,6 +22,12 @@ const fallbackData: DashboardData = {
     interviews: 0,
     offers: 0,
     responseRate: 0
+  },
+  statusSummary: [],
+  reminderSummary: {
+    total: 0,
+    overdue: 0,
+    dueThisWeek: 0
   },
   applications: [],
   upcomingTasks: [],
@@ -40,6 +46,12 @@ function getTaskIcon(type: string) {
       return <Calendar03Icon size={16} />;
     case "document":
       return <Note01Icon size={16} />;
+    case "deadline":
+      return <Calendar03Icon size={16} />;
+    case "recruiter":
+    case "contact":
+    case "thank-you":
+    case "action item":
     case "follow-up":
     default:
       return <CheckmarkCircle02Icon size={16} />;
@@ -63,6 +75,11 @@ function taskIconClass(type: string): string {
     case "interview": return "text-violet-700 bg-violet-100";
     case "follow-up": return "text-blue-700 bg-blue-100";
     case "document": return "text-amber-700 bg-amber-100";
+    case "deadline": return "text-red-700 bg-red-100";
+    case "recruiter": return "text-blue-700 bg-blue-100";
+    case "contact": return "text-cyan-700 bg-cyan-100";
+    case "thank-you": return "text-pink-700 bg-pink-100";
+    case "action item": return "text-emerald-700 bg-emerald-100";
     default: return "text-gray-600 bg-gray-200";
   }
 }
@@ -71,31 +88,12 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardQuery();
-  const {
-    data: applications = [],
-    isLoading: applicationsLoading,
-  } = useApplicationsQuery();
-  const {
-    data: tasks = [],
-    isLoading: tasksLoading,
-  } = useTasksQuery();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
   const dashboard = dashboardData ?? fallbackData;
-  const activeStatuses = new Set<ApplicationStatus>(["Saved", "Preparing", "Applied", "Interview"]);
-  const data: DashboardData = {
-    ...dashboard,
-    applications,
-    upcomingTasks: tasks,
-    metrics: {
-      ...dashboard.metrics,
-      activeApplications: applications.filter((application) => activeStatuses.has(application.status)).length,
-      interviews: applications.filter((application) => application.status === "Interview").length,
-      offers: applications.filter((application) => application.status === "Offer").length,
-    },
-  };
-  const loading = dashboardLoading || applicationsLoading || tasksLoading;
+  const data: DashboardData = dashboard;
+  const loading = dashboardLoading;
   const firstName = user?.name ? user.name.split(" ")[0] : "there";
 
   const filteredApplications = useMemo(() => {
@@ -169,26 +167,26 @@ export function DashboardPage() {
         <MetricCard
           label="Active applications"
           value={data.metrics.activeApplications}
-          detail="Across four pipeline stages"
+          detail={`${data.applications.length} total in your pipeline`}
           accent="teal"
         />
         <MetricCard
           label="Interviews"
           value={data.metrics.interviews}
-          detail="One scheduled tomorrow"
+          detail="Applications at interview stage"
           accent="violet"
         />
         <MetricCard
           label="Response rate"
           value={data.metrics.responseRate}
           suffix="%"
-          detail="Up 5% this month"
+          detail="Submitted applications with responses"
           accent="amber"
         />
         <MetricCard
           label="Offers"
           value={data.metrics.offers}
-          detail="Keep building momentum"
+          detail={data.metrics.offers ? "Offer-stage applications" : "Keep building momentum"}
           accent="blue"
         />
       </section>
@@ -203,11 +201,11 @@ export function DashboardPage() {
                 onValueChange={(val) => val && setStatusFilter(val)}
                 className="w-full"
                 items={{
-                  All: `All applications (${applications.length})`,
+                  All: `All applications (${data.applications.length})`,
                   ...Object.fromEntries(
                     pipelineStatuses.map((status) => [
                       status,
-                      `${status} (${applications.filter((a) => a.status === status).length})`
+                      `${status} (${data.applications.filter((a) => a.status === status).length})`
                     ])
                   )
                 }}
@@ -282,15 +280,31 @@ export function DashboardPage() {
                 <span className="mb-0.5 block text-[12px] font-medium text-[var(--text-muted)]">Stay on schedule</span>
                 <h2>Upcoming</h2>
               </div>
-              <button className="inline-flex items-center rounded-lg border-0 bg-transparent px-2 py-1 text-xs font-semibold text-[var(--primary)] hover:bg-[rgba(10,92,77,0.08)] cursor-pointer" type="button">View all</button>
+              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                {data.reminderSummary.total} reminders
+              </span>
             </div>
+            {data.reminderSummary.total > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2 text-[11px] font-semibold" aria-label="Reminder summary">
+                <span className="rounded-full bg-red-50 px-2.5 py-1 text-red-700">
+                  {data.reminderSummary.overdue} overdue
+                </span>
+                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">
+                  {data.reminderSummary.dueThisWeek} due this week
+                </span>
+              </div>
+            )}
             <div className="grid gap-2.5">
-              {data.upcomingTasks.map((task) => (
-                <article className="grid grid-cols-[32px_1fr] items-center gap-2.5 rounded-xl bg-gray-50 p-2.5" key={task.id}>
+              {data.upcomingTasks.slice(0, 6).map((task) => (
+                <Link
+                  to={task.href ?? "/applications"}
+                  className="grid grid-cols-[32px_1fr_auto] items-center gap-2.5 rounded-xl bg-gray-50 p-2.5 no-underline transition-colors hover:bg-gray-100"
+                  key={task.id}
+                >
                   <span className={`grid size-8 place-items-center rounded-lg text-[12px] font-semibold ${taskIconClass(task.type)}`}>
                     {getTaskIcon(task.type)}
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <strong className="block text-[14px] font-medium">{task.title}</strong>
                     <span className="text-[12px] text-gray-500">
                       {task.due
@@ -301,8 +315,16 @@ export function DashboardPage() {
                         : "No due date"}
                     </span>
                   </div>
-                </article>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${task.overdue ? "bg-red-100 text-red-700" : "bg-white text-gray-500"}`}>
+                    {task.priority ?? task.type}
+                  </span>
+                </Link>
               ))}
+              {!loading && data.upcomingTasks.length === 0 && (
+                <p className="rounded-xl bg-emerald-50 px-4 py-5 text-center text-sm text-emerald-800">
+                  You are all caught up. New deadlines and follow-ups will appear here.
+                </p>
+              )}
             </div>
             <div className="mt-4 rounded-xl bg-gray-50 p-4">
               <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Interview preparation</span>

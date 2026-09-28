@@ -1,0 +1,245 @@
+[
+  {
+    "id": "table.informationalInterview",
+    "label": "Create table \"informationalInterview\"",
+    "summary": "Creates table \"informationalInterview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "informationalInterview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"informationalInterview\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"informationalInterview\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"informationalInterview\"",
+        "sql": "CREATE TABLE \"public\".\"informationalInterview\" (\n  \"company\" text,\n  \"contactId\" int4,\n  \"contactName\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"keyTakeaway\" text,\n  \"nextFollowUp\" timestamptz,\n  \"preparationQuestions\" text[] DEFAULT '{}' NOT NULL,\n  \"recommendedAction\" text,\n  \"referral\" text,\n  \"role\" text NOT NULL,\n  \"scheduledFor\" timestamptz NOT NULL,\n  \"status\" text DEFAULT 'PREPARING' NOT NULL,\n  \"thankYouSent\" bool NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"informationalInterview_preparationQuestions_elem_not_n_4cc07314\" CHECK (array_position(\"preparationQuestions\", NULL) IS NULL),\n  CONSTRAINT \"informationalInterview_status_check_959e1b90\" CHECK (\"status\" IN ('PREPARING', 'SCHEDULED', 'COMPLETED'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"informationalInterview\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"informationalInterview\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.user.user_role_check_482f18a5",
+    "label": "Add check constraint \"user_role_check_482f18a5\" on \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "user_role_check_482f18a5",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_role_check_482f18a5\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_role_check_482f18a5",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"user_role_check_482f18a5\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_role_check_482f18a5\" CHECK (\"role\" IN ('STUDENT', 'ADMIN'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_role_check_482f18a5\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_role_check_482f18a5",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.informationalInterview.informationalInterview_contactId_idx_ec98db2a",
+    "label": "Create index \"informationalInterview_contactId_idx_ec98db2a\" on \"informationalInterview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "informationalInterview_contactId_idx_ec98db2a",
+        "table": "informationalInterview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"informationalInterview_contactId_idx_ec98db2a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"informationalInterview_contactId_idx_ec98db2a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"informationalInterview_contactId_idx_ec98db2a\"",
+        "sql": "CREATE INDEX \"informationalInterview_contactId_idx_ec98db2a\" ON \"public\".\"informationalInterview\" (\"contactId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"informationalInterview_contactId_idx_ec98db2a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"informationalInterview_contactId_idx_ec98db2a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.informationalInterview.informationalInterview_userId_idx_a489d58a",
+    "label": "Create index \"informationalInterview_userId_idx_a489d58a\" on \"informationalInterview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "informationalInterview_userId_idx_a489d58a",
+        "table": "informationalInterview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"informationalInterview_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"informationalInterview_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"informationalInterview_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"informationalInterview_userId_idx_a489d58a\" ON \"public\".\"informationalInterview\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"informationalInterview_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"informationalInterview_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.informationalInterview.informationalInterview_userId_fkey",
+    "label": "Add foreign key \"informationalInterview_userId_fkey\" on \"informationalInterview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "informationalInterview_userId_fkey",
+        "table": "informationalInterview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"informationalInterview_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "informationalInterview_userId_fkey",
+          "public",
+          "\"public\".\"informationalInterview\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"informationalInterview_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"informationalInterview\"\nADD CONSTRAINT \"informationalInterview_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"informationalInterview_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "informationalInterview_userId_fkey",
+          "public",
+          "\"public\".\"informationalInterview\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.informationalInterview.informationalInterview_contactId_fkey",
+    "label": "Add foreign key \"informationalInterview_contactId_fkey\" on \"informationalInterview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "informationalInterview_contactId_fkey",
+        "table": "informationalInterview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"informationalInterview_contactId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "informationalInterview_contactId_fkey",
+          "public",
+          "\"public\".\"informationalInterview\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"informationalInterview_contactId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"informationalInterview\"\nADD CONSTRAINT \"informationalInterview_contactId_fkey\"\nFOREIGN KEY (\"contactId\")\nREFERENCES \"public\".\"contact\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"informationalInterview_contactId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "informationalInterview_contactId_fkey",
+          "public",
+          "\"public\".\"informationalInterview\""
+        ]
+      }
+    ]
+  }
+]

@@ -8,6 +8,7 @@ async function main() {
     const seedPasswordHash = await bcrypt.hash("password123", 10);
 
     // Clear existing seed data so the script can be safely run again.
+    await db.orm.public.InformationalInterview.where({}).deleteAll();
     await db.orm.public.Task.where({}).deleteAll();
     await db.orm.public.Application.where({}).deleteAll();
     await db.orm.public.Contact.where({}).deleteAll();
@@ -78,6 +79,24 @@ async function main() {
         employerId: brightPath.id,
         notes: "Professional contact for an informational interview.",
         nextFollowUp: Temporal.Instant.from("2026-09-25T00:00:00Z"),
+    });
+
+    // Informational interviews
+    await db.orm.public.InformationalInterview.create({
+        contactName: "David Okello",
+        role: "Software Engineer",
+        company: "BrightPath Solutions",
+        scheduledFor: Temporal.Instant.from("2026-10-01T15:00:00Z"),
+        status: "SCHEDULED",
+        preparationQuestions: [
+            "Which skills matter most for an early-career engineer on your team?",
+            "What would you recommend learning next?",
+        ],
+        recommendedAction: "Review BrightPath's engineering work before the meeting.",
+        thankYouSent: false,
+        nextFollowUp: Temporal.Instant.from("2026-10-02T00:00:00Z"),
+        userId: saleh.id,
+        contactId: engineer.id,
     });
 
     // Applications

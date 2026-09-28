@@ -81,12 +81,15 @@ export interface ContactInput {
 }
 
 export interface UpcomingTask {
-  id: number;
+  id: number | string;
   title: string;
   description?: string | null;
   due: string | null;
   type: string;
   status?: "Pending" | "Completed";
+  href?: "/applications" | "/contacts" | "/informational-interviews";
+  overdue?: boolean;
+  priority?: "Overdue" | "Soon" | "Upcoming" | "No date";
   applicationId?: number | null;
   contactId?: number | null;
 }
@@ -99,11 +102,29 @@ export interface InformationalInterview {
   scheduledFor: string;
   status: "Preparing" | "Scheduled" | "Completed";
   preparationQuestions: string[];
-  keyTakeaway?: string;
-  recommendedAction?: string;
-  referral?: string;
+  keyTakeaway?: string | null;
+  recommendedAction?: string | null;
+  referral?: string | null;
   thankYouSent: boolean;
-  nextFollowUp?: string;
+  nextFollowUp?: string | null;
+  contactId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InformationalInterviewInput {
+  contactName: string;
+  role: string;
+  company?: string | null;
+  scheduledFor: string;
+  status?: "Preparing" | "Scheduled" | "Completed";
+  preparationQuestions?: string[];
+  keyTakeaway?: string | null;
+  recommendedAction?: string | null;
+  referral?: string | null;
+  thankYouSent?: boolean;
+  nextFollowUp?: string | null;
+  contactId?: number | null;
 }
 
 export interface DashboardData {
@@ -112,6 +133,15 @@ export interface DashboardData {
     interviews: number;
     offers: number;
     responseRate: number;
+  };
+  statusSummary: Array<{
+    status: string;
+    count: number;
+  }>;
+  reminderSummary: {
+    total: number;
+    overdue: number;
+    dueThisWeek: number;
   };
   applications: JobApplication[];
   upcomingTasks: UpcomingTask[];
