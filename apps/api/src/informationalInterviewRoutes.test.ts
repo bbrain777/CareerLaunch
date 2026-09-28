@@ -134,4 +134,56 @@ describe("informational interview routes", () => {
     expect(response.status).toBe(204);
     expect(remove).toHaveBeenCalledWith(7, 42);
   });
+
+  // --- NEW SPRINT 3 SECURITY TESTS BELOW ---
+
+  it.each([
+    ["get", "/api/informational-interviews"],
+    ["post", "/api/informational-interviews"],
+    ["patch", "/api/informational-interviews/7"],
+    ["delete", "/api/informational-interviews/7"],
+  ] as const)("rejects invalid tokens for %s %s", async (method, path) => {
+    const response = await request(app)[method](path).set("Authorization", "Bearer fake-invalid-token");
+    expect(response.status).toBe(401);
+  });
+
+  it.each([
+    ["patch", "/api/informational-interviews/abc"],
+    ["delete", "/api/informational-interviews/abc"],
+    ["patch", "/api/informational-interviews/-5"],
+  ] as const)("rejects malformed record identifiers for %s %s", async (method, path) => {
+    const response = await request(app)[method](path).set("Authorization", `Bearer ${token}`);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toMatch(/positive integer/);
+  });
+
+  it("rejects invalid follow-up dates and statuses", async () => {
+    // 1. Test the bad status first
+    const badStatus = await request(app)
+      .post("/api/informational-interviews")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        contactName: "Jordan Lee",
+        role: "Engineer",
+        scheduledFor: "2026-10-02T14:00:00Z",
+        status: "NOT_REAL_STATUS",
+      });
+
+    expect(badStatus.status).toBe(400);
+    expect(badStatus.body.message).toMatch(/status must be one of/);
+
+    // 2. Test the bad date separately
+    const badDate = await request(app)
+      .post("/api/informational-interviews")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        contactName: "Jordan Lee",
+        role: "Engineer",
+        scheduledFor: "2026-10-02T14:00:00Z",
+        nextFollowUp: "this-is-not-a-date",
+      });
+
+    expect(badDate.status).toBe(400);
+    expect(badDate.body.message).toMatch(/nextFollowUp must be a valid date/);
+  });
 });
