@@ -84,4 +84,30 @@ describe("dashboard aggregation", () => {
       href: "/contacts",
     });
   });
+
+  // --- NEW SPRINT 3 SECURITY TEST BELOW ---
+  
+  it("handles missing dates and closed statuses gracefully without failing", () => {
+    const dashboard = buildDashboardData({
+      today: new Date("2026-09-28T12:00:00Z"),
+      applications: [{ id: 1, status: "CLOSED", deadline: "2026-10-10T00:00:00Z" }],
+      tasks: [{ id: 2, status: "PENDING", title: "No date task", dueDate: null }],
+      contacts: [{ id: 3, nextFollowUp: null }],
+      informationalInterviews: [{ 
+        id: 4, 
+        status: "COMPLETED", 
+        thankYouSent: true, 
+        nextFollowUp: null 
+      }],
+    } as any);
+
+    // Closed applications should not generate deadline reminders
+    expect(dashboard.upcomingTasks.find(t => t.type === "Deadline")).toBeUndefined();
+    
+    // Tasks without dates should safely default to "No date" priority
+    expect(dashboard.upcomingTasks.find(t => t.id === "task-2")?.priority).toBe("No date");
+    
+    // Contacts and Interviews without follow-up dates should be safely ignored
+    expect(dashboard.upcomingTasks.find(t => t.type === "Contact")).toBeUndefined();
+  });
 });

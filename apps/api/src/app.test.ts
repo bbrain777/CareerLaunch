@@ -31,6 +31,16 @@ describe("CareerLaunch API", () => {
     expect(response.status).toBe(401);
   });
 
+  // --- NEW SPRINT 3 SECURITY TEST BELOW ---
+
+  it("rejects invalid tokens for dashboard data", async () => {
+    const response = await request(app)
+      .get("/api/dashboard")
+      .set("Authorization", "Bearer totally-fake-token");
+    
+    expect(response.status).toBe(401);
+  });
+
   it("returns owner-scoped dashboard metrics and coordinated reminders", async () => {
     const findApplications = vi.spyOn(applicationRepository, "findAllByUserId").mockResolvedValue([
       {
