@@ -56,6 +56,8 @@ npx.cmd prisma db migrate
 
 Application, employer, and contact endpoints require `Authorization: Bearer <token>`. Employer and contact CRUD operations derive ownership only from the authenticated JWT. List endpoints accept a case-insensitive `search` query, for example `/api/contacts?search=recruiter`.
 
+The authenticated `GET /api/dashboard` endpoint returns one owner-scoped snapshot containing live application metrics, pipeline status counts, applications, informational interviews, and coordinated reminders. Reminders combine application deadlines, recruiter/contact follow-ups, interview preparation, thank-you notes, and pending action items. Dashboard data is refreshed after application or contact changes.
+
 ### Project structure
 
 - **apps/web** - React and TypeScript interface built with Vite

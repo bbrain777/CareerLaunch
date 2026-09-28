@@ -81,12 +81,15 @@ export interface ContactInput {
 }
 
 export interface UpcomingTask {
-  id: number;
+  id: number | string;
   title: string;
   description?: string | null;
   due: string | null;
   type: string;
   status?: "Pending" | "Completed";
+  href?: "/applications" | "/contacts" | "/informational-interviews";
+  overdue?: boolean;
+  priority?: "Overdue" | "Soon" | "Upcoming" | "No date";
   applicationId?: number | null;
   contactId?: number | null;
 }
@@ -112,6 +115,15 @@ export interface DashboardData {
     interviews: number;
     offers: number;
     responseRate: number;
+  };
+  statusSummary: Array<{
+    status: string;
+    count: number;
+  }>;
+  reminderSummary: {
+    total: number;
+    overdue: number;
+    dueThisWeek: number;
   };
   applications: JobApplication[];
   upcomingTasks: UpcomingTask[];

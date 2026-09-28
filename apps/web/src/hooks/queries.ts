@@ -132,6 +132,7 @@ export function useCreateContactMutation() {
       api.post<{ contact: Contact }>("/api/contacts", contact),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contacts });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       appToastManager.add({
         title: "Contact created",
         description: data?.contact
@@ -151,6 +152,7 @@ export function useUpdateContactMutation() {
       api.patch<{ contact: Contact }>(`/api/contacts/${id}`, changes),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contacts });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       appToastManager.add({
         title: "Contact updated",
         description: data?.contact
@@ -169,6 +171,7 @@ export function useDeleteContactMutation() {
     mutationFn: (id: number) => api.delete<void>(`/api/contacts/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contacts });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       appToastManager.add({
         title: "Contact deleted",
         description: "Contact removed successfully.",
@@ -186,6 +189,7 @@ export function useCreateApplicationMutation() {
       api.post<{ application: JobApplication }>("/api/applications", application),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.applications });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       appToastManager.add({
         title: "Application created",
         description: data?.application?.company ? `Application for ${data.application.company} tracked.` : "Job application tracked successfully.",
@@ -203,6 +207,7 @@ export function useUpdateApplicationMutation() {
       api.patch<{ application: JobApplication }>(`/api/applications/${id}`, changes),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.applications });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       appToastManager.add({
         title: "Application updated",
         description: data?.application?.company ? `Updated application for ${data.application.company}.` : "Application updated successfully.",
@@ -219,6 +224,7 @@ export function useDeleteApplicationMutation() {
     mutationFn: (id: number) => api.delete<void>(`/api/applications/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.applications });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
       appToastManager.add({
         title: "Application deleted",
         description: "Application removed successfully.",

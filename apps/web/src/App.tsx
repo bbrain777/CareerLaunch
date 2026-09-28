@@ -9,6 +9,12 @@ const fallbackData: DashboardData = {
     offers: 0,
     responseRate: 0
   },
+  statusSummary: [],
+  reminderSummary: {
+    total: 0,
+    overdue: 0,
+    dueThisWeek: 0
+  },
   applications: [],
   upcomingTasks: [],
   informationalInterviews: []
