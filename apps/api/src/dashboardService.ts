@@ -1,4 +1,18 @@
-import type { InformationalInterview } from "./data.js";
+export interface InformationalInterviewRecord {
+  id: number;
+  contactName: string;
+  role: string;
+  company?: string | null;
+  scheduledFor: string | Date | unknown;
+  status: string;
+  preparationQuestions: string[];
+  keyTakeaway?: string | null;
+  recommendedAction?: string | null;
+  referral?: string | null;
+  thankYouSent: boolean;
+  nextFollowUp?: string | Date | null | unknown;
+  contactId?: number | null;
+}
 
 const activeStatuses = new Set(["SAVED", "PREPARING", "APPLIED", "INTERVIEW"]);
 const submittedStatuses = new Set(["APPLIED", "INTERVIEW", "OFFER", "CLOSED"]);
@@ -136,13 +150,15 @@ function contactReminder(contact: DashboardRecord, today: Date): DashboardRemind
 }
 
 function interviewReminders(
-  interview: InformationalInterview,
+  interview: InformationalInterviewRecord,
   today: Date,
 ): DashboardReminder[] {
   const reminders: DashboardReminder[] = [];
   const interviewDate = dateOnly(interview.scheduledFor);
 
-  if (interview.status !== "Completed") {
+  const completed = normalizedStatus(interview.status) === "COMPLETED";
+
+  if (!completed) {
     reminders.push({
       id: `interview-${interview.id}-prepare`,
       title: `Prepare for conversation with ${interview.contactName}`,
@@ -155,7 +171,7 @@ function interviewReminders(
     });
   }
 
-  if (interview.status === "Completed" && !interview.thankYouSent) {
+  if (completed && !interview.thankYouSent) {
     reminders.push({
       id: `interview-${interview.id}-thank-you`,
       title: `Send thank-you to ${interview.contactName}`,
@@ -198,6 +214,19 @@ function serializeApplication(application: DashboardRecord) {
   };
 }
 
+function serializeInterview(interview: InformationalInterviewRecord) {
+  const status = normalizedStatus(interview.status);
+  const clientStatus = status.charAt(0) + status.slice(1).toLowerCase();
+  return {
+    ...interview,
+    id: Number(interview.id),
+    status: clientStatus,
+    scheduledFor: String(interview.scheduledFor),
+    nextFollowUp: dateOnly(interview.nextFollowUp),
+    contactId: interview.contactId ? Number(interview.contactId) : null,
+  };
+}
+
 function sortReminders(reminders: DashboardReminder[]) {
   const priorityRank = { Overdue: 0, Soon: 1, Upcoming: 2, "No date": 3 };
   return reminders.sort((left, right) => {
@@ -217,7 +246,7 @@ export function buildDashboardData({
   applications: DashboardRecord[];
   contacts: DashboardRecord[];
   tasks: DashboardRecord[];
-  informationalInterviews: InformationalInterview[];
+  informationalInterviews: InformationalInterviewRecord[];
   today?: Date;
 }) {
   const statuses = applications.map((application) => normalizedStatus(application.status));
@@ -263,6 +292,6 @@ export function buildDashboardData({
     },
     applications: applications.map(serializeApplication),
     upcomingTasks: reminders,
-    informationalInterviews,
+    informationalInterviews: informationalInterviews.map(serializeInterview),
   };
 }

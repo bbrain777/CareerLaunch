@@ -10,6 +10,7 @@ import type {
   EmployerInput,
   JobApplication,
   InformationalInterview,
+  InformationalInterviewInput,
   UpcomingTask,
 } from "../types";
 import type { AuthUser } from "../lib/auth";
@@ -242,6 +243,62 @@ export function useInterviewsQuery() {
         { informationalInterviews: InformationalInterview[] } | InformationalInterview[]
       >("/api/informational-interviews");
       return Array.isArray(result) ? result : result.informationalInterviews;
+    },
+  });
+}
+
+export function useCreateInterviewMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (interview: InformationalInterviewInput) =>
+      api.post<{ informationalInterview: InformationalInterview }>(
+        "/api/informational-interviews",
+        interview,
+      ),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.interviews });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      appToastManager.add({
+        title: "Interview added",
+        description: `Conversation with ${data.informationalInterview.contactName} added.`,
+        variant: "success",
+      });
+    },
+  });
+}
+
+export function useUpdateInterviewMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: number; changes: Partial<InformationalInterviewInput> }) =>
+      api.patch<{ informationalInterview: InformationalInterview }>(
+        `/api/informational-interviews/${id}`,
+        changes,
+      ),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.interviews });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      appToastManager.add({
+        title: "Interview updated",
+        description: `Conversation with ${data.informationalInterview.contactName} updated.`,
+        variant: "success",
+      });
+    },
+  });
+}
+
+export function useDeleteInterviewMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/api/informational-interviews/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.interviews });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      appToastManager.add({
+        title: "Interview deleted",
+        description: "The informational interview was removed.",
+        variant: "default",
+      });
     },
   });
 }

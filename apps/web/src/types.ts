@@ -102,11 +102,29 @@ export interface InformationalInterview {
   scheduledFor: string;
   status: "Preparing" | "Scheduled" | "Completed";
   preparationQuestions: string[];
-  keyTakeaway?: string;
-  recommendedAction?: string;
-  referral?: string;
+  keyTakeaway?: string | null;
+  recommendedAction?: string | null;
+  referral?: string | null;
   thankYouSent: boolean;
-  nextFollowUp?: string;
+  nextFollowUp?: string | null;
+  contactId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InformationalInterviewInput {
+  contactName: string;
+  role: string;
+  company?: string | null;
+  scheduledFor: string;
+  status?: "Preparing" | "Scheduled" | "Completed";
+  preparationQuestions?: string[];
+  keyTakeaway?: string | null;
+  recommendedAction?: string | null;
+  referral?: string | null;
+  thankYouSent?: boolean;
+  nextFollowUp?: string | null;
+  contactId?: number | null;
 }
 
 export interface DashboardData {

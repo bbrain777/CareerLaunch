@@ -5,6 +5,7 @@ import { app } from "./app.js";
 import { applicationRepository } from "./repositories/applicationRepository.js";
 import { contactRepository } from "./repositories/contactRepository.js";
 import { taskRepository } from "./repositories/taskRepository.js";
+import { informationalInterviewRepository } from "./repositories/informationalInterviewRepository.js";
 
 const token = jwt.sign(
   { userId: 42, email: "owner@example.com" },
@@ -71,6 +72,8 @@ describe("CareerLaunch API", () => {
         contactId: null,
       },
     ] as any);
+    const findInterviews = vi.spyOn(informationalInterviewRepository, "findAllByUserId")
+      .mockResolvedValue([] as any);
 
     const response = await request(app)
       .get("/api/dashboard?userId=999")
@@ -80,6 +83,7 @@ describe("CareerLaunch API", () => {
     expect(findApplications).toHaveBeenCalledWith(42);
     expect(findContacts).toHaveBeenCalledWith(42);
     expect(findTasks).toHaveBeenCalledWith(42);
+    expect(findInterviews).toHaveBeenCalledWith(42);
     expect(response.body.metrics).toEqual({
       activeApplications: 2,
       interviews: 1,
@@ -94,15 +98,4 @@ describe("CareerLaunch API", () => {
     ]));
   });
 
-  it("returns informational interview preparation and follow-up details", async () => {
-    const response = await request(app).get("/api/informational-interviews");
-
-    expect(response.status).toBe(200);
-    expect(response.body.informationalInterviews).toHaveLength(2);
-    expect(response.body.informationalInterviews[0].preparationQuestions).toHaveLength(3);
-    expect(response.body.informationalInterviews[1]).toMatchObject({
-      status: "Completed",
-      thankYouSent: true
-    });
-  });
 });

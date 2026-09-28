@@ -13,19 +13,33 @@ enum TaskStatus {
   COMPLETED
 }
 
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+enum InformationalInterviewStatus {
+  PREPARING
+  SCHEDULED
+  COMPLETED
+}
+
 model User {
-  id           Int                  @id @default(autoincrement())
-  email        String               @unique
-  passwordHash String
-  firstName    String
-  lastName     String?
-  role         String               @default("STUDENT")
-  createdAt    DateTime             @default(now())
-  updatedAt    temporal.updatedAt()
-  applications Application[]
-  contacts     Contact[]
-  employers    Employer[]
-  tasks        Task[]
+  id                      Int                      @id @default(autoincrement())
+  email                   String                   @unique
+  passwordHash            String
+  firstName               String
+  lastName                String?
+  role                    UserRole                 @default(STUDENT)
+  createdAt               DateTime                 @default(now())
+  updatedAt               temporal.updatedAt()
+  applications            Application[]
+  contacts                Contact[]
+  employers               Employer[]
+  tasks                   Task[]
+  informationalInterviews InformationalInterview[]
+
+  @@map("user")
 }
 
 model Employer {
@@ -42,28 +56,33 @@ model Employer {
   user         User                 @relation(fields:[userId], references:[id], onDelete: Cascade)
   applications Application[]
   contacts     Contact[]
+
+  @@map("employer")
 }
 
 model Contact {
-  id            Int                  @id @default(autoincrement())
-  firstName     String
-  lastName      String?
-  email         String?
-  phone         String?
-  jobTitle      String?
-  notes         String?
-  lastContacted DateTime?
-  nextFollowUp  DateTime?
-  userId        Int
-  employerId    Int?
+  id                      Int                      @id @default(autoincrement())
+  firstName               String
+  lastName                String?
+  email                   String?
+  phone                   String?
+  jobTitle                String?
+  notes                   String?
+  lastContacted           DateTime?
+  nextFollowUp            DateTime?
+  userId                  Int
+  employerId              Int?
 
-  user          User                 @relation(fields:[userId], references:[id], onDelete: Cascade)
-  employer      Employer?            @relation(fields:[employerId], references:[id], onDelete: SetNull)
-  applications  Application[]
-  tasks         Task[]
+  user                    User                     @relation(fields:[userId], references:[id], onDelete: Cascade)
+  employer                Employer?                @relation(fields:[employerId], references:[id], onDelete: SetNull)
+  applications            Application[]
+  tasks                   Task[]
+  informationalInterviews InformationalInterview[]
 
-  createdAt     DateTime             @default(now())
-  updatedAt     temporal.updatedAt()
+  createdAt               DateTime                 @default(now())
+  updatedAt               temporal.updatedAt()
+
+  @@map("contact")
 }
 
 model Application {
@@ -87,6 +106,8 @@ model Application {
 
   createdAt  DateTime             @default(now())
   updatedAt  temporal.updatedAt()
+
+  @@map("application")
 }
 
 model Task {
@@ -106,4 +127,32 @@ model Task {
 
   createdAt     DateTime             @default(now())
   updatedAt     temporal.updatedAt()
+
+  @@map("task")
+}
+
+model InformationalInterview {
+  id                   Int                          @id @default(autoincrement())
+  contactName          String
+  role                 String
+  company              String?
+  scheduledFor         DateTime
+  status               InformationalInterviewStatus @default(PREPARING)
+  preparationQuestions String[]                     @default([])
+  keyTakeaway          String?
+  recommendedAction    String?
+  referral             String?
+  thankYouSent         Boolean
+  nextFollowUp         DateTime?
+
+  userId               Int
+  contactId            Int?
+
+  user                 User                         @relation(fields:[userId], references:[id], onDelete: Cascade)
+  contact              Contact?                     @relation(fields:[contactId], references:[id], onDelete: SetNull)
+
+  createdAt            DateTime                     @default(now())
+  updatedAt            temporal.updatedAt()
+
+  @@map("informationalInterview")
 }
