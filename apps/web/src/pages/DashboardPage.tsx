@@ -11,6 +11,7 @@ import {
 } from "hugeicons-react";
 import { pipelineStatuses } from "../status";
 import type { ApplicationStatus, DashboardData } from "../types";
+import { getInterviewReadinessSummary, selectInterviewReminders } from "./informationalInterviewHelpers";
 import { MetricCard } from "../components/Cards";
 import { Select, Table } from "../components/ui";
 import { useAuth } from "../lib/auth";
@@ -112,6 +113,15 @@ export function DashboardPage() {
     }
     return result;
   }, [data.applications, query, statusFilter]);
+
+  const interviewReminders = useMemo(
+    () => selectInterviewReminders(data.upcomingTasks),
+    [data.upcomingTasks],
+  );
+  const readiness = useMemo(
+    () => getInterviewReadinessSummary(data.informationalInterviews),
+    [data.informationalInterviews],
+  );
 
   return (
     <>
@@ -326,8 +336,39 @@ export function DashboardPage() {
                 </p>
               )}
             </div>
-            <div className="mt-4 rounded-xl bg-gray-50 p-4">
-              <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Interview preparation</span>
+            <div className="mt-4 rounded-xl bg-gray-50 p-4" aria-label="Career readiness">
+              <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Career readiness</span>
+              {loading ? (
+                <p className="mt-1 mb-3 text-sm text-gray-500">Loading interview readiness…</p>
+              ) : readiness.total === 0 ? (
+                <p className="mt-1 mb-3 text-sm text-gray-700">Record an informational interview to build preparation, thank-you, and follow-up readiness.</p>
+              ) : (
+                <dl className="mt-2 mb-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg bg-white px-2 py-2">
+                    <dt className="text-[11px] font-medium text-gray-500">Interviews</dt>
+                    <dd className="text-sm font-semibold text-gray-900">{readiness.total}</dd>
+                  </div>
+                  <div className="rounded-lg bg-white px-2 py-2">
+                    <dt className="text-[11px] font-medium text-gray-500">Thank-yous</dt>
+                    <dd className="text-sm font-semibold text-gray-900">{readiness.thankYouPending} pending</dd>
+                  </div>
+                  <div className="rounded-lg bg-white px-2 py-2">
+                    <dt className="text-[11px] font-medium text-gray-500">Follow-ups</dt>
+                    <dd className="text-sm font-semibold text-gray-900">{readiness.followUps}</dd>
+                  </div>
+                </dl>
+              )}
+              {!loading && interviewReminders.length > 0 && (
+                <ul className="mb-3 space-y-1.5">
+                  {interviewReminders.slice(0, 3).map((reminder) => (
+                    <li key={reminder.id}>
+                      <Link to="/informational-interviews" className="block truncate rounded-lg bg-white px-3 py-2 text-xs font-medium text-gray-700 no-underline hover:bg-gray-100">
+                        {reminder.title}{reminder.due ? ` · ${reminder.due}` : ""}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <p className="mt-1 mb-3 text-sm text-gray-700">Review questions and build a focused checklist.</p>
               <Link to="/informational-interviews" className="inline-flex w-full h-10 items-center justify-center rounded-xl bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-4 text-xs font-semibold text-white no-underline">
                 Start preparing

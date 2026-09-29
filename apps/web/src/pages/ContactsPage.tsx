@@ -36,6 +36,7 @@ export function ContactsPage() {
   const [employerFilter, setEmployerFilter] = useState("All");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [editorKey, setEditorKey] = useState(0);
+  const [detail, setDetail] = useState<Contact | null>(null);
   const createContact = useCreateContactMutation();
   const updateContact = useUpdateContactMutation();
   const deleteContact = useDeleteContactMutation();
@@ -46,6 +47,7 @@ export function ContactsPage() {
   };
 
   const openEdit = (contact: Contact) => {
+    setDetail(null);
     setEditor({ mode: "edit", contact });
     setEditorKey((key) => key + 1);
   };
@@ -138,7 +140,17 @@ export function ContactsPage() {
         }
       />
 
-      <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0">
+      <ContactDetail
+        contact={detail}
+        employerName={detail ? employerById.get(detail.employerId ?? -1)?.name ?? null : null}
+        open={detail !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setDetail(null);
+        }}
+        onEdit={detail ? () => openEdit(detail) : undefined}
+      />
+
+      <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" aria-label="Contacts">
         <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="w-full sm:w-[220px] sm:flex-none">
             <Select
@@ -210,14 +222,24 @@ export function ContactsPage() {
                           : "Never"}
                       </Table.Cell>
                       <Table.Cell className="text-right">
-                        <button
-                          type="button"
-                          className="rounded-[6px] border-0 bg-[#e6f6f2] px-2.5 py-1 text-[14px] font-medium text-[#0a5c4d] hover:bg-[#cceee5]"
-                          aria-label={`Edit ${contact.firstName}`}
-                          onClick={() => openEdit(contact)}
-                        >
-                          Edit
-                        </button>
+                        <span className="inline-flex justify-end gap-2">
+                          <button
+                            type="button"
+                            className="rounded-[6px] border border-gray-200 bg-white px-2.5 py-1 text-[14px] font-medium text-gray-700 hover:bg-gray-100"
+                            aria-label={`View ${contact.firstName}`}
+                            onClick={() => setDetail(contact)}
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-[6px] border-0 bg-[#e6f6f2] px-2.5 py-1 text-[14px] font-medium text-[#0a5c4d] hover:bg-[#cceee5]"
+                            aria-label={`Edit ${contact.firstName}`}
+                            onClick={() => openEdit(contact)}
+                          >
+                            Edit
+                          </button>
+                        </span>
                       </Table.Cell>
                     </Table.Row>
                   );
@@ -478,5 +500,65 @@ function ContactEditor({
         </Dialog>
       </DialogRoot>
     </>
+  );
+}
+
+function ContactDetail({ contact, employerName, open, onOpenChange, onEdit }: {
+  contact: Contact | null;
+  employerName: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
+}) {
+  const fullName = contact ? [contact.firstName, contact.lastName].filter(Boolean).join(" ") : "";
+  return (
+    <DialogRoot open={open} onOpenChange={onOpenChange}>
+      <Dialog size="xl" className="max-h-[85vh] overflow-y-auto px-6 py-5">
+        <DialogTitle className="text-lg font-semibold text-kumo-strong">
+          {contact ? fullName : "Contact details"}
+        </DialogTitle>
+        <DialogDescription className="mt-0.5 text-xs text-kumo-subtle">
+          {contact ? `${contact.jobTitle ?? "Contact"}${employerName ? ` at ${employerName}` : ""}` : "Contact details."}
+        </DialogDescription>
+        {contact && (
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <dl className="contents">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Email</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{contact.email || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Phone</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{contact.phone || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Role</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{contact.jobTitle || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Employer</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{employerName || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Last contacted</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{contact.lastContacted ?? "Never"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Next follow-up</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{contact.nextFollowUp ?? "Not scheduled"}</dd>
+              </div>
+            </dl>
+            <section className="sm:col-span-2" aria-label="Contact notes">
+              <h3 className="text-sm font-semibold text-gray-900">Notes</h3>
+              <p className="mt-1 text-sm text-gray-700">{contact.notes || "—"}</p>
+            </section>
+          </div>
+        )}
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Close</button>
+          {onEdit && <button type="button" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b]" onClick={onEdit}>Edit contact</button>}
+        </div>
+      </Dialog>
+    </DialogRoot>
   );
 }

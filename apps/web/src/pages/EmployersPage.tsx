@@ -36,6 +36,7 @@ export function EmployersPage() {
   const [industryFilter, setIndustryFilter] = useState("All");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [editorKey, setEditorKey] = useState(0);
+  const [detail, setDetail] = useState<Employer | null>(null);
   const createEmployer = useCreateEmployerMutation();
   const updateEmployer = useUpdateEmployerMutation();
   const deleteEmployer = useDeleteEmployerMutation();
@@ -46,6 +47,7 @@ export function EmployersPage() {
   };
 
   const openEdit = (employer: Employer) => {
+    setDetail(null);
     setEditor({ mode: "edit", employer });
     setEditorKey((key) => key + 1);
   };
@@ -121,7 +123,17 @@ export function EmployersPage() {
         }
       />
 
-      <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0">
+      <EmployerDetail
+        employer={detail}
+        linkedContacts={detail ? contacts.filter((contact) => contact.employerId === detail.id) : []}
+        open={detail !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setDetail(null);
+        }}
+        onEdit={detail ? () => openEdit(detail) : undefined}
+      />
+
+      <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" aria-label="Employers">
         <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="w-full sm:w-[220px] sm:flex-none">
             <Select
@@ -197,14 +209,24 @@ export function EmployersPage() {
                       {contacts.filter((contact) => contact.employerId === employer.id).length}
                     </Table.Cell>
                     <Table.Cell className="text-right">
-                      <button
-                        type="button"
-                        className="rounded-[6px] border-0 bg-[#e6f6f2] px-2.5 py-1 text-[14px] font-medium text-[#0a5c4d] hover:bg-[#cceee5]"
-                        aria-label={`Open ${employer.name}`}
-                        onClick={() => openEdit(employer)}
-                      >
-                        Edit
-                      </button>
+                      <span className="inline-flex justify-end gap-2">
+                        <button
+                          type="button"
+                          className="rounded-[6px] border border-gray-200 bg-white px-2.5 py-1 text-[14px] font-medium text-gray-700 hover:bg-gray-100"
+                          aria-label={`View ${employer.name}`}
+                          onClick={() => setDetail(employer)}
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-[6px] border-0 bg-[#e6f6f2] px-2.5 py-1 text-[14px] font-medium text-[#0a5c4d] hover:bg-[#cceee5]"
+                          aria-label={`Open ${employer.name}`}
+                          onClick={() => openEdit(employer)}
+                        >
+                          Edit
+                        </button>
+                      </span>
                     </Table.Cell>
                   </Table.Row>
                 ))}
@@ -417,5 +439,77 @@ function EmployerEditor({
         </Dialog>
       </DialogRoot>
     </>
+  );
+}
+
+function EmployerDetail({ employer, linkedContacts, open, onOpenChange, onEdit }: {
+  employer: Employer | null;
+  linkedContacts: Array<{ id: number; firstName: string; lastName: string | null }>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
+}) {
+  const websiteHref = employer?.website
+    ? employer.website.startsWith("http") ? employer.website : `https://${employer.website}`
+    : null;
+  return (
+    <DialogRoot open={open} onOpenChange={onOpenChange}>
+      <Dialog size="xl" className="max-h-[85vh] overflow-y-auto px-6 py-5">
+        <DialogTitle className="text-lg font-semibold text-kumo-strong">
+          {employer ? employer.name : "Employer details"}
+        </DialogTitle>
+        <DialogDescription className="mt-0.5 text-xs text-kumo-subtle">
+          {employer ? `${employer.industry ?? "Company"}${employer.location ? ` · ${employer.location}` : ""}` : "Employer details."}
+        </DialogDescription>
+        {employer && (
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <dl className="contents">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Industry</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{employer.industry || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Location</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{employer.location || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Website</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">
+                  {websiteHref ? (
+                    <a href={websiteHref} target="_blank" rel="noreferrer" className="text-[#0a5c4d] hover:underline">
+                      {employer.website}
+                    </a>
+                  ) : "—"}
+                </dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Linked contacts</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{linkedContacts.length}</dd>
+              </div>
+            </dl>
+            <section className="sm:col-span-2" aria-label="Employer notes">
+              <h3 className="text-sm font-semibold text-gray-900">Notes</h3>
+              <p className="mt-1 text-sm text-gray-700">{employer.notes || "—"}</p>
+            </section>
+            <section className="sm:col-span-2" aria-label="Linked contacts">
+              <h3 className="text-sm font-semibold text-gray-900">Contacts at this employer</h3>
+              {linkedContacts.length ? (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+                  {linkedContacts.map((contact) => (
+                    <li key={contact.id}>{[contact.firstName, contact.lastName].filter(Boolean).join(" ")}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-sm text-gray-500">No linked contacts yet.</p>
+              )}
+            </section>
+          </div>
+        )}
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Close</button>
+          {onEdit && <button type="button" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b]" onClick={onEdit}>Edit employer</button>}
+        </div>
+      </Dialog>
+    </DialogRoot>
   );
 }

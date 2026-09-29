@@ -28,10 +28,13 @@ type EditorState = { mode: "create" } | { mode: "edit"; application: JobApplicat
 
 export function ApplicationsPage() {
   const { data: applications = [], isLoading: loading } = useApplicationsQuery();
+  const { data: employers = [] } = useEmployersQuery();
+  const { data: contacts = [] } = useContactsQuery();
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [editorKey, setEditorKey] = useState(0);
+  const [detail, setDetail] = useState<JobApplication | null>(null);
   const createApplication = useCreateApplicationMutation();
   const updateApplication = useUpdateApplicationMutation();
   const deleteApplication = useDeleteApplicationMutation();
@@ -42,9 +45,19 @@ export function ApplicationsPage() {
   };
 
   const openEdit = (application: JobApplication) => {
+    setDetail(null);
     setEditor({ mode: "edit", application });
     setEditorKey((key) => key + 1);
   };
+
+  const employerById = useMemo(
+    () => new Map(employers.map((employer) => [employer.id, employer])),
+    [employers],
+  );
+  const contactById = useMemo(
+    () => new Map(contacts.map((contact) => [contact.id, contact])),
+    [contacts],
+  );
 
   const filteredApplications = useMemo(() => {
     let result = applications;
@@ -112,7 +125,25 @@ export function ApplicationsPage() {
         }
       />
 
-      <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0">
+      <ApplicationDetail
+        application={detail}
+        employerName={detail ? employerById.get(detail.employerId ?? -1)?.name ?? null : null}
+        contactName={
+          detail
+            ? (() => {
+                const contact = contactById.get(detail.contactId ?? -1);
+                return contact ? [contact.firstName, contact.lastName].filter(Boolean).join(" ") : null;
+              })()
+            : null
+        }
+        open={detail !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setDetail(null);
+        }}
+        onEdit={detail ? () => openEdit(detail) : undefined}
+      />
+
+      <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" aria-label="Job applications">
         <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="w-full sm:w-[220px] sm:flex-none">
             <Select
@@ -172,7 +203,7 @@ export function ApplicationsPage() {
                         <ApplicationCard
                           application={application}
                           key={application.id}
-                          onOpen={() => openEdit(application)}
+                          onOpen={() => setDetail(application)}
                         />
                       ))}
                     </div>
@@ -192,7 +223,7 @@ export function ApplicationsPage() {
                 <ApplicationCard
                   application={application}
                   key={application.id}
-                  onOpen={() => openEdit(application)}
+                  onOpen={() => setDetail(application)}
                 />
               ))
             ) : (
@@ -476,5 +507,73 @@ function ApplicationEditor({
       </Dialog>
     </DialogRoot>
     </>
+  );
+}
+
+function ApplicationDetail({ application, employerName, contactName, open, onOpenChange, onEdit }: {
+  application: JobApplication | null;
+  employerName: string | null;
+  contactName: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
+}) {
+  return (
+    <DialogRoot open={open} onOpenChange={onOpenChange}>
+      <Dialog size="xl" className="max-h-[85vh] overflow-y-auto px-6 py-5">
+        <DialogTitle className="text-lg font-semibold text-kumo-strong">
+          {application ? `${application.position} at ${application.company}` : "Application details"}
+        </DialogTitle>
+        <DialogDescription className="mt-0.5 text-xs text-kumo-subtle">
+          {application ? `Status: ${application.status}` : "Application details."}
+        </DialogDescription>
+        {application && (
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <dl className="contents">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Company</dt>
+                <dd className="mt-0.5 text-sm font-medium text-gray-900">{application.company}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Position</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{application.position}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Location</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{application.location || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Status</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{application.status}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Deadline</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{application.deadline ?? "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Applied on</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{application.appliedAt ?? "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Employer</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{employerName || "—"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Contact</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{contactName || "—"}</dd>
+              </div>
+            </dl>
+            <section className="sm:col-span-2" aria-label="Application notes">
+              <h3 className="text-sm font-semibold text-gray-900">Notes</h3>
+              <p className="mt-1 text-sm text-gray-700">{application.notes || "—"}</p>
+            </section>
+          </div>
+        )}
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Close</button>
+          {onEdit && <button type="button" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b]" onClick={onEdit}>Edit application</button>}
+        </div>
+      </Dialog>
+    </DialogRoot>
   );
 }
