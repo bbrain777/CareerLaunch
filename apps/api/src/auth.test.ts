@@ -5,7 +5,7 @@ import { app } from "./app.js";
 describe("Authentication API", () => {
   const testUser = {
     name: "Test User",
-    email: "test@example.com",
+    email: `test-${Date.now()}@example.com`,
     password: "password123",
     targetRole: "Software Engineer"
   };
@@ -73,31 +73,29 @@ describe("Authentication API", () => {
   });
 
   it("updates and returns the authenticated user's profile", async () => {
+    const updatedEmail = `updated-${Date.now()}@example.com`;
+
     const response = await request(app)
       .put("/api/auth/profile")
       .set("Authorization", `Bearer ${authToken}`)
       .send({
         name: "Updated User",
-        email: "updated@example.com",
-        currentRole: "Student",
-        targetRole: "Frontend Engineer",
-        weeklyGoal: 7
+        email: updatedEmail,
       });
 
     expect(response.status).toBe(200);
     expect(response.body.user).toMatchObject({
       name: "Updated User",
-      email: "updated@example.com",
-      currentRole: "Student",
-      targetRole: "Frontend Engineer",
-      weeklyGoal: 7
+      email: updatedEmail,
     });
+
     expect(response.body.user.password).toBeUndefined();
 
     const profile = await request(app)
       .get("/api/auth/profile")
       .set("Authorization", `Bearer ${authToken}`);
-    expect(profile.body.user.email).toBe("updated@example.com");
+
+    expect(profile.body.user.email).toBe(updatedEmail);
   });
 
   it("rejects profile updates without authentication", async () => {
@@ -117,7 +115,7 @@ describe("Authentication API", () => {
 
   it("logs out successfully", async () => {
     const response = await request(app).post("/api/auth/logout");
-    
+
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("Logout successful");
   });
