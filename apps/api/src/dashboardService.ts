@@ -241,42 +241,62 @@ export function buildDashboardData({
   contacts,
   tasks,
   informationalInterviews,
+  applicationMetrics,
   today = new Date(),
 }: {
   applications: DashboardRecord[];
   contacts: DashboardRecord[];
   tasks: DashboardRecord[];
   informationalInterviews: InformationalInterviewRecord[];
+  applicationMetrics?: {
+    activeApplications: number;
+    interviews: number;
+    offers: number;
+    submitted: number;
+    responses: number;
+  };
   today?: Date;
 }) {
-  const statuses = applications.map((application) => normalizedStatus(application.status));
-  const submittedApplications = statuses.filter((status) => submittedStatuses.has(status)).length;
-  const respondedApplications = statuses.filter((status) => responseStatuses.has(status)).length;
+  const statuses = applications.map((application) =>
+    normalizedStatus(application.status)
+  );
+
+  const submittedApplications =
+    applicationMetrics?.submitted ??
+    statuses.filter((status) => submittedStatuses.has(status)).length;
+
+  const respondedApplications =
+    applicationMetrics?.responses ??
+    statuses.filter((status) => responseStatuses.has(status)).length;
 
   const reminders = sortReminders([
     ...tasks.filter(isPendingTask).map((task) => taskReminder(task, today)),
     ...applications
       .map((application) => applicationReminder(application, today))
-      .filter((reminder): reminder is DashboardReminder => Boolean(reminder)),
+      .filter((reminder): reminder is DashboardReminder => reminder !== null),
     ...contacts
       .map((contact) => contactReminder(contact, today))
-      .filter((reminder): reminder is DashboardReminder => Boolean(reminder)),
-    ...informationalInterviews.flatMap((interview) => interviewReminders(interview, today)),
+      .filter((reminder): reminder is DashboardReminder => reminder !== null),
+    ...informationalInterviews.flatMap((interview) =>
+      interviewReminders(interview, today),
+    ),
   ]);
-
-  const todayStart = startOfUtcDay(today).getTime();
-  const inSevenDays = todayStart + 7 * 86_400_000;
-  const dueThisWeek = reminders.filter((reminder) => {
-    if (!reminder.due) return false;
-    const due = new Date(`${reminder.due}T00:00:00Z`).getTime();
-    return due >= todayStart && due <= inSevenDays;
-  }).length;
+  const dueThisWeek = reminders.filter((reminder) => reminder.priority === "Soon").length;
 
   return {
     metrics: {
-      activeApplications: statuses.filter((status) => activeStatuses.has(status)).length,
-      interviews: statuses.filter((status) => status === "INTERVIEW").length,
-      offers: statuses.filter((status) => status === "OFFER").length,
+      activeApplications:
+        applicationMetrics?.activeApplications ??
+        statuses.filter((status) => activeStatuses.has(status)).length,
+
+      interviews:
+        applicationMetrics?.interviews ??
+        statuses.filter((status) => status === "INTERVIEW").length,
+
+      offers:
+        applicationMetrics?.offers ??
+        statuses.filter((status) => status === "OFFER").length,
+
       responseRate: submittedApplications
         ? Math.round((respondedApplications / submittedApplications) * 100)
         : 0,

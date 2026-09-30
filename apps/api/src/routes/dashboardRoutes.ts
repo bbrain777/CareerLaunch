@@ -9,18 +9,25 @@ import { applicationRepository } from "../repositories/applicationRepository.js"
 import { contactRepository } from "../repositories/contactRepository.js";
 import { taskRepository } from "../repositories/taskRepository.js";
 import { informationalInterviewRepository } from "../repositories/informationalInterviewRepository.js";
-
+import { dashboardRepository } from "../repositories/dashboardRepository.js";
 export const dashboardRouter = Router();
 
 dashboardRouter.use(requireAuth);
 
 dashboardRouter.get("/", async (request: AuthRequest, response) => {
   const userId = authenticatedUserId(request)!;
-  const [applications, contacts, tasks, informationalInterviews] = await Promise.all([
+  const [
+    applications,
+    contacts,
+    tasks,
+    informationalInterviews,
+    applicationMetrics,
+  ] = await Promise.all([
     applicationRepository.findAllByUserId(userId),
     contactRepository.findAllByUserId(userId),
     taskRepository.findAllByUserId(userId),
     informationalInterviewRepository.findAllByUserId(userId),
+    dashboardRepository.getApplicationMetrics(userId),
   ]);
 
   response.json(buildDashboardData({
@@ -28,5 +35,6 @@ dashboardRouter.get("/", async (request: AuthRequest, response) => {
     contacts,
     tasks,
     informationalInterviews: informationalInterviews as any,
+    applicationMetrics,
   }));
 });
