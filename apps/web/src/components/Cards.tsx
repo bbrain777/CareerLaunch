@@ -63,10 +63,10 @@ export function ApplicationCard({
         <button
           type="button"
           className="rounded-lg bg-gray-100 group-hover:bg-[#0a5c4d] group-hover:text-white px-3 py-1 text-xs font-medium text-gray-700 transition-all cursor-pointer border-0"
-          aria-label={"Open " + application.position}
+          aria-label={"View " + application.position}
           onClick={onOpen ?? (() => window.location.assign("/applications"))}
         >
-          Open
+          View
         </button>
       </div>
     </article>

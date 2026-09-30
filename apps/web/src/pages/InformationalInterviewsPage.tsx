@@ -9,6 +9,13 @@ import {
   useEmployersQuery, useInterviewsQuery, useUpdateInterviewMutation,
 } from "../hooks/queries";
 import type { Contact, Employer, InformationalInterview, InformationalInterviewInput } from "../types";
+import {
+  PREP_QUESTION_MAX,
+  PREP_QUESTION_MIN,
+  filterInterviews,
+  parsePreparationQuestions,
+  validatePreparationQuestions,
+} from "./informationalInterviewHelpers";
 
 type EditorState = { mode: "create" } | { mode: "edit"; interview: InformationalInterview };
 
@@ -18,8 +25,16 @@ const statusOptions = {
   Completed: "Completed",
 };
 
+const fullDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
 export function InformationalInterviewsPage() {
-  const { data: interviews = [], isLoading: loading } = useInterviewsQuery();
+  const {
+    data: interviews = [],
+    isLoading: loading,
+    isError: interviewsError,
+    error: interviewsErrorDetail,
+    refetch: refetchInterviews,
+  } = useInterviewsQuery();
   const { data: contacts = [] } = useContactsQuery();
   const { data: employers = [] } = useEmployersQuery();
   const createInterview = useCreateInterviewMutation();
@@ -29,6 +44,7 @@ export function InformationalInterviewsPage() {
   const [companyFilter, setCompanyFilter] = useState("All");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [editorKey, setEditorKey] = useState(0);
+  const [detail, setDetail] = useState<InformationalInterview | null>(null);
 
   const companies = useMemo(() => {
     const set = new Set<string>();
@@ -38,19 +54,10 @@ export function InformationalInterviewsPage() {
     return Array.from(set).sort();
   }, [interviews]);
 
-  const filteredInterviews = useMemo(() => {
-    let result = interviews;
-    if (companyFilter !== "All") result = result.filter((interview) => interview.company === companyFilter);
-    const search = query.trim().toLowerCase();
-    if (search) {
-      result = result.filter((interview) =>
-        [interview.contactName, interview.company, interview.role, interview.status,
-          interview.keyTakeaway, interview.scheduledFor]
-          .filter(Boolean).join(" ").toLowerCase().includes(search)
-      );
-    }
-    return result;
-  }, [interviews, query, companyFilter]);
+  const filteredInterviews = useMemo(
+    () => filterInterviews(interviews, query, companyFilter),
+    [interviews, query, companyFilter],
+  );
 
   function openCreate() {
     setEditor({ mode: "create" });
@@ -58,6 +65,7 @@ export function InformationalInterviewsPage() {
   }
 
   function openEdit(interview: InformationalInterview) {
+    setDetail(null);
     setEditor({ mode: "edit", interview });
     setEditorKey((key) => key + 1);
   }
@@ -97,7 +105,14 @@ export function InformationalInterviewsPage() {
         } : undefined}
       />
 
-      <section className="min-w-0 rounded-2xl bg-white p-4 sm:p-6">
+      <InterviewDetail
+        interview={detail}
+        open={detail !== null}
+        onOpenChange={(open) => { if (!open) setDetail(null); }}
+        onEdit={detail ? () => openEdit(detail) : undefined}
+      />
+
+      <section className="min-w-0 rounded-2xl bg-white p-4 sm:p-6" aria-label="Informational interviews">
         <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="w-full sm:w-[220px] sm:flex-none">
             <Select
@@ -125,8 +140,22 @@ export function InformationalInterviewsPage() {
           </label>
         </div>
 
-        {loading ? (
-          <div className="page-loading"><span className="page-loader" aria-hidden="true" /><span>Loading interviews</span></div>
+        {interviewsError && !loading ? (
+          <div className="rounded-xl bg-red-50 px-4 py-5 text-center" role="alert">
+            <p className="text-sm font-medium text-red-700">Couldn&apos;t load informational interviews.</p>
+            <p className="mt-1 text-xs text-red-600">
+              {interviewsErrorDetail instanceof Error ? interviewsErrorDetail.message : "The API request failed."}
+            </p>
+            <button
+              type="button"
+              className="mt-3 h-9 rounded-xl bg-red-600 px-4 text-xs font-medium text-white hover:bg-red-700"
+              onClick={() => { void refetchInterviews(); }}
+            >
+              Retry
+            </button>
+          </div>
+        ) : loading ? (
+          <div className="page-loading" role="status" aria-live="polite"><span className="page-loader" aria-hidden="true" /><span>Loading interviews</span></div>
         ) : filteredInterviews.length ? (
           <div className="w-full overflow-x-auto pb-2">
             <Table className="min-w-[760px]">
@@ -136,29 +165,115 @@ export function InformationalInterviewsPage() {
                 <Table.Head className="min-w-[120px]">Date</Table.Head>
                 <Table.Head className="min-w-[100px]">Status</Table.Head>
                 <Table.Head className="min-w-[160px]">Next action</Table.Head>
-                <Table.Head className="min-w-[80px] text-right">Actions</Table.Head>
+                <Table.Head className="min-w-[140px] text-right">Actions</Table.Head>
               </Table.Row></Table.Header>
               <Table.Body>
                 {filteredInterviews.map((interview) => (
                   <Table.Row key={interview.id}>
                     <Table.Cell className="font-medium text-gray-900">{interview.contactName}</Table.Cell>
                     <Table.Cell>{interview.role} {interview.company ? `at ${interview.company}` : ""}</Table.Cell>
-                    <Table.Cell>{new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(interview.scheduledFor))}</Table.Cell>
+                    <Table.Cell>{fullDate.format(new Date(interview.scheduledFor))}</Table.Cell>
                     <Table.Cell>{interview.status}</Table.Cell>
                     <Table.Cell className="max-w-xs truncate">{interview.recommendedAction || interview.keyTakeaway || "—"}</Table.Cell>
                     <Table.Cell className="text-right">
-                      <button type="button" className="rounded-[6px] border-0 bg-[#e6f6f2] px-2.5 py-1 text-[14px] font-medium text-[#0a5c4d] hover:bg-[#cceee5]" aria-label={`Edit interview with ${interview.contactName}`} onClick={() => openEdit(interview)}>Edit</button>
+                      <span className="inline-flex justify-end gap-2">
+                        <button type="button" className="rounded-[6px] border border-gray-200 bg-white px-2.5 py-1 text-[14px] font-medium text-gray-700 hover:bg-gray-100" aria-label={`View interview with ${interview.contactName}`} onClick={() => setDetail(interview)}>View</button>
+                        <button type="button" className="rounded-[6px] border-0 bg-[#e6f6f2] px-2.5 py-1 text-[14px] font-medium text-[#0a5c4d] hover:bg-[#cceee5]" aria-label={`Edit interview with ${interview.contactName}`} onClick={() => openEdit(interview)}>Edit</button>
+                      </span>
                     </Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>
             </Table>
           </div>
+        ) : interviews.length === 0 ? (
+          <div className="px-4 py-12 text-center">
+            <p className="text-sm font-medium text-gray-900">No informational interviews recorded yet.</p>
+            <p className="mt-1 text-sm text-gray-500">Add your first conversation to start tracking preparation and follow-ups.</p>
+          </div>
         ) : (
           <p className="px-4 py-12 text-center text-sm text-gray-500">No informational interviews match your search.</p>
         )}
       </section>
     </>
+  );
+}
+
+function InterviewDetail({ interview, open, onOpenChange, onEdit }: {
+  interview: InformationalInterview | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
+}) {
+  return (
+    <DialogRoot open={open} onOpenChange={onOpenChange}>
+      <Dialog size="xl" className="max-h-[85vh] overflow-y-auto px-6 py-5">
+        <DialogTitle className="text-lg font-semibold text-kumo-strong">
+          {interview ? `Conversation with ${interview.contactName}` : "Interview details"}
+        </DialogTitle>
+        <DialogDescription className="mt-0.5 text-xs text-kumo-subtle">
+          {interview ? `${interview.role}${interview.company ? ` at ${interview.company}` : ""} · ${interview.status}` : "Interview details."}
+        </DialogDescription>
+        {interview && (
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <dl className="contents">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Contact</dt>
+                <dd className="mt-0.5 text-sm font-medium text-gray-900">{interview.contactName}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Status</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{interview.status}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Role and company research</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{interview.role}{interview.company ? ` at ${interview.company}` : ""}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Interview date</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{fullDate.format(new Date(interview.scheduledFor))}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Thank-you status</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{interview.thankYouSent ? "Sent" : "Pending"}</dd>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <dt className="text-xs font-medium text-gray-500">Follow-up date</dt>
+                <dd className="mt-0.5 text-sm text-gray-900">{interview.nextFollowUp ?? "Not scheduled"}</dd>
+              </div>
+            </dl>
+            <section className="sm:col-span-2" aria-label="Preparation questions">
+              <h3 className="text-sm font-semibold text-gray-900">Preparation questions ({interview.preparationQuestions.length})</h3>
+              {interview.preparationQuestions.length ? (
+                <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-gray-700">
+                  {interview.preparationQuestions.map((question, index) => (
+                    <li key={`${index}-${question}`}>{question}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-1 text-sm text-gray-500">No preparation questions recorded.</p>
+              )}
+            </section>
+            <section aria-label="Interview notes">
+              <h3 className="text-sm font-semibold text-gray-900">Key takeaway</h3>
+              <p className="mt-1 text-sm text-gray-700">{interview.keyTakeaway || "—"}</p>
+            </section>
+            <section aria-label="Recommended next step">
+              <h3 className="text-sm font-semibold text-gray-900">Recommended action</h3>
+              <p className="mt-1 text-sm text-gray-700">{interview.recommendedAction || "—"}</p>
+            </section>
+            <section className="sm:col-span-2" aria-label="Referrals and contacts">
+              <h3 className="text-sm font-semibold text-gray-900">Referral</h3>
+              <p className="mt-1 text-sm text-gray-700">{interview.referral || "—"}</p>
+            </section>
+          </div>
+        )}
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Close</button>
+          {onEdit && <button type="button" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b]" onClick={onEdit}>Edit interview</button>}
+        </div>
+      </Dialog>
+    </DialogRoot>
   );
 }
 
@@ -181,6 +296,7 @@ function InterviewEditor({ interview, contacts, employers, open, saving, deletin
   const [scheduledFor, setScheduledFor] = useState(interview?.scheduledFor?.slice(0, 10) ?? "");
   const [status, setStatus] = useState<InformationalInterviewInput["status"]>(interview?.status ?? "Preparing");
   const [questions, setQuestions] = useState(interview?.preparationQuestions.join("\n") ?? "");
+  const [questionsTouched, setQuestionsTouched] = useState(false);
   const [keyTakeaway, setKeyTakeaway] = useState(interview?.keyTakeaway ?? "");
   const [recommendedAction, setRecommendedAction] = useState(interview?.recommendedAction ?? "");
   const [referral, setReferral] = useState(interview?.referral ?? "");
@@ -194,6 +310,10 @@ function InterviewEditor({ interview, contacts, employers, open, saving, deletin
       [contact.firstName, contact.lastName].filter(Boolean).join(" ")])),
   }), [contacts]);
 
+  const parsedQuestions = useMemo(() => parsePreparationQuestions(questions), [questions]);
+  const questionsError = (questionsTouched || interview) ? validatePreparationQuestions(parsedQuestions) : null;
+  const questionsErrorId = "interview-questions-error";
+
   function selectContact(value: string) {
     setContactId(value);
     if (value === "none") return;
@@ -206,11 +326,14 @@ function InterviewEditor({ interview, contacts, employers, open, saving, deletin
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setQuestionsTouched(true);
+    const validationError = validatePreparationQuestions(parsedQuestions);
+    if (validationError) return;
     try {
       await onSave({
         contactName: contactName.trim(), role: role.trim(), company: company.trim() || null,
         scheduledFor, status,
-        preparationQuestions: questions.split("\n").map((question) => question.trim()).filter(Boolean),
+        preparationQuestions: parsedQuestions,
         keyTakeaway: keyTakeaway.trim() || null,
         recommendedAction: recommendedAction.trim() || null,
         referral: referral.trim() || null,
@@ -223,10 +346,10 @@ function InterviewEditor({ interview, contacts, employers, open, saving, deletin
   return (
     <>
       <DialogRoot open={open} onOpenChange={onOpenChange}>
-        <Dialog size="xl" className="px-6 py-5">
+        <Dialog size="xl" className="max-h-[85vh] overflow-y-auto px-6 py-5">
           <DialogTitle className="text-lg font-semibold text-kumo-strong">{interview ? "Edit informational interview" : "Add informational interview"}</DialogTitle>
           <DialogDescription className="mt-0.5 text-xs text-kumo-subtle">Plan the conversation, capture outcomes, and schedule the next follow-up.</DialogDescription>
-          <form className="mt-4" onSubmit={handleSubmit}>
+          <form className="mt-4" onSubmit={handleSubmit} noValidate={false}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Select label="Linked contact" className="w-full" value={contactId} onValueChange={(value) => value && selectContact(value)} items={contactOptions} />
               <Field label="Contact name" required><Input value={contactName} onChange={(event) => setContactName(event.target.value)} required /></Field>
@@ -239,7 +362,20 @@ function InterviewEditor({ interview, contacts, employers, open, saving, deletin
                 <input type="checkbox" checked={thankYouSent} onChange={(event) => setThankYouSent(event.target.checked)} className="size-4 accent-[#0a5c4d]" />
                 Thank-you message sent
               </label>
-              <div className="md:col-span-2"><Field label="Preparation questions (one per line)"><InputArea rows={3} value={questions} onChange={(event) => setQuestions(event.target.value)} /></Field></div>
+              <div className="md:col-span-2">
+                <Field label={`Preparation questions (one per line, ${PREP_QUESTION_MIN} to ${PREP_QUESTION_MAX})`}>
+                  <InputArea
+                    rows={3}
+                    value={questions}
+                    onChange={(event) => { setQuestions(event.target.value); setQuestionsTouched(true); }}
+                    onBlur={() => setQuestionsTouched(true)}
+                    aria-invalid={Boolean(questionsError)}
+                    aria-describedby={questionsError ? questionsErrorId : "interview-questions-count"}
+                  />
+                </Field>
+                <p id="interview-questions-count" className="mt-1 text-xs text-gray-500">{parsedQuestions.length} of {PREP_QUESTION_MIN}–{PREP_QUESTION_MAX} questions added</p>
+                {questionsError && <p id={questionsErrorId} role="alert" className="mt-1 text-xs font-medium text-red-600">{questionsError}</p>}
+              </div>
               <Field label="Key takeaway"><InputArea rows={3} value={keyTakeaway} onChange={(event) => setKeyTakeaway(event.target.value)} /></Field>
               <Field label="Recommended action"><InputArea rows={3} value={recommendedAction} onChange={(event) => setRecommendedAction(event.target.value)} /></Field>
               <div className="md:col-span-2"><Field label="Referral"><Input value={referral} onChange={(event) => setReferral(event.target.value)} /></Field></div>
