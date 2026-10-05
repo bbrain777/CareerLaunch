@@ -81,12 +81,18 @@ describe("Authentication API", () => {
       .send({
         name: "Updated User",
         email: updatedEmail,
+        currentRole: "Student",
+        targetRole: "Backend Engineer",
+        weeklyGoal: 8,
       });
 
     expect(response.status).toBe(200);
     expect(response.body.user).toMatchObject({
       name: "Updated User",
       email: updatedEmail,
+      currentRole: "Student",
+      targetRole: "Backend Engineer",
+      weeklyGoal: 8,
     });
 
     expect(response.body.user.password).toBeUndefined();
@@ -96,6 +102,11 @@ describe("Authentication API", () => {
       .set("Authorization", `Bearer ${authToken}`);
 
     expect(profile.body.user.email).toBe(updatedEmail);
+    expect(profile.body.user).toMatchObject({
+      currentRole: "Student",
+      targetRole: "Backend Engineer",
+      weeklyGoal: 8,
+    });
   });
 
   it("rejects profile updates without authentication", async () => {

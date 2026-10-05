@@ -42,6 +42,9 @@ function databaseUserToStored(user: Record<string, any>): StoredUser {
     email: String(user.email),
     name: [user.firstName, user.lastName].filter(Boolean).join(" "),
     password: String(user.passwordHash),
+    currentRole: user.currentRole == null ? undefined : String(user.currentRole),
+    targetRole: user.targetRole == null ? undefined : String(user.targetRole),
+    weeklyGoal: user.weeklyGoal == null ? undefined : Number(user.weeklyGoal),
   };
 }
 
@@ -90,24 +93,46 @@ async function createUser(input: {
     firstName,
     lastName,
     role: "STUDENT",
+    targetRole: input.targetRole,
+    weeklyGoal: 5,
   });
   return databaseUserToStored(user);
 }
 
 async function updateStoredUser(
   user: StoredUser,
-  input: { name: string; email: string },
+  input: {
+    name: string;
+    email: string;
+    currentRole?: string;
+    targetRole?: string;
+    weeklyGoal?: number;
+  },
 ): Promise<StoredUser> {
+  const currentRole = input.currentRole ?? user.currentRole;
+  const targetRole = input.targetRole ?? user.targetRole;
+  const weeklyGoal = input.weeklyGoal ?? user.weeklyGoal ?? 5;
+
   if (!usesDatabase()) {
     user.name = input.name;
     user.email = input.email;
+    user.currentRole = currentRole;
+    user.targetRole = targetRole;
+    user.weeklyGoal = weeklyGoal;
     return user;
   }
 
   const { firstName, lastName } = splitName(input.name);
   const updated = await getDb().orm.public.User
     .where({ id: user.id })
-    .update({ email: input.email, firstName, lastName });
+    .update({
+      email: input.email,
+      firstName,
+      lastName,
+      currentRole: currentRole ?? null,
+      targetRole: targetRole ?? null,
+      weeklyGoal,
+    });
 
   if (!updated) {
     throw new Error("Authenticated user no longer exists");
@@ -244,12 +269,13 @@ authRouter.put("/profile", requireAuth, async (req: AuthRequest, res) => {
   user = await updateStoredUser(user, {
     name: name.trim(),
     email: normalizedEmail,
+    currentRole: typeof currentRole === "string" ? currentRole.trim() : undefined,
+    targetRole: typeof targetRole === "string" ? targetRole.trim() : undefined,
+    weeklyGoal:
+      typeof weeklyGoal === "number" && Number.isInteger(weeklyGoal) && weeklyGoal > 0
+        ? weeklyGoal
+        : undefined,
   });
-  user.currentRole = typeof currentRole === "string" ? currentRole.trim() : undefined;
-  user.targetRole = typeof targetRole === "string" ? targetRole.trim() : undefined;
-  if (typeof weeklyGoal === "number" && Number.isInteger(weeklyGoal) && weeklyGoal > 0) {
-    user.weeklyGoal = weeklyGoal;
-  }
 
   res.status(200).json({ message: "Profile updated successfully", user: publicUser(user) });
 });
