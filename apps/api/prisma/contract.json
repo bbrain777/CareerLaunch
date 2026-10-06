@@ -16,6 +16,10 @@
       "model": "Employer",
       "namespace": "public"
     },
+    "expense": {
+      "model": "Expense",
+      "namespace": "public"
+    },
     "informationalInterview": {
       "model": "InformationalInterview",
       "namespace": "public"
@@ -59,6 +63,27 @@
               {
                 "name": "CLOSED",
                 "value": "CLOSED"
+              }
+            ]
+          },
+          "ExpenseCategory": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "TRAVEL",
+                "value": "TRAVEL"
+              },
+              {
+                "name": "PRINTING",
+                "value": "PRINTING"
+              },
+              {
+                "name": "TRAINING",
+                "value": "TRAINING"
+              },
+              {
+                "name": "PROFESSIONAL_SERVICES",
+                "value": "PROFESSIONAL_SERVICES"
               }
             ]
           },
@@ -237,6 +262,21 @@
                 },
                 "to": {
                   "model": "Employer",
+                  "namespace": "public"
+                }
+              },
+              "expenses": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "applicationId"
+                  ]
+                },
+                "to": {
+                  "model": "Expense",
                   "namespace": "public"
                 }
               },
@@ -683,6 +723,146 @@
               },
               "namespaceId": "public",
               "table": "employer"
+            }
+          },
+          "Expense": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "applicationId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "category": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ExpenseCategory",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "date": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "application": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "applicationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Application",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "applicationId": {
+                  "column": "applicationId"
+                },
+                "category": {
+                  "column": "category"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "date": {
+                  "column": "date"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "expense"
             }
           },
           "InformationalInterview": {
@@ -1173,6 +1353,21 @@
                   "namespace": "public"
                 }
               },
+              "expenses": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Expense",
+                  "namespace": "public"
+                }
+              },
               "informationalInterviews": {
                 "cardinality": "1:N",
                 "on": {
@@ -1652,6 +1847,136 @@
               },
               "uniques": []
             },
+            "expense": {
+              "checks": [
+                {
+                  "expression": "\"category\" IN ('TRAVEL', 'PRINTING', 'TRAINING', 'PROFESSIONAL_SERVICES')",
+                  "name": "expense_category_check_5ab8d097",
+                  "prefix": "expense_category_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": false
+                },
+                "applicationId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "category": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ExpenseCategory",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "date": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "expense"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "applicationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "expense"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "application"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "applicationId"
+                  ],
+                  "name": "expense_applicationId_idx_8158f91a",
+                  "prefix": "expense_applicationId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "expense_userId_idx_a489d58a",
+                  "prefix": "expense_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "informationalInterview": {
               "checks": [
                 {
@@ -2091,6 +2416,15 @@
                 "CLOSED"
               ]
             },
+            "ExpenseCategory": {
+              "kind": "valueSet",
+              "values": [
+                "TRAVEL",
+                "PRINTING",
+                "TRAINING",
+                "PROFESSIONAL_SERVICES"
+              ]
+            },
             "InformationalInterviewStatus": {
               "kind": "valueSet",
               "values": [
@@ -2119,10 +2453,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "94a2e0a292af29cba394fe3f83495274f8841a782b336256c8e46a692fa97644"
+    "storageHash": "0f1e0fbc228b248cc6d4f4637a418e2a10313464833368cc185e792f24edfc46"
   },
   "execution": {
-    "executionHash": "bf84ef6e39f51e239e8018af09b9dff84e9bfd8cb795b30913c9dd8cc216bba5",
+    "executionHash": "73dd6059333b41439975ab543dcf5a492f730de4fd7dd981ce0b6b7d3f8592bd",
     "mutations": {
       "defaults": [
         {
@@ -2168,6 +2502,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "employer"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "expense"
           }
         },
         {

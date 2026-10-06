@@ -24,6 +24,13 @@ enum InformationalInterviewStatus {
   COMPLETED
 }
 
+enum ExpenseCategory {
+  TRAVEL
+  PRINTING
+  TRAINING
+  PROFESSIONAL_SERVICES
+}
+
 model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
@@ -38,6 +45,7 @@ model User {
   employers               Employer[]
   tasks                   Task[]
   informationalInterviews InformationalInterview[]
+  expenses                Expense[]
 
   @@map("user")
 }
@@ -86,11 +94,11 @@ model Contact {
 }
 
 model Application {
-  id         Int                  @id @default(autoincrement())
+  id         Int                @id @default(autoincrement())
   company    String
   position   String
   location   String?
-  status     ApplicationStatus    @default(SAVED)
+  status     ApplicationStatus  @default(SAVED)
   deadline   DateTime?
   appliedAt  DateTime?
   notes      String?
@@ -99,33 +107,34 @@ model Application {
   employerId Int?
   contactId  Int?
 
-  user       User                 @relation(fields:[userId], references:[id], onDelete: Cascade)
-  employer   Employer?            @relation(fields:[employerId], references:[id], onDelete: SetNull)
-  contact    Contact?             @relation(fields:[contactId], references:[id], onDelete: SetNull)
+  user       User               @relation(fields:[userId], references:[id], onDelete: Cascade)
+  employer   Employer?          @relation(fields:[employerId], references:[id], onDelete: SetNull)
+  contact    Contact?           @relation(fields:[contactId], references:[id], onDelete: SetNull)
   tasks      Task[]
+  expenses   Expense[]
 
-  createdAt  DateTime             @default(now())
+  createdAt  DateTime           @default(now())
   updatedAt  temporal.updatedAt()
 
   @@map("application")
 }
 
 model Task {
-  id            Int                  @id @default(autoincrement())
+  id            Int                @id @default(autoincrement())
   title         String
   description   String?
   dueDate       DateTime?
-  status        TaskStatus           @default(PENDING)
+  status        TaskStatus         @default(PENDING)
 
   userId        Int
   applicationId Int?
   contactId     Int?
 
-  user          User                 @relation(fields:[userId], references:[id], onDelete: Cascade)
-  application   Application?         @relation(fields:[applicationId], references:[id], onDelete: Cascade)
-  contact       Contact?             @relation(fields:[contactId], references:[id], onDelete: SetNull)
+  user          User               @relation(fields:[userId], references:[id], onDelete: Cascade)
+  application   Application?       @relation(fields:[applicationId], references:[id], onDelete: Cascade)
+  contact       Contact?           @relation(fields:[contactId], references:[id], onDelete: SetNull)
 
-  createdAt     DateTime             @default(now())
+  createdAt     DateTime           @default(now())
   updatedAt     temporal.updatedAt()
 
   @@map("task")
@@ -155,4 +164,23 @@ model InformationalInterview {
   updatedAt            temporal.updatedAt()
 
   @@map("informationalInterview")
+}
+
+model Expense {
+  id            Int             @id @default(autoincrement())
+  amount        Float           
+  category      ExpenseCategory 
+  date          DateTime
+  description   String
+
+  userId        Int
+  applicationId Int?
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application   Application?    @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     temporal.updatedAt()
+
+  @@map("expense")
 }
