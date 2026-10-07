@@ -44,3 +44,20 @@ export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction)
     return;
   }
 };
+
+export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  // 1. Ensure the user object exists (which means requireAuth ran first successfully)
+  if (!req.user || typeof req.user === "string") {
+    res.status(401).json({ message: "Unauthorized: User context missing" });
+    return;
+  }
+
+  // 2. Check for the ADMIN role
+  if (req.user.role !== "ADMIN") {
+    res.status(403).json({ message: "Forbidden: Administrator privileges required" });
+    return;
+  }
+
+  // 3. User is an admin, let them proceed
+  next();
+};
