@@ -10,6 +10,7 @@
     "test": "vitest run",
     "db:migrate": "npx prisma db migrate",
     "db:seed": "tsx src/seed.ts",
+    "db:seed:user-demo": "tsx src/seed-user-demo.ts",
     "db:reset": "npx prisma db migrate && tsx src/seed.ts"
   },
   "dependencies": {
