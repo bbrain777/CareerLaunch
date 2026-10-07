@@ -279,3 +279,23 @@ authRouter.put("/profile", requireAuth, async (req: AuthRequest, res) => {
 
   res.status(200).json({ message: "Profile updated successfully", user: publicUser(user) });
 });
+
+// 5. Refresh Token Endpoint
+authRouter.post("/refresh", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = authenticatedUserId(req);
+    const user = await findUserById(userId);
+
+    if (!user) {
+      res.status(401).json({ message: "Invalid session user" });
+      return;
+    }
+
+    // Generate a fresh session token for the user
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "1h" });
+
+    res.status(200).json({ message: "Token refreshed successfully", token, user: publicUser(user) });
+  } catch (error) {
+    res.status(500).json({ message: "Server error during token refresh" });
+  }
+});
