@@ -66,8 +66,8 @@ describe("ExpenseTrackingPage", () => {
     const searchInput = screen.getAllByPlaceholderText("Search description...")[0];
     fireEvent.change(searchInput, { target: { value: "Uber" } });
 
-    // The flight should disappear and empty state should show
-    expect(screen.queryByText("Conference Flight")).not.toBeInTheDocument();
+    // Safely assert that all instances of the filtered-out text are gone
+    expect(screen.queryAllByText("Conference Flight")).toHaveLength(0);
     expect(screen.getByText(/No expenses match your criteria/i)).toBeInTheDocument();
   });
 });
