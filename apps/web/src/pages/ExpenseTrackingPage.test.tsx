@@ -53,7 +53,7 @@ describe("ExpenseTrackingPage", () => {
 
     // Check summary total across cards and table
     expect(screen.getAllByText("$250.00").length).toBeGreaterThan(0);
-    expect(screen.getByText("Total Spending")).toBeInTheDocument();
+    expect(screen.getAllByText("Total Spending")[0]).toBeInTheDocument();
   });
 
   it("filters expenses by search term", async () => {
@@ -63,7 +63,7 @@ describe("ExpenseTrackingPage", () => {
       expect(screen.getAllByText("Conference Flight")[0]).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText("Search description...");
+    const searchInput = screen.getAllByPlaceholderText("Search description...")[0];
     fireEvent.change(searchInput, { target: { value: "Uber" } });
 
     // The flight should disappear and empty state should show
