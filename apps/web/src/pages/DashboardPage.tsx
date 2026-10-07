@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button, ButtonGroup, DropdownMenu } from "@cloudflare/kumo";
 import { CaretDownIcon } from "@phosphor-icons/react";
@@ -87,15 +87,35 @@ function taskIconClass(type: string): string {
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardQuery();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  // Expense Summary State
+  const [expenseSummary, setExpenseSummary] = useState<{ total: number; byCategory: Record<string, number> } | null>(null);
+  const [expensesLoading, setExpensesLoading] = useState(true);
 
   const dashboard = dashboardData ?? fallbackData;
   const data: DashboardData = dashboard;
   const loading = dashboardLoading;
   const firstName = user?.name ? user.name.split(" ")[0] : "there";
+
+  useEffect(() => {
+    if (!token) return;
+    fetch("/api/expenses/summary", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setExpenseSummary(data);
+        setExpensesLoading(false);
+      })
+      .catch(e => {
+        console.error("Failed to load expenses", e);
+        setExpensesLoading(false);
+      });
+  }, [token]);
 
   const filteredApplications = useMemo(() => {
     let result = data.applications;
@@ -165,6 +185,9 @@ export function DashboardPage() {
                 </DropdownMenu.Item>
                 <DropdownMenu.Item onClick={() => navigate({ to: "/informational-interviews" })}>
                   Interview
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onClick={() => navigate({ to: "/expenses" })}>
+                  Expense
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu>
@@ -422,6 +445,45 @@ export function DashboardPage() {
               <p className="px-4 py-12 text-center text-sm text-gray-500">No informational interviews recorded yet.</p>
             )}
           </section>
+
+          {/* New Expense Tracking Summary Widget */}
+          <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" id="expense-tracking">
+            <div className="mb-[18px] flex items-center justify-between gap-4">
+              <div>
+                <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Financial overview</span>
+                <h2>Expense Tracking</h2>
+              </div>
+              <Link to="/expenses" className="inline-flex items-center rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-[#0a5c4d]/10">
+                Details
+              </Link>
+            </div>
+            {expensesLoading ? (
+              <p className="mt-1 mb-3 text-sm text-gray-500">Loading expenses…</p>
+            ) : expenseSummary ? (
+              <div className="rounded-xl bg-gray-50 p-4">
+                 <div className="text-center mb-4">
+                   <span className="text-[11px] font-medium text-gray-500 uppercase">Total Spent</span>
+                   <div className="text-2xl font-bold text-gray-900">${expenseSummary.total.toFixed(2)}</div>
+                 </div>
+                 {Object.keys(expenseSummary.byCategory).length > 0 && (
+                   <div className="space-y-2 mt-4 pt-4 border-t border-gray-200">
+                     {Object.entries(expenseSummary.byCategory).map(([cat, amt]) => (
+                       <div key={cat} className="flex justify-between text-xs">
+                         <span className="text-gray-600">{cat.replace("_", " ")}</span>
+                         <span className="font-semibold">${Number(amt).toFixed(2)}</span>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+                 <Link to="/expenses" className="mt-4 flex w-full h-8 items-center justify-center rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 no-underline hover:bg-gray-50 transition-colors">
+                   Log an expense
+                 </Link>
+              </div>
+            ) : (
+              <p className="mt-1 mb-3 text-sm text-gray-700">No expenses logged yet.</p>
+            )}
+          </section>
+
         </div>
       </div>
     </>

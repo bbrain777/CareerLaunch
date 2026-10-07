@@ -1,6 +1,15 @@
 import { ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home01Icon, Briefcase01Icon, UserSquareIcon, UserIcon, Logout01Icon, Building01Icon, Contact01Icon } from "hugeicons-react";
+import { 
+  Home01Icon, 
+  Briefcase01Icon, 
+  UserSquareIcon, 
+  UserIcon, 
+  Logout01Icon, 
+  Building01Icon, 
+  Contact01Icon,
+  Wallet01Icon 
+} from "hugeicons-react";
 import { CaretUpDownIcon } from "@phosphor-icons/react";
 import {
   SidebarProvider,
@@ -102,6 +111,16 @@ export function SidebarLayout({ children }: SidebarProps) {
                   Interviews
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  icon={Wallet01Icon}
+                  isActive={currentPath === "/expenses"}
+                  render={<Link to="/expenses" />}
+                >
+                  Expenses
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
@@ -193,6 +212,10 @@ export function SidebarLayout({ children }: SidebarProps) {
         <Link to="/informational-interviews" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/informational-interviews" ? "text-white font-semibold" : "hover:text-white"}`}>
           <UserSquareIcon size={19} />
           <span>Interviews</span>
+        </Link>
+        <Link to="/expenses" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/expenses" ? "text-white font-semibold" : "hover:text-white"}`}>
+          <Wallet01Icon size={19} />
+          <span>Expenses</span>
         </Link>
         <Link to="/profile" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/profile" ? "text-white font-semibold" : "hover:text-white"}`}>
           <UserIcon size={19} />

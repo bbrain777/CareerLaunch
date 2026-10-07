@@ -12,6 +12,7 @@ import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { EmployersPage } from "./pages/EmployersPage";
 import { ContactsPage } from "./pages/ContactsPage";
 import { InformationalInterviewsPage } from "./pages/InformationalInterviewsPage";
+import { ExpenseTrackingPage } from "./pages/ExpenseTrackingPage";
 
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
@@ -111,6 +112,12 @@ const profileRoute = createRoute({
   component: ProfilePage
 });
 
+const expensesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/expenses",
+  component: ExpenseTrackingPage
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   applicationsRoute,
@@ -118,6 +125,7 @@ const routeTree = rootRoute.addChildren([
   contactsRoute,
   interviewsRoute,
   profileRoute,
+  expensesRoute,
   loginRoute,
   signupRoute
 ]);
@@ -129,4 +137,3 @@ declare module "@tanstack/react-router" {
     router: typeof router;
   }
 }
-
