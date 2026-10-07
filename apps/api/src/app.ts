@@ -10,6 +10,7 @@ import { employerRouter } from "./routes/employerRoutes.js";
 import { contactRouter } from "./routes/contactRoutes.js";
 import { dashboardRouter } from "./routes/dashboardRoutes.js";
 import { informationalInterviewRouter } from "./routes/informationalInterviewRoutes.js";
+import { expenseRouter } from "./routes/expenseRoutes.js";
 
 export const app = express();
 
@@ -23,6 +24,7 @@ app.use("/api/employers", employerRouter);
 app.use("/api/contacts", contactRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/informational-interviews", informationalInterviewRouter);
+app.use("/api/expenses", expenseRouter);
 
 app.get("/api/health", (_request, response) => {
   response.json({
