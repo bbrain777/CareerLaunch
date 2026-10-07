@@ -127,6 +127,42 @@ export interface InformationalInterviewInput {
   contactId?: number | null;
 }
 
+export interface CareerDocument {
+  id: number;
+  type: "RESUME" | "COVER_LETTER";
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
+  downloadUrl: string;
+}
+
+export type ExpenseCategory = "TRAVEL" | "PRINTING" | "TRAINING" | "PROFESSIONAL_SERVICES";
+
+export interface Expense {
+  id: number;
+  amount: number;
+  category: ExpenseCategory;
+  date: string;
+  description: string;
+  applicationId: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ExpenseInput {
+  amount: number;
+  category: ExpenseCategory;
+  date: string;
+  description: string;
+  applicationId: number | null;
+}
+
+export interface ExpenseSummary {
+  total: number;
+  byCategory: Partial<Record<ExpenseCategory, number>>;
+}
+
 export interface DashboardData {
   metrics: {
     activeApplications: number;

@@ -12,6 +12,10 @@ import type {
   InformationalInterview,
   InformationalInterviewInput,
   UpcomingTask,
+  CareerDocument,
+  Expense,
+  ExpenseInput,
+  ExpenseSummary,
 } from "../types";
 import type { AuthUser } from "../lib/auth";
 
@@ -24,7 +28,110 @@ export const queryKeys = {
   profile: ["profile"] as const,
   employers: ["employers"] as const,
   contacts: ["contacts"] as const,
+  documents: ["documents"] as const,
+  expenses: ["expenses"] as const,
+  expenseSummary: ["expenses", "summary"] as const,
 };
+
+export function useExpensesQuery() {
+  return useQuery({
+    queryKey: queryKeys.expenses,
+    queryFn: async () => {
+      const result = await api.get<{ expenses: Expense[] }>("/api/expenses");
+      return result.expenses;
+    },
+  });
+}
+
+export function useExpenseSummaryQuery() {
+  return useQuery({
+    queryKey: queryKeys.expenseSummary,
+    queryFn: async () => {
+      const result = await api.get<{ summary: ExpenseSummary }>("/api/expenses/summary");
+      return result.summary;
+    },
+  });
+}
+
+function invalidateExpenses(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.expenses });
+  queryClient.invalidateQueries({ queryKey: queryKeys.expenseSummary });
+}
+
+export function useCreateExpenseMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (expense: ExpenseInput) => api.post<{ expense: Expense }>("/api/expenses", expense),
+    onSuccess: () => {
+      invalidateExpenses(queryClient);
+      appToastManager.add({ title: "Expense saved", description: "The expense was added to your history.", variant: "success" });
+    },
+  });
+}
+
+export function useUpdateExpenseMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: number; changes: Partial<ExpenseInput> }) =>
+      api.patch<{ expense: Expense }>(`/api/expenses/${id}`, changes),
+    onSuccess: () => {
+      invalidateExpenses(queryClient);
+      appToastManager.add({ title: "Expense updated", description: "Your changes were saved.", variant: "success" });
+    },
+  });
+}
+
+export function useDeleteExpenseMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/api/expenses/${id}`),
+    onSuccess: () => {
+      invalidateExpenses(queryClient);
+      appToastManager.add({ title: "Expense deleted", description: "The expense was removed." });
+    },
+  });
+}
+
+export function useDocumentsQuery() {
+  return useQuery({
+    queryKey: queryKeys.documents,
+    queryFn: async () => {
+      const result = await api.get<{ documents: CareerDocument[] }>("/api/documents");
+      return result.documents;
+    },
+  });
+}
+
+export function useUploadDocumentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, type }: { file: File; type: CareerDocument["type"] }) => {
+      const form = new FormData();
+      form.append("type", type);
+      form.append("file", file);
+      return api.post<{ document: CareerDocument }>("/api/documents", form);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents });
+      appToastManager.add({
+        title: "Document uploaded",
+        description: `${data.document.fileName} is stored privately.`,
+        variant: "success",
+      });
+    },
+  });
+}
+
+export function useDeleteDocumentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/api/documents/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents });
+      appToastManager.add({ title: "Document deleted", description: "The private file was removed." });
+    },
+  });
+}
 
 // --- Queries ---
 

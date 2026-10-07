@@ -16,6 +16,8 @@ import { InformationalInterviewsPage } from "./pages/InformationalInterviewsPage
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { DocumentsPage } from "./pages/DocumentsPage";
+import { ExpenseTrackingPage } from "./pages/ExpenseTrackingPage";
 import { useAuth } from "./lib/auth";
 import { isPublicAuthPath, requiresLogin } from "./lib/auth-routing";
 
@@ -111,6 +113,18 @@ const profileRoute = createRoute({
   component: ProfilePage
 });
 
+const documentsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/documents",
+  component: DocumentsPage
+});
+
+const expensesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/expenses",
+  component: ExpenseTrackingPage
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   applicationsRoute,
@@ -118,6 +132,8 @@ const routeTree = rootRoute.addChildren([
   contactsRoute,
   interviewsRoute,
   profileRoute,
+  documentsRoute,
+  expensesRoute,
   loginRoute,
   signupRoute
 ]);

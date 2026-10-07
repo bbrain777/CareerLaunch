@@ -58,6 +58,15 @@ Application, employer, and contact endpoints require `Authorization: Bearer <tok
 
 The authenticated `GET /api/dashboard` endpoint returns one owner-scoped snapshot containing live application metrics, pipeline status counts, applications, informational interviews, and coordinated reminders. Reminders combine application deadlines, recruiter/contact follow-ups, interview preparation, thank-you notes, and pending action items. Dashboard data is refreshed after application or contact changes.
 
+### Resume and cover-letter storage
+
+Authenticated users can upload, download, list, and delete their own resumes and cover letters from the **Documents** page. Files are stored in a private Vercel Blob store; the API checks JWT ownership before returning file content or deleting a file.
+
+- Allowed types: PDF (`.pdf`), Microsoft Word (`.doc`), and Office Open XML (`.docx`)
+- Maximum size: 5 MB per file
+- Required production variable: `BLOB_READ_WRITE_TOKEN`
+- Blob paths are scoped by authenticated user ID, and private Blob URLs are not exposed by list responses
+
 ### Project structure
 
 - **apps/web** - React and TypeScript interface built with Vite

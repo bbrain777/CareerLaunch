@@ -24,6 +24,18 @@ enum InformationalInterviewStatus {
   COMPLETED
 }
 
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+}
+
+enum ExpenseCategory {
+  TRAVEL
+  PRINTING
+  TRAINING
+  PROFESSIONAL_SERVICES
+}
+
 model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
@@ -41,8 +53,28 @@ model User {
   employers               Employer[]
   tasks                   Task[]
   informationalInterviews InformationalInterview[]
+  documents               Document[]
+  expenses                Expense[]
 
   @@map("user")
+}
+
+model Document {
+  id          Int          @id @default(autoincrement())
+  type        DocumentType
+  fileName    String
+  pathname    String
+  blobUrl     String
+  contentType String
+  sizeBytes   Int
+  userId      Int
+
+  user        User         @relation(fields:[userId], references:[id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   temporal.updatedAt()
+
+  @@map("document")
 }
 
 model Employer {
@@ -106,11 +138,30 @@ model Application {
   employer   Employer?            @relation(fields:[employerId], references:[id], onDelete: SetNull)
   contact    Contact?             @relation(fields:[contactId], references:[id], onDelete: SetNull)
   tasks      Task[]
+  expenses   Expense[]
 
   createdAt  DateTime             @default(now())
   updatedAt  temporal.updatedAt()
 
   @@map("application")
+}
+
+model Expense {
+  id            Int             @id @default(autoincrement())
+  amount        Float
+  category      ExpenseCategory
+  date          DateTime
+  description   String
+  userId        Int
+  applicationId Int?
+
+  user          User            @relation(fields:[userId], references:[id], onDelete: Cascade)
+  application   Application?    @relation(fields:[applicationId], references:[id], onDelete: SetNull)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     temporal.updatedAt()
+
+  @@map("expense")
 }
 
 model Task {

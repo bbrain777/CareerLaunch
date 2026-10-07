@@ -23,6 +23,7 @@ import {
   useUpdateApplicationMutation,
 } from "../hooks/queries";
 import type { ApplicationInput, ApplicationStatus, JobApplication } from "../types";
+import { filterAndSortApplications, type ApplicationSort } from "./applicationFilters";
 
 type EditorState = { mode: "create" } | { mode: "edit"; application: JobApplication };
 
@@ -32,6 +33,9 @@ export function ApplicationsPage() {
   const { data: contacts = [] } = useContactsQuery();
   const [query, setQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
+  const [sort, setSort] = useState<ApplicationSort>("updated-desc");
+  const [deadlineFrom, setDeadlineFrom] = useState("");
+  const [deadlineTo, setDeadlineTo] = useState("");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [editorKey, setEditorKey] = useState(0);
   const [detail, setDetail] = useState<JobApplication | null>(null);
@@ -60,24 +64,24 @@ export function ApplicationsPage() {
   );
 
   const filteredApplications = useMemo(() => {
-    let result = applications;
+    return filterAndSortApplications(applications, {
+      query,
+      status: selectedStatus,
+      deadlineFrom,
+      deadlineTo,
+      sort,
+    });
+  }, [applications, deadlineFrom, deadlineTo, query, selectedStatus, sort]);
 
-    if (selectedStatus !== "All") {
-      result = result.filter((app) => app.status === selectedStatus);
-    }
+  const filtersActive = Boolean(query || selectedStatus !== "All" || deadlineFrom || deadlineTo || sort !== "updated-desc");
 
-    const search = query.trim().toLowerCase();
-    if (search) {
-      result = result.filter((app) =>
-        [app.company, app.position, app.location, app.status]
-          .join(" ")
-          .toLowerCase()
-          .includes(search)
-      );
-    }
-
-    return result;
-  }, [applications, query, selectedStatus]);
+  function clearFilters() {
+    setQuery("");
+    setSelectedStatus("All");
+    setSort("updated-desc");
+    setDeadlineFrom("");
+    setDeadlineTo("");
+  }
 
   return (
     <>
@@ -144,9 +148,10 @@ export function ApplicationsPage() {
       />
 
       <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" aria-label="Job applications">
-        <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="w-full sm:w-[220px] sm:flex-none">
+        <div className="mb-[18px] grid gap-3 sm:grid-cols-2 xl:grid-cols-[220px_190px_160px_160px_minmax(220px,1fr)_auto] xl:items-end">
+          <div className="w-full">
             <Select
+              label="Status"
               aria-label="Filter applications by status"
               value={selectedStatus}
               onValueChange={(val) => val && setSelectedStatus(val)}
@@ -163,7 +168,45 @@ export function ApplicationsPage() {
             />
           </div>
 
-          <label className="flex w-full items-center gap-2 rounded-xl bg-gray-100/80 border border-gray-200/60 px-3.5 py-2 sm:w-[280px] md:w-[320px] text-gray-400 focus-within:border-[#0a5c4d] focus-within:ring-2 focus-within:ring-[#0a5c4d]/20 transition-all">
+          <div className="w-full">
+            <Select
+              label="Sort by"
+              aria-label="Sort applications"
+              value={sort}
+              onValueChange={(value) => value && setSort(value as ApplicationSort)}
+              className="w-full"
+              items={{
+                "updated-desc": "Recently updated",
+                "deadline-asc": "Deadline: soonest",
+                "deadline-desc": "Deadline: latest",
+                "company-asc": "Company: A–Z",
+              }}
+            />
+          </div>
+
+          <label className="grid gap-1.5 text-sm font-medium text-gray-700">
+            Deadline from
+            <input
+              type="date"
+              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm"
+              value={deadlineFrom}
+              max={deadlineTo || undefined}
+              onChange={(event) => setDeadlineFrom(event.target.value)}
+            />
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium text-gray-700">
+            Deadline to
+            <input
+              type="date"
+              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm"
+              value={deadlineTo}
+              min={deadlineFrom || undefined}
+              onChange={(event) => setDeadlineTo(event.target.value)}
+            />
+          </label>
+
+          <label className="flex h-10 w-full items-center gap-2 rounded-xl bg-gray-100/80 border border-gray-200/60 px-3.5 text-gray-400 focus-within:border-[#0a5c4d] focus-within:ring-2 focus-within:ring-[#0a5c4d]/20 transition-all">
             <span className="sr-only">Search applications</span>
             <Search01Icon size={16} className="shrink-0 text-gray-500" />
             <input
@@ -174,7 +217,15 @@ export function ApplicationsPage() {
               placeholder="Search applications"
             />
           </label>
+
+          <Button variant="secondary" className="h-10" disabled={!filtersActive} onClick={clearFilters}>
+            Clear
+          </Button>
         </div>
+
+        <p className="mb-4 text-xs text-gray-500" aria-live="polite">
+          Showing {filteredApplications.length} of {applications.length} applications
+        </p>
 
         {loading ? (
           <div className="page-loading">

@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'15a71de9a81fa98a8dfe4749daafee8e37c50ace0337810385eef0a657ed19a0'>;
+  StorageHashBase<'1055a8f1b0ca9f3d0c6f9e0c3d619e53782470121325c14fe0d2960ef9e23cd3'>;
 export type ExecutionHash =
-  ExecutionHashBase<'6127ecec1f99ea6582c94fff2d0dc7a2a276a14fc2422b4462dc897816995bb1'>;
+  ExecutionHashBase<'4126343433df0e60040ab00a0dcf0489f2457f21707bea9f3f6867ce7cfbfa28'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -303,17 +303,6 @@ export type FieldOutputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
-    readonly Expense: {
-      readonly id: CodecTypes['pg/int4@1']['output'];
-      readonly amount: CodecTypes['pg/float8@1']['output'];
-      readonly category: 'TRAVEL' | 'PRINTING' | 'TRAINING' | 'PROFESSIONAL_SERVICES';
-      readonly date: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly description: CodecTypes['pg/text@1']['output'];
-      readonly userId: CodecTypes['pg/int4@1']['output'];
-      readonly applicationId: CodecTypes['pg/int4@1']['output'] | null;
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    };
     readonly InformationalInterview: {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly contactName: CodecTypes['pg/text@1']['output'];
@@ -411,17 +400,6 @@ export type FieldInputTypes = {
       readonly location: CodecTypes['pg/text@1']['input'] | null;
       readonly notes: CodecTypes['pg/text@1']['input'] | null;
       readonly userId: CodecTypes['pg/int4@1']['input'];
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-    };
-    readonly Expense: {
-      readonly id: CodecTypes['pg/int4@1']['input'];
-      readonly amount: CodecTypes['pg/float8@1']['input'];
-      readonly category: 'TRAVEL' | 'PRINTING' | 'TRAINING' | 'PROFESSIONAL_SERVICES';
-      readonly date: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly description: CodecTypes['pg/text@1']['input'];
-      readonly userId: CodecTypes['pg/int4@1']['input'];
-      readonly applicationId: CodecTypes['pg/int4@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -525,17 +503,6 @@ export type StorageColumnTypes = {
       readonly userId: CodecTypes['pg/int4@1']['output'];
       readonly website: CodecTypes['pg/text@1']['output'] | null;
     };
-    readonly expense: {
-      readonly amount: CodecTypes['pg/float8@1']['output'];
-      readonly applicationId: CodecTypes['pg/int4@1']['output'] | null;
-      readonly category: 'TRAVEL' | 'PRINTING' | 'TRAINING' | 'PROFESSIONAL_SERVICES';
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly date: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly description: CodecTypes['pg/text@1']['output'];
-      readonly id: CodecTypes['pg/int4@1']['output'];
-      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly userId: CodecTypes['pg/int4@1']['output'];
-    };
     readonly informationalInterview: {
       readonly company: CodecTypes['pg/text@1']['output'] | null;
       readonly contactId: CodecTypes['pg/int4@1']['output'] | null;
@@ -635,17 +602,6 @@ export type StorageColumnInputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly userId: CodecTypes['pg/int4@1']['input'];
       readonly website: CodecTypes['pg/text@1']['input'] | null;
-    };
-    readonly expense: {
-      readonly amount: CodecTypes['pg/float8@1']['input'];
-      readonly applicationId: CodecTypes['pg/int4@1']['input'] | null;
-      readonly category: 'TRAVEL' | 'PRINTING' | 'TRAINING' | 'PROFESSIONAL_SERVICES';
-      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly date: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly description: CodecTypes['pg/text@1']['input'];
-      readonly id: CodecTypes['pg/int4@1']['input'];
-      readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly userId: CodecTypes['pg/int4@1']['input'];
     };
     readonly informationalInterview: {
       readonly company: CodecTypes['pg/text@1']['input'] | null;
@@ -1125,102 +1081,6 @@ type ContractBase = Omit<
                 },
               ];
             };
-            readonly expense: {
-              columns: {
-                readonly id: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'function';
-                    readonly expression: 'autoincrement()';
-                  };
-                };
-                readonly amount: {
-                  readonly nativeType: 'float8';
-                  readonly codecId: 'pg/float8@1';
-                  readonly nullable: false;
-                };
-                readonly category: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-                readonly date: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly nullable: false;
-                };
-                readonly description: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-                readonly userId: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                };
-                readonly applicationId: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
-                };
-                readonly createdAt: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly nullable: false;
-                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
-                };
-                readonly updatedAt: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly nullable: false;
-                };
-              };
-              primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [];
-              indexes: readonly [
-                {
-                  readonly name: 'expense_userId_idx_a489d58a';
-                  readonly prefix: 'expense_userId_idx';
-                  readonly columns: readonly ['userId'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'expense_applicationId_idx_8158f91a';
-                  readonly prefix: 'expense_applicationId_idx';
-                  readonly columns: readonly ['applicationId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'expense';
-                    readonly columns: readonly ['userId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'user';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'expense';
-                    readonly columns: readonly ['applicationId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'application';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
-            };
             readonly informationalInterview: {
               columns: {
                 readonly id: {
@@ -1572,10 +1432,6 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['RESUME', 'COVER_LETTER'];
             };
-            readonly ExpenseCategory: {
-              readonly kind: 'valueSet';
-              readonly values: readonly ['TRAVEL', 'PRINTING', 'TRAINING', 'PROFESSIONAL_SERVICES'];
-            };
             readonly InformationalInterviewStatus: {
               readonly kind: 'valueSet';
               readonly values: readonly ['PREPARING', 'SCHEDULED', 'COMPLETED'];
@@ -1607,7 +1463,6 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'Application';
     };
-    readonly expense: { readonly namespace: 'public' & NamespaceId; readonly model: 'Expense' };
     readonly task: { readonly namespace: 'public' & NamespaceId; readonly model: 'Task' };
     readonly informationalInterview: {
       readonly namespace: 'public' & NamespaceId;
@@ -1706,17 +1561,6 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['employerId'];
                   readonly targetFields: readonly ['id'];
-                };
-              };
-              readonly expenses: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Expense';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['applicationId'];
                 };
               };
               readonly tasks: {
@@ -2063,91 +1907,6 @@ type ContractBase = Omit<
               };
             };
           };
-          readonly Expense: {
-            readonly fields: {
-              readonly id: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly amount: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
-              };
-              readonly category: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly date: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                };
-              };
-              readonly description: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly userId: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly applicationId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly createdAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                };
-              };
-              readonly updatedAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                };
-              };
-            };
-            readonly relations: {
-              readonly application: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Application';
-                };
-                readonly cardinality: 'N:1';
-                readonly on: {
-                  readonly localFields: readonly ['applicationId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-              readonly user: {
-                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
-                readonly cardinality: 'N:1';
-                readonly on: {
-                  readonly localFields: readonly ['userId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-            };
-            readonly storage: {
-              readonly table: 'expense';
-              readonly namespaceId: 'public';
-              readonly fields: {
-                readonly id: { readonly column: 'id' };
-                readonly amount: { readonly column: 'amount' };
-                readonly category: { readonly column: 'category' };
-                readonly date: { readonly column: 'date' };
-                readonly description: { readonly column: 'description' };
-                readonly userId: { readonly column: 'userId' };
-                readonly applicationId: { readonly column: 'applicationId' };
-                readonly createdAt: { readonly column: 'createdAt' };
-                readonly updatedAt: { readonly column: 'updatedAt' };
-              };
-            };
-          };
           readonly InformationalInterview: {
             readonly fields: {
               readonly id: {
@@ -2471,17 +2230,6 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['userId'];
                 };
               };
-              readonly expenses: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Expense';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['userId'];
-                };
-              };
               readonly informationalInterviews: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -2562,15 +2310,6 @@ type ContractBase = Omit<
               { readonly name: 'COVER_LETTER'; readonly value: 'COVER_LETTER' },
             ];
           };
-          readonly ExpenseCategory: {
-            readonly codecId: 'pg/text@1';
-            readonly members: readonly [
-              { readonly name: 'TRAVEL'; readonly value: 'TRAVEL' },
-              { readonly name: 'PRINTING'; readonly value: 'PRINTING' },
-              { readonly name: 'TRAINING'; readonly value: 'TRAINING' },
-              { readonly name: 'PROFESSIONAL_SERVICES'; readonly value: 'PROFESSIONAL_SERVICES' },
-            ];
-          };
         };
       };
     };
@@ -2631,15 +2370,6 @@ type ContractBase = Omit<
           readonly ref: {
             readonly namespace: 'public';
             readonly table: 'employer';
-            readonly column: 'updatedAt';
-          };
-          readonly onCreate: { readonly kind: 'generator'; readonly id: 'instantNow' };
-          readonly onUpdate: { readonly kind: 'generator'; readonly id: 'instantNow' };
-        },
-        {
-          readonly ref: {
-            readonly namespace: 'public';
-            readonly table: 'expense';
             readonly column: 'updatedAt';
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'instantNow' };

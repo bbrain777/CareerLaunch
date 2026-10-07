@@ -2,6 +2,7 @@
   "name": "careerlaunch",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*"
   ],
@@ -14,6 +15,7 @@
     "start": "npm run start --workspace @careerlaunch/api",
     "db:migrate": "npm run db:migrate --workspace @careerlaunch/api",
     "db:seed": "npm run db:seed --workspace @careerlaunch/api",
+    "db:seed:user-demo": "npm run db:seed:user-demo --workspace @careerlaunch/api",
     "db:reset": "npm run db:reset --workspace @careerlaunch/api"
   },
   "devDependencies": {

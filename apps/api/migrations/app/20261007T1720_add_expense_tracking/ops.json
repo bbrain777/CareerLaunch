@@ -1,0 +1,203 @@
+[
+  {
+    "id": "table.expense",
+    "label": "Create table \"expense\"",
+    "summary": "Creates table \"expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"expense\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"expense\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"expense\"",
+        "sql": "CREATE TABLE \"public\".\"expense\" (\n  \"amount\" float8 NOT NULL,\n  \"applicationId\" int4,\n  \"category\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"date\" timestamptz NOT NULL,\n  \"description\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"expense_category_check_5ab8d097\" CHECK (\"category\" IN ('TRAVEL', 'PRINTING', 'TRAINING', 'PROFESSIONAL_SERVICES'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"expense\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"expense\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.expense.expense_applicationId_idx_8158f91a",
+    "label": "Create index \"expense_applicationId_idx_8158f91a\" on \"expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "expense_applicationId_idx_8158f91a",
+        "table": "expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"expense_applicationId_idx_8158f91a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"expense_applicationId_idx_8158f91a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"expense_applicationId_idx_8158f91a\"",
+        "sql": "CREATE INDEX \"expense_applicationId_idx_8158f91a\" ON \"public\".\"expense\" (\"applicationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"expense_applicationId_idx_8158f91a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"expense_applicationId_idx_8158f91a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.expense.expense_userId_idx_a489d58a",
+    "label": "Create index \"expense_userId_idx_a489d58a\" on \"expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "expense_userId_idx_a489d58a",
+        "table": "expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"expense_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"expense_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"expense_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"expense_userId_idx_a489d58a\" ON \"public\".\"expense\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"expense_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"expense_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.expense.expense_userId_fkey",
+    "label": "Add foreign key \"expense_userId_fkey\" on \"expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "expense_userId_fkey",
+        "table": "expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"expense_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "expense_userId_fkey",
+          "public",
+          "\"public\".\"expense\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"expense_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"expense\"\nADD CONSTRAINT \"expense_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"expense_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "expense_userId_fkey",
+          "public",
+          "\"public\".\"expense\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.expense.expense_applicationId_fkey",
+    "label": "Add foreign key \"expense_applicationId_fkey\" on \"expense\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "expense_applicationId_fkey",
+        "table": "expense"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"expense_applicationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "expense_applicationId_fkey",
+          "public",
+          "\"public\".\"expense\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"expense_applicationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"expense\"\nADD CONSTRAINT \"expense_applicationId_fkey\"\nFOREIGN KEY (\"applicationId\")\nREFERENCES \"public\".\"application\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"expense_applicationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "expense_applicationId_fkey",
+          "public",
+          "\"public\".\"expense\""
+        ]
+      }
+    ]
+  }
+]
