@@ -1,0 +1,128 @@
+[
+  {
+    "id": "column.public.user.currentRole",
+    "label": "Add column \"currentRole\" to \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "currentRole",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"currentRole\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "currentRole"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"currentRole\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD COLUMN \"currentRole\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"currentRole\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "currentRole"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.user.targetRole",
+    "label": "Add column \"targetRole\" to \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "targetRole",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"targetRole\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "targetRole"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"targetRole\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD COLUMN \"targetRole\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"targetRole\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "targetRole"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.user.weeklyGoal",
+    "label": "Add column \"weeklyGoal\" to \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "weeklyGoal",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"weeklyGoal\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "weeklyGoal"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"weeklyGoal\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD COLUMN \"weeklyGoal\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"weeklyGoal\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "weeklyGoal"
+        ]
+      }
+    ]
+  }
+]
