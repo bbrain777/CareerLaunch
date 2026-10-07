@@ -29,6 +29,13 @@ enum DocumentType {
   COVER_LETTER
 }
 
+enum ExpenseCategory {
+  TRAVEL
+  PRINTING
+  TRAINING
+  PROFESSIONAL_SERVICES
+}
+
 model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
@@ -47,6 +54,7 @@ model User {
   tasks                   Task[]
   informationalInterviews InformationalInterview[]
   documents               Document[]
+  expenses                Expense[]
 
   @@map("user")
 }
@@ -130,11 +138,30 @@ model Application {
   employer   Employer?            @relation(fields:[employerId], references:[id], onDelete: SetNull)
   contact    Contact?             @relation(fields:[contactId], references:[id], onDelete: SetNull)
   tasks      Task[]
+  expenses   Expense[]
 
   createdAt  DateTime             @default(now())
   updatedAt  temporal.updatedAt()
 
   @@map("application")
+}
+
+model Expense {
+  id            Int             @id @default(autoincrement())
+  amount        Float
+  category      ExpenseCategory
+  date          DateTime
+  description   String
+  userId        Int
+  applicationId Int?
+
+  user          User            @relation(fields:[userId], references:[id], onDelete: Cascade)
+  application   Application?    @relation(fields:[applicationId], references:[id], onDelete: SetNull)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     temporal.updatedAt()
+
+  @@map("expense")
 }
 
 model Task {

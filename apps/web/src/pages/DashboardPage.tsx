@@ -15,7 +15,7 @@ import { getInterviewReadinessSummary, selectInterviewReminders } from "./inform
 import { MetricCard } from "../components/Cards";
 import { Select, Table } from "../components/ui";
 import { useAuth } from "../lib/auth";
-import { useDashboardQuery } from "../hooks/queries";
+import { useDashboardQuery, useExpenseSummaryQuery } from "../hooks/queries";
 
 const fallbackData: DashboardData = {
   metrics: {
@@ -89,6 +89,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardQuery();
+  const { data: expenseSummary, isLoading: expenseSummaryLoading } = useExpenseSummaryQuery();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
@@ -165,6 +166,9 @@ export function DashboardPage() {
                 </DropdownMenu.Item>
                 <DropdownMenu.Item onClick={() => navigate({ to: "/informational-interviews" })}>
                   Interview
+                </DropdownMenu.Item>
+                <DropdownMenu.Item onClick={() => navigate({ to: "/expenses" })}>
+                  Expense
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu>
@@ -420,6 +424,31 @@ export function DashboardPage() {
               </div>
             ) : (
               <p className="px-4 py-12 text-center text-sm text-gray-500">No informational interviews recorded yet.</p>
+            )}
+          </section>
+
+          <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" id="expense-tracking">
+            <div className="mb-[18px] flex items-center justify-between gap-4">
+              <div>
+                <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Financial overview</span>
+                <h2>Expense tracking</h2>
+              </div>
+              <Link to="/expenses" className="inline-flex items-center rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-[#0a5c4d]/10">
+                View all
+              </Link>
+            </div>
+            {expenseSummaryLoading ? (
+              <p className="py-8 text-center text-sm text-gray-500">Loading expenses…</p>
+            ) : (
+              <div className="rounded-xl bg-emerald-50 p-4">
+                <span className="text-xs font-medium text-emerald-700">Total job-search spending</span>
+                <strong className="mt-1 block text-2xl text-emerald-950">
+                  {new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(expenseSummary?.total ?? 0)}
+                </strong>
+                <Link to="/expenses" className="mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg bg-white px-3 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-emerald-100">
+                  Log an expense
+                </Link>
+              </div>
             )}
           </section>
         </div>
