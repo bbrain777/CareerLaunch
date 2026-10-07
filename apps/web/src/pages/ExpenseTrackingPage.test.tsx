@@ -48,11 +48,11 @@ describe("ExpenseTrackingPage", () => {
 
     // Wait for the mock fetch to resolve and render data
     await waitFor(() => {
-      expect(screen.getByText("Conference Flight")).toBeInTheDocument();
+      expect(screen.getAllByText("Conference Flight")[0]).toBeInTheDocument();
     });
 
-    // Check summary total
-    expect(screen.getByText("$250.00")).toBeInTheDocument();
+    // Check summary total across cards and table
+    expect(screen.getAllByText("$250.00").length).toBeGreaterThan(0);
     expect(screen.getByText("Total Spending")).toBeInTheDocument();
   });
 
@@ -60,7 +60,7 @@ describe("ExpenseTrackingPage", () => {
     render(<ExpenseTrackingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("Conference Flight")).toBeInTheDocument();
+      expect(screen.getAllByText("Conference Flight")[0]).toBeInTheDocument();
     });
 
     const searchInput = screen.getByPlaceholderText("Search description...");
