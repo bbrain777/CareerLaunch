@@ -13,3 +13,7 @@ Thumbs.db
 *.tmp
 *.tsbuildinfo
 ~$*.docx
+.vercel
+.env*
+!.env.example
+!**/.env.example
