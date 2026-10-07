@@ -1,6 +1,6 @@
-import "@testing-library/jest-dom";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import "@testing-library/jest-dom/vitest";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { ExpenseTrackingPage } from "./ExpenseTrackingPage";
 import { useAuth } from "../lib/auth";
 
