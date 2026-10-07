@@ -7,7 +7,7 @@
     "dev": "vite --configLoader runner",
     "build": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && vite build --configLoader runner",
     "preview": "vite preview",
-    "test": "tsx --test"
+    "test": "npx tsx --test 'src/**/*.test.ts' && npx vitest run src/pages/ExpenseTrackingPage.test.tsx"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
