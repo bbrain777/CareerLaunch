@@ -12,6 +12,7 @@ import type {
   InformationalInterview,
   InformationalInterviewInput,
   UpcomingTask,
+  CareerDocument,
 } from "../types";
 import type { AuthUser } from "../lib/auth";
 
@@ -24,7 +25,49 @@ export const queryKeys = {
   profile: ["profile"] as const,
   employers: ["employers"] as const,
   contacts: ["contacts"] as const,
+  documents: ["documents"] as const,
 };
+
+export function useDocumentsQuery() {
+  return useQuery({
+    queryKey: queryKeys.documents,
+    queryFn: async () => {
+      const result = await api.get<{ documents: CareerDocument[] }>("/api/documents");
+      return result.documents;
+    },
+  });
+}
+
+export function useUploadDocumentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, type }: { file: File; type: CareerDocument["type"] }) => {
+      const form = new FormData();
+      form.append("type", type);
+      form.append("file", file);
+      return api.post<{ document: CareerDocument }>("/api/documents", form);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents });
+      appToastManager.add({
+        title: "Document uploaded",
+        description: `${data.document.fileName} is stored privately.`,
+        variant: "success",
+      });
+    },
+  });
+}
+
+export function useDeleteDocumentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.delete<void>(`/api/documents/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.documents });
+      appToastManager.add({ title: "Document deleted", description: "The private file was removed." });
+    },
+  });
+}
 
 // --- Queries ---
 

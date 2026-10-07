@@ -127,6 +127,16 @@ export interface InformationalInterviewInput {
   contactId?: number | null;
 }
 
+export interface CareerDocument {
+  id: number;
+  type: "RESUME" | "COVER_LETTER";
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
+  downloadUrl: string;
+}
+
 export interface DashboardData {
   metrics: {
     activeApplications: number;

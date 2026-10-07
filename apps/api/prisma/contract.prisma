@@ -24,6 +24,11 @@ enum InformationalInterviewStatus {
   COMPLETED
 }
 
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+}
+
 model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
@@ -41,8 +46,27 @@ model User {
   employers               Employer[]
   tasks                   Task[]
   informationalInterviews InformationalInterview[]
+  documents               Document[]
 
   @@map("user")
+}
+
+model Document {
+  id          Int          @id @default(autoincrement())
+  type        DocumentType
+  fileName    String
+  pathname    String
+  blobUrl     String
+  contentType String
+  sizeBytes   Int
+  userId      Int
+
+  user        User         @relation(fields:[userId], references:[id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   temporal.updatedAt()
+
+  @@map("document")
 }
 
 model Employer {

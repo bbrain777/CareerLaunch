@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home01Icon, Briefcase01Icon, UserSquareIcon, UserIcon, Logout01Icon, Building01Icon, Contact01Icon } from "hugeicons-react";
 import { CaretUpDownIcon } from "@phosphor-icons/react";
+import { FileTextIcon } from "@phosphor-icons/react";
 import {
   SidebarProvider,
   Sidebar,
@@ -53,6 +54,16 @@ export function SidebarLayout({ children }: SidebarProps) {
         <SidebarContent>
           <SidebarGroup>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  icon={FileTextIcon}
+                  isActive={currentPath === "/documents"}
+                  render={<Link to="/documents" />}
+                >
+                  Documents
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton
                   icon={Home01Icon}
