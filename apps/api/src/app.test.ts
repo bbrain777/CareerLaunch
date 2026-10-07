@@ -26,6 +26,25 @@ describe("CareerLaunch API", () => {
     });
   });
 
+  it("allows the production frontend origin", async () => {
+    const response = await request(app)
+      .get("/api/health")
+      .set("Origin", "https://careerlaunch-puce.vercel.app");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["access-control-allow-origin"]).toBe("https://careerlaunch-puce.vercel.app");
+    expect(response.headers["access-control-allow-credentials"]).toBe("true");
+  });
+
+  it("does not grant CORS access to an unknown origin", async () => {
+    const response = await request(app)
+      .get("/api/health")
+      .set("Origin", "https://unapproved.example");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["access-control-allow-origin"]).toBeUndefined();
+  });
+
   it("requires authentication for dashboard data", async () => {
     const response = await request(app).get("/api/dashboard");
 
