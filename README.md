@@ -40,12 +40,16 @@ npm.cmd run build
 
 ### API and authentication setup
 
-The API uses PostgreSQL for persistent records and JSON Web Tokens (JWT) for secure routes. Create `apps/api/.env` with a PostgreSQL connection and a local JWT secret:
+The API uses PostgreSQL for persistent records and JSON Web Tokens (JWT) for secure routes. For local development, put the shared Neon connection in the repository-root `.env.local` file, or use `apps/api/.env.local` for an API-specific override:
 
 ```dotenv
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
 JWT_SECRET=replace_with_a_long_random_local_secret
 ```
+
+Environment variables provided by Vercel or the current shell always take priority. Local files are then loaded in this order: `apps/api/.env.local`, root `.env.local`, `apps/api/.env`, and root `.env`. This allows the web and API workspaces to share the root Neon configuration while preserving an explicit API override. Automated tests do not load developer environment files.
+
+Use the pooled Neon URL for `DATABASE_URL`. Keep `.env` and `.env.local` files untracked, and configure the same values separately in the Vercel project settings for production.
 
 Apply pending database migrations before starting the API:
 
