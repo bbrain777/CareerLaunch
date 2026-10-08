@@ -23,3 +23,4 @@ apps/api/.agents/
 apps/api/.claude/
 apps/api/.cursor/
 apps/api/.devin/
+*.agent.md
