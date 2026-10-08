@@ -11,7 +11,7 @@
     "dev:api": "npm run dev --workspace @careerlaunch/api",
     "dev:web": "npm run dev --workspace @careerlaunch/web",
     "build": "npm run build --workspace @careerlaunch/api && npm run build --workspace @careerlaunch/web",
-    "test": "cd apps/web && npx tsx --test 'src/**/*.test.ts' && npx vitest run --environment jsdom",
+    "test": "npm run test --workspace @careerlaunch/api && npm run test --workspace @careerlaunch/web",
     "start": "npm run start --workspace @careerlaunch/api",
     "db:migrate": "npm run db:migrate --workspace @careerlaunch/api",
     "db:seed": "npm run db:seed --workspace @careerlaunch/api",
