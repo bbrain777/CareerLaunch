@@ -23,5 +23,11 @@
   },
   "engines": {
     "node": ">=22.18.0"
+  },
+  "optionalDependencies": {
+    "@esbuild/linux-x64": "^0.28.2",
+    "@rolldown/binding-linux-x64-gnu": "^1.2.13",
+    "@rollup/rollup-linux-x64-gnu": "^4.64.2",
+    "lightningcss-linux-x64-gnu": "^1.33.0"
   }
 }

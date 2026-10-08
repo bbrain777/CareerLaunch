@@ -1,8 +1,19 @@
 import { ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home01Icon, Briefcase01Icon, UserSquareIcon, UserIcon, Logout01Icon, Building01Icon, Contact01Icon, Wallet01Icon } from "hugeicons-react";
-import { CaretUpDownIcon } from "@phosphor-icons/react";
-import { FileTextIcon } from "@phosphor-icons/react";
+import {
+  Home01Icon,
+  Briefcase01Icon,
+  UserSquareIcon,
+  UserIcon,
+  Logout01Icon,
+  Building01Icon,
+  Contact01Icon,
+  Wallet01Icon,
+} from "hugeicons-react";
+import {
+  CaretUpDownIcon,
+  FileTextIcon,
+} from "@phosphor-icons/react";
 import {
   SidebarProvider,
   Sidebar,
@@ -17,7 +28,10 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
-import { DropdownMenu, DropdownMenuItem } from "@/components/ui/DropdownMenu";
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+} from "@/components/ui/DropdownMenu";
 import { AppLogo } from "@/components/AppLogo";
 import { useAuth } from "@/lib/auth";
 
@@ -58,7 +72,7 @@ export function SidebarLayout({ children }: SidebarProps) {
                 <SidebarMenuButton
                   icon={FileTextIcon}
                   isActive={currentPath === "/documents"}
-                  render={<Link to="/documents" />}
+                  render={<Link to={"/documents" as any} />}
                 >
                   Documents
                 </SidebarMenuButton>
@@ -131,14 +145,22 @@ export function SidebarLayout({ children }: SidebarProps) {
           <div className="sidebar-card mb-2">
             <span className="eyebrow">Weekly goal</span>
             <strong>3 of 5 applications</strong>
-            <div className="progress-track" aria-label="60 percent of weekly goal">
+
+            <div
+              className="progress-track"
+              aria-label="60 percent of weekly goal"
+            >
               <span />
             </div>
+
             <p>Two more applications to reach your target.</p>
           </div>
 
           <div className="relative flex items-center gap-1 w-full pt-1">
-            <SidebarMenu aria-label="User" className="min-w-0 flex-1">
+            <SidebarMenu
+              aria-label="User"
+              className="min-w-0 flex-1"
+            >
               <SidebarMenuItem>
                 <DropdownMenu
                   align="start"
@@ -154,10 +176,15 @@ export function SidebarLayout({ children }: SidebarProps) {
                       <div className="user-avatar-circle">
                         <UserIcon className="size-3.5" />
                       </div>
+
                       <span className="min-w-0 flex-1 truncate text-[13px] font-medium">
                         {displayName}
                       </span>
-                      <CaretUpDownIcon className="size-4 shrink-0 text-[#9eb3ad]" weight="bold" />
+
+                      <CaretUpDownIcon
+                        className="size-4 shrink-0 text-[#9eb3ad]"
+                        weight="bold"
+                      />
                     </button>
                   }
                 >
@@ -165,15 +192,25 @@ export function SidebarLayout({ children }: SidebarProps) {
                     <p className="dropdown-user-name truncate">
                       {displayName}
                     </p>
+
                     <p className="dropdown-user-email truncate">
                       {displayEmail}
                     </p>
                   </div>
-                  <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
+
+                  <DropdownMenuItem
+                    onClick={() =>
+                      navigate({ to: "/profile" })
+                    }
+                  >
                     <UserIcon className="size-4 text-gray-500" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={handleLogout}
+                  >
                     <Logout01Icon className="size-4 text-red-500 dark:text-red-400" />
                     <span>Sign out</span>
                   </DropdownMenuItem>
@@ -188,38 +225,97 @@ export function SidebarLayout({ children }: SidebarProps) {
         <div className="sidebar-trigger-bar hidden sm:flex">
           <SidebarTrigger />
         </div>
+
         <div className="main-content-container">
           {children}
         </div>
       </SidebarInset>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[62px] items-center justify-around border-t border-white/10 bg-[#0e1e1b]/95 backdrop-blur-md px-1 pb-[env(safe-area-inset-bottom,0px)] md:hidden" aria-label="Mobile Navigation">
-        <Link to="/" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/" ? "text-white font-semibold" : "hover:text-white"}`}>
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 flex h-[62px] items-center justify-around border-t border-white/10 bg-[#0e1e1b]/95 backdrop-blur-md px-1 pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+        aria-label="Mobile Navigation"
+      >
+        <Link
+          to="/"
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${
+            currentPath === "/"
+              ? "text-white font-semibold"
+              : "hover:text-white"
+          }`}
+        >
           <Home01Icon size={19} />
           <span>Dashboard</span>
         </Link>
-        <Link to="/applications" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/applications" ? "text-white font-semibold" : "hover:text-white"}`}>
+
+        <Link
+          to="/applications"
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${
+            currentPath === "/applications"
+              ? "text-white font-semibold"
+              : "hover:text-white"
+          }`}
+        >
           <Briefcase01Icon size={19} />
           <span>Jobs</span>
         </Link>
-        <Link to="/employers" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/employers" ? "text-white font-semibold" : "hover:text-white"}`}>
+
+        <Link
+          to="/employers"
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${
+            currentPath === "/employers"
+              ? "text-white font-semibold"
+              : "hover:text-white"
+          }`}
+        >
           <Building01Icon size={19} />
           <span>Employers</span>
         </Link>
-        <Link to="/contacts" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/contacts" ? "text-white font-semibold" : "hover:text-white"}`}>
+
+        <Link
+          to="/contacts"
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${
+            currentPath === "/contacts"
+              ? "text-white font-semibold"
+              : "hover:text-white"
+          }`}
+        >
           <Contact01Icon size={19} />
           <span>Contacts</span>
         </Link>
-        <Link to="/informational-interviews" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/informational-interviews" ? "text-white font-semibold" : "hover:text-white"}`}>
+
+        <Link
+          to="/informational-interviews"
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${
+            currentPath === "/informational-interviews"
+              ? "text-white font-semibold"
+              : "hover:text-white"
+          }`}
+        >
           <UserSquareIcon size={19} />
           <span>Interviews</span>
         </Link>
-        <Link to="/expenses" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/expenses" ? "text-white font-semibold" : "hover:text-white"}`}>
+
+        <Link
+          to="/expenses"
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${
+            currentPath === "/expenses"
+              ? "text-white font-semibold"
+              : "hover:text-white"
+          }`}
+        >
           <Wallet01Icon size={19} />
           <span>Expenses</span>
         </Link>
-        <Link to="/profile" className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${currentPath === "/profile" ? "text-white font-semibold" : "hover:text-white"}`}>
+
+        <Link
+          to="/profile"
+          className={`flex flex-1 flex-col items-center justify-center gap-0.5 p-1 text-[11px] font-medium text-[#9eb3ad] no-underline ${
+            currentPath === "/profile"
+              ? "text-white font-semibold"
+              : "hover:text-white"
+          }`}
+        >
           <UserIcon size={19} />
           <span>Profile</span>
         </Link>

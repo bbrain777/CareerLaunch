@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 import cors from "cors";
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import { applicationRouter } from "./routes/applicationRoutes.js";
 import { authRouter } from "./routes/auth.js";
@@ -17,8 +17,11 @@ import { corsOptions } from "./cors.js";
 export const app = express();
 
 app.use(helmet());
+
 app.use(cors(corsOptions));
+
 app.use(express.json());
+
 app.use("/api/auth", authRouter);
 app.use("/api/applications", applicationRouter);
 app.use("/api/tasks", taskRouter);
@@ -38,4 +41,12 @@ app.get("/api/health", (_request, response) => {
 
 app.use((_request, response) => {
   response.status(404).json({ message: "Route not found" });
+});
+
+// SECURITY PATCH: Global error handler prevents stack trace leakage to clients
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("[Server Error]", err);
+  res.status(500).json({
+    message: "An internal server error occurred"
+  });
 });

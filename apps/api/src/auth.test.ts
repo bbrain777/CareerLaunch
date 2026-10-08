@@ -1,6 +1,7 @@
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { app } from "./app.js";
+import { requireAdmin } from "./middleware/auth.js";
 
 describe("Authentication API", () => {
   const testUser = {
@@ -129,5 +130,47 @@ describe("Authentication API", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("Logout successful");
+  });
+});
+
+describe("Admin Authorization Middleware", () => {
+  it("returns 401 if user context is missing", () => {
+    const req = {} as any;
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn()
+    } as any;
+    const next = vi.fn();
+
+    requireAdmin(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized: User context missing" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 if user does not have the ADMIN role", () => {
+    const req = { user: { userId: 1, role: "USER" } } as any;
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn()
+    } as any;
+    const next = vi.fn();
+
+    requireAdmin(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ message: "Forbidden: Administrator privileges required" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("calls next() successfully if user is an ADMIN", () => {
+    const req = { user: { userId: 1, role: "ADMIN" } } as any;
+    const res = {} as any;
+    const next = vi.fn();
+
+    requireAdmin(req, res, next);
+
+    expect(next).toHaveBeenCalled();
   });
 });

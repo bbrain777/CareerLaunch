@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -22,5 +21,11 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    include: ["src/**/*.test.tsx"],
+    exclude: ["src/**/*.test.ts", "node_modules", "dist"]
   }
-});
+} as any);

@@ -4,7 +4,7 @@ import {
   createRootRoute,
   Navigate,
   Outlet,
-  useRouterState
+  useRouterState,
 } from "@tanstack/react-router";
 import { SidebarLayout } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -12,17 +12,17 @@ import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { EmployersPage } from "./pages/EmployersPage";
 import { ContactsPage } from "./pages/ContactsPage";
 import { InformationalInterviewsPage } from "./pages/InformationalInterviewsPage";
-
+import { DocumentsPage } from "./pages/DocumentsPage";
+import { ExpenseTrackingPage } from "./pages/ExpenseTrackingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ProfilePage } from "./pages/ProfilePage";
-import { DocumentsPage } from "./pages/DocumentsPage";
-import { ExpenseTrackingPage } from "./pages/ExpenseTrackingPage";
 import { useAuth } from "./lib/auth";
 import { isPublicAuthPath, requiresLogin } from "./lib/auth-routing";
 
 function RootComponent() {
   const { token, loading } = useAuth();
+
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -62,67 +62,67 @@ const rootRoute = createRootRoute({
       <h2>Page Not Found</h2>
       <p>The page you requested could not be found.</p>
     </div>
-  )
+  ),
 });
 
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
-  component: LoginPage
+  component: LoginPage,
 });
 
 const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/signup",
-  component: SignupPage
+  component: SignupPage,
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: DashboardPage
+  component: DashboardPage,
 });
 
 const applicationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/applications",
-  component: ApplicationsPage
+  component: ApplicationsPage,
 });
 
 const interviewsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/informational-interviews",
-  component: InformationalInterviewsPage
+  component: InformationalInterviewsPage,
 });
 
 const employersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/employers",
-  component: EmployersPage
+  component: EmployersPage,
 });
 
 const contactsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/contacts",
-  component: ContactsPage
+  component: ContactsPage,
 });
 
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
-  component: ProfilePage
+  component: ProfilePage,
 });
 
 const documentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/documents",
-  component: DocumentsPage
+  component: DocumentsPage,
 });
 
 const expensesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/expenses",
-  component: ExpenseTrackingPage
+  component: ExpenseTrackingPage,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -135,7 +135,7 @@ const routeTree = rootRoute.addChildren([
   documentsRoute,
   expensesRoute,
   loginRoute,
-  signupRoute
+  signupRoute,
 ]);
 
 export const router = createRouter({ routeTree });
@@ -145,4 +145,3 @@ declare module "@tanstack/react-router" {
     router: typeof router;
   }
 }
-
