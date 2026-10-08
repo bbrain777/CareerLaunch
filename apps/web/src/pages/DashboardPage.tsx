@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button, ButtonGroup, DropdownMenu } from "@cloudflare/kumo";
 import { CaretDownIcon } from "@phosphor-icons/react";
@@ -7,38 +7,44 @@ import {
   Calendar03Icon,
   CheckmarkCircle02Icon,
   Note01Icon,
-  PlusSignIcon
+  PlusSignIcon,
 } from "hugeicons-react";
 import { pipelineStatuses } from "../status";
 import type { ApplicationStatus, DashboardData } from "../types";
-import { getInterviewReadinessSummary, selectInterviewReminders } from "./informationalInterviewHelpers";
+import {
+  getInterviewReadinessSummary,
+  selectInterviewReminders,
+} from "./informationalInterviewHelpers";
 import { MetricCard } from "../components/Cards";
 import { Select, Table } from "../components/ui";
 import { useAuth } from "../lib/auth";
-import { useDashboardQuery } from "../hooks/queries";
+import {
+  useDashboardQuery,
+  useExpenseSummaryQuery,
+} from "../hooks/queries";
 
 const fallbackData: DashboardData = {
   metrics: {
     activeApplications: 0,
     interviews: 0,
     offers: 0,
-    responseRate: 0
+    responseRate: 0,
   },
   statusSummary: [],
   reminderSummary: {
     total: 0,
     overdue: 0,
-    dueThisWeek: 0
+    dueThisWeek: 0,
   },
   applications: [],
   upcomingTasks: [],
-  informationalInterviews: []
+  informationalInterviews: [],
 };
 
 const todayLabel = new Intl.DateTimeFormat("en-GB", {
   weekday: "long",
   day: "numeric",
-  month: "long"
+  month: "long",
 }).format(new Date());
 
 function getTaskIcon(type: string) {
@@ -61,76 +67,95 @@ function getTaskIcon(type: string) {
 
 function pillClass(status: ApplicationStatus): string {
   switch (status) {
-    case "Saved": return "bg-slate-100 text-slate-600";
-    case "Applied": return "bg-blue-50 text-blue-700";
-    case "Interview": return "bg-violet-50 text-violet-700";
-    case "Offer": return "bg-emerald-50 text-emerald-700";
-    case "Closed": return "bg-red-50 text-red-700";
-    case "Preparing": return "bg-amber-50 text-amber-700";
-    default: return "bg-slate-100 text-slate-600";
+    case "Saved":
+      return "bg-slate-100 text-slate-600";
+    case "Applied":
+      return "bg-blue-50 text-blue-700";
+    case "Interview":
+      return "bg-violet-50 text-violet-700";
+    case "Offer":
+      return "bg-emerald-50 text-emerald-700";
+    case "Closed":
+      return "bg-red-50 text-red-700";
+    case "Preparing":
+      return "bg-amber-50 text-amber-700";
+    default:
+      return "bg-slate-100 text-slate-600";
   }
 }
 
 function taskIconClass(type: string): string {
   switch (type.toLowerCase()) {
-    case "interview": return "text-violet-700 bg-violet-100";
-    case "follow-up": return "text-blue-700 bg-blue-100";
-    case "document": return "text-amber-700 bg-amber-100";
-    case "deadline": return "text-red-700 bg-red-100";
-    case "recruiter": return "text-blue-700 bg-blue-100";
-    case "contact": return "text-cyan-700 bg-cyan-100";
-    case "thank-you": return "text-pink-700 bg-pink-100";
-    case "action item": return "text-emerald-700 bg-emerald-100";
-    default: return "text-gray-600 bg-gray-200";
+    case "interview":
+      return "text-violet-700 bg-violet-100";
+    case "follow-up":
+      return "text-blue-700 bg-blue-100";
+    case "document":
+      return "text-amber-700 bg-amber-100";
+    case "deadline":
+      return "text-red-700 bg-red-100";
+    case "recruiter":
+      return "text-blue-700 bg-blue-100";
+    case "contact":
+      return "text-cyan-700 bg-cyan-100";
+    case "thank-you":
+      return "text-pink-700 bg-pink-100";
+    case "action item":
+      return "text-emerald-700 bg-emerald-100";
+    default:
+      return "text-gray-600 bg-gray-200";
   }
 }
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
-  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardQuery();
+  const { user } = useAuth();
+
+  const {
+    data: dashboardData,
+    isLoading: dashboardLoading,
+  } = useDashboardQuery();
+
+  const {
+    data: expenseSummary,
+    isLoading: expenseSummaryLoading,
+  } = useExpenseSummaryQuery();
+
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-
-  // Expense Summary State
-  const [expenseSummary, setExpenseSummary] = useState<{ total: number; byCategory: Record<string, number> } | null>(null);
-  const [expensesLoading, setExpensesLoading] = useState(true);
 
   const dashboard = dashboardData ?? fallbackData;
   const data: DashboardData = dashboard;
   const loading = dashboardLoading;
-  const firstName = user?.name ? user.name.split(" ")[0] : "there";
-
-  useEffect(() => {
-    if (!token) return;
-    fetch("/api/expenses/summary", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
-        setExpenseSummary(data);
-        setExpensesLoading(false);
-      })
-      .catch(e => {
-        console.error("Failed to load expenses", e);
-        setExpensesLoading(false);
-      });
-  }, [token]);
+  const firstName = user?.name
+    ? user.name.split(" ")[0]
+    : "there";
 
   const filteredApplications = useMemo(() => {
     let result = data.applications;
+
     if (statusFilter !== "All") {
-      result = result.filter((app) => app.status === statusFilter);
-    }
-    const search = query.trim().toLowerCase();
-    if (search) {
-      result = result.filter((application) =>
-        [application.company, application.position, application.location, application.status]
-          .join(" ")
-          .toLowerCase()
-          .includes(search)
+      result = result.filter(
+        (app) => app.status === statusFilter,
       );
     }
+
+    const search = query.trim().toLowerCase();
+
+    if (search) {
+      result = result.filter((application) =>
+        [
+          application.company,
+          application.position,
+          application.location,
+          application.status,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(search),
+      );
+    }
+
     return result;
   }, [data.applications, query, statusFilter]);
 
@@ -138,8 +163,12 @@ export function DashboardPage() {
     () => selectInterviewReminders(data.upcomingTasks),
     [data.upcomingTasks],
   );
+
   const readiness = useMemo(
-    () => getInterviewReadinessSummary(data.informationalInterviews),
+    () =>
+      getInterviewReadinessSummary(
+        data.informationalInterviews,
+      ),
     [data.informationalInterviews],
   );
 
@@ -147,19 +176,29 @@ export function DashboardPage() {
     <>
       <header className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="min-w-0">
-          <span className="mb-0.5 block text-[12px] font-medium text-[var(--text-muted)]">{todayLabel}</span>
-          <h1 className="truncate">Welcome back{user?.name ? `, ${firstName}` : ""}</h1>
+          <span className="mb-0.5 block text-[12px] font-medium text-[var(--text-muted)]">
+            {todayLabel}
+          </span>
+
+          <h1 className="truncate">
+            Welcome back
+            {user?.name ? `, ${firstName}` : ""}
+          </h1>
         </div>
+
         <div className="shrink-0">
           <ButtonGroup aria-label="Create options">
             <Button
               variant="primary"
-              onClick={() => navigate({ to: "/applications" })}
+              onClick={() =>
+                navigate({ to: "/applications" })
+              }
               className="!h-8.5 !px-2.5 sm:!px-3 !text-[13px] !font-medium inline-flex items-center gap-1.5"
             >
               <PlusSignIcon size={14} />
               <span>Create</span>
             </Button>
+
             <DropdownMenu>
               <DropdownMenu.Trigger
                 render={
@@ -173,20 +212,47 @@ export function DashboardPage() {
                   </Button>
                 }
               />
+
               <DropdownMenu.Content>
-                <DropdownMenu.Item onClick={() => navigate({ to: "/applications" })}>
+                <DropdownMenu.Item
+                  onClick={() =>
+                    navigate({ to: "/applications" })
+                  }
+                >
                   Application
                 </DropdownMenu.Item>
-                <DropdownMenu.Item onClick={() => navigate({ to: "/contacts" })}>
+
+                <DropdownMenu.Item
+                  onClick={() =>
+                    navigate({ to: "/contacts" })
+                  }
+                >
                   Contact
                 </DropdownMenu.Item>
-                <DropdownMenu.Item onClick={() => navigate({ to: "/employers" })}>
+
+                <DropdownMenu.Item
+                  onClick={() =>
+                    navigate({ to: "/employers" })
+                  }
+                >
                   Employer
                 </DropdownMenu.Item>
-                <DropdownMenu.Item onClick={() => navigate({ to: "/informational-interviews" })}>
+
+                <DropdownMenu.Item
+                  onClick={() =>
+                    navigate({
+                      to: "/informational-interviews",
+                    })
+                  }
+                >
                   Interview
                 </DropdownMenu.Item>
-                <DropdownMenu.Item onClick={() => navigate({ to: "/expenses" })}>
+
+                <DropdownMenu.Item
+                  onClick={() =>
+                    navigate({ to: "/expenses" })
+                  }
+                >
                   Expense
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
@@ -195,20 +261,24 @@ export function DashboardPage() {
         </div>
       </header>
 
-
-      <section className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" aria-label="Application summary">
+      <section
+        className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+        aria-label="Application summary"
+      >
         <MetricCard
           label="Active applications"
           value={data.metrics.activeApplications}
           detail={`${data.applications.length} total in your pipeline`}
           accent="teal"
         />
+
         <MetricCard
           label="Interviews"
           value={data.metrics.interviews}
           detail="Applications at interview stage"
           accent="violet"
         />
+
         <MetricCard
           label="Response rate"
           value={data.metrics.responseRate}
@@ -216,43 +286,66 @@ export function DashboardPage() {
           detail="Submitted applications with responses"
           accent="amber"
         />
+
         <MetricCard
           label="Offers"
           value={data.metrics.offers}
-          detail={data.metrics.offers ? "Offer-stage applications" : "Keep building momentum"}
+          detail={
+            data.metrics.offers
+              ? "Offer-stage applications"
+              : "Keep building momentum"
+          }
           accent="blue"
         />
       </section>
 
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,2.3fr)_minmax(300px,1fr)]">
-        <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" id="applications">
+        <section
+          className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0"
+          id="applications"
+        >
           <div className="mb-[18px] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="w-full sm:w-[220px] sm:flex-none">
               <Select
                 aria-label="Filter applications by status"
                 value={statusFilter}
-                onValueChange={(val) => val && setStatusFilter(val)}
+                onValueChange={(val) =>
+                  val && setStatusFilter(val)
+                }
                 className="w-full"
                 items={{
                   All: `All applications (${data.applications.length})`,
                   ...Object.fromEntries(
                     pipelineStatuses.map((status) => [
                       status,
-                      `${status} (${data.applications.filter((a) => a.status === status).length})`
-                    ])
-                  )
+                      `${status} (${
+                        data.applications.filter(
+                          (a) => a.status === status,
+                        ).length
+                      })`,
+                    ]),
+                  ),
                 }}
               />
             </div>
 
             <label className="flex w-full items-center gap-2 rounded-xl bg-gray-100/90 px-3.5 py-2 sm:w-[280px] md:w-[320px] text-gray-400 focus-within:ring-2 focus-within:ring-[#0a5c4d]/20 transition-all">
-              <span className="sr-only">Search applications</span>
-              <Search01Icon size={16} className="shrink-0 text-gray-500" />
+              <span className="sr-only">
+                Search applications
+              </span>
+
+              <Search01Icon
+                size={16}
+                className="shrink-0 text-gray-500"
+              />
+
               <input
                 type="text"
                 className="bg-transparent border-0 outline-none ring-0 shadow-none p-0 text-sm w-full text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:border-0"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) =>
+                  setQuery(event.target.value)
+                }
                 placeholder="Search applications"
               />
             </label>
@@ -260,7 +353,10 @@ export function DashboardPage() {
 
           {loading ? (
             <div className="page-loading">
-              <span className="page-loader" aria-hidden="true" />
+              <span
+                className="page-loader"
+                aria-hidden="true"
+              />
               <span>Loading opportunities</span>
             </div>
           ) : filteredApplications.length ? (
@@ -268,41 +364,75 @@ export function DashboardPage() {
               <Table className="min-w-[580px]">
                 <Table.Header>
                   <Table.Row>
-                    <Table.Head className="min-w-[140px]">Company</Table.Head>
-                    <Table.Head className="min-w-[140px]">Position</Table.Head>
-                    <Table.Head className="min-w-[120px]">Location</Table.Head>
-                    <Table.Head className="min-w-[100px]">Status</Table.Head>
-                    <Table.Head className="min-w-[100px]">Deadline</Table.Head>
+                    <Table.Head className="min-w-[140px]">
+                      Company
+                    </Table.Head>
+                    <Table.Head className="min-w-[140px]">
+                      Position
+                    </Table.Head>
+                    <Table.Head className="min-w-[120px]">
+                      Location
+                    </Table.Head>
+                    <Table.Head className="min-w-[100px]">
+                      Status
+                    </Table.Head>
+                    <Table.Head className="min-w-[100px]">
+                      Deadline
+                    </Table.Head>
                   </Table.Row>
                 </Table.Header>
+
                 <Table.Body>
-                  {filteredApplications.map((application) => (
-                    <Table.Row key={application.id}>
-                      <Table.Cell className="font-medium text-gray-900">
-                        {application.company}
-                      </Table.Cell>
-                      <Table.Cell>{application.position}</Table.Cell>
-                      <Table.Cell>{application.location || "—"}</Table.Cell>
-                      <Table.Cell>
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${pillClass(application.status)}`}>
-                          {application.status}
-                        </span>
-                      </Table.Cell>
-                      <Table.Cell>
-                        {application.deadline
-                          ? new Intl.DateTimeFormat("en-GB", {
-                              day: "numeric",
-                              month: "short",
-                            }).format(new Date(`${application.deadline}T12:00:00`))
-                          : "—"}
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
+                  {filteredApplications.map(
+                    (application) => (
+                      <Table.Row key={application.id}>
+                        <Table.Cell className="font-medium text-gray-900">
+                          {application.company}
+                        </Table.Cell>
+
+                        <Table.Cell>
+                          {application.position}
+                        </Table.Cell>
+
+                        <Table.Cell>
+                          {application.location || "—"}
+                        </Table.Cell>
+
+                        <Table.Cell>
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${pillClass(
+                              application.status,
+                            )}`}
+                          >
+                            {application.status}
+                          </span>
+                        </Table.Cell>
+
+                        <Table.Cell>
+                          {application.deadline
+                            ? new Intl.DateTimeFormat(
+                                "en-GB",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                },
+                              ).format(
+                                new Date(
+                                  `${application.deadline}T12:00:00`,
+                                ),
+                              )
+                            : "—"}
+                        </Table.Cell>
+                      </Table.Row>
+                    ),
+                  )}
                 </Table.Body>
               </Table>
             </div>
           ) : (
-            <p className="px-4 py-12 text-center text-sm text-gray-500">No applications found matching your search.</p>
+            <p className="px-4 py-12 text-center text-sm text-gray-500">
+              No applications found matching your search.
+            </p>
           )}
         </section>
 
@@ -310,180 +440,305 @@ export function DashboardPage() {
           <aside className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0">
             <div className="mb-[18px] flex items-center justify-between gap-4">
               <div>
-                <span className="mb-0.5 block text-[12px] font-medium text-[var(--text-muted)]">Stay on schedule</span>
+                <span className="mb-0.5 block text-[12px] font-medium text-[var(--text-muted)]">
+                  Stay on schedule
+                </span>
                 <h2>Upcoming</h2>
               </div>
+
               <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
                 {data.reminderSummary.total} reminders
               </span>
             </div>
+
             {data.reminderSummary.total > 0 && (
-              <div className="mb-3 flex flex-wrap gap-2 text-[11px] font-semibold" aria-label="Reminder summary">
+              <div
+                className="mb-3 flex flex-wrap gap-2 text-[11px] font-semibold"
+                aria-label="Reminder summary"
+              >
                 <span className="rounded-full bg-red-50 px-2.5 py-1 text-red-700">
                   {data.reminderSummary.overdue} overdue
                 </span>
+
                 <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700">
                   {data.reminderSummary.dueThisWeek} due this week
                 </span>
               </div>
             )}
+
             <div className="grid gap-2.5">
-              {data.upcomingTasks.slice(0, 6).map((task) => (
-                <Link
-                  to={task.href ?? "/applications"}
-                  className="grid grid-cols-[32px_1fr_auto] items-center gap-2.5 rounded-xl bg-gray-50 p-2.5 no-underline transition-colors hover:bg-gray-100"
-                  key={task.id}
-                >
-                  <span className={`grid size-8 place-items-center rounded-lg text-[12px] font-semibold ${taskIconClass(task.type)}`}>
-                    {getTaskIcon(task.type)}
-                  </span>
-                  <div className="min-w-0">
-                    <strong className="block text-[14px] font-medium">{task.title}</strong>
-                    <span className="text-[12px] text-gray-500">
-                      {task.due
-                        ? new Intl.DateTimeFormat("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                          }).format(new Date(`${task.due}T12:00:00`))
-                        : "No due date"}
+              {data.upcomingTasks
+                .slice(0, 6)
+                .map((task) => (
+                  <Link
+                    to={task.href ?? "/applications"}
+                    className="grid grid-cols-[32px_1fr_auto] items-center gap-2.5 rounded-xl bg-gray-50 p-2.5 no-underline transition-colors hover:bg-gray-100"
+                    key={task.id}
+                  >
+                    <span
+                      className={`grid size-8 place-items-center rounded-lg text-[12px] font-semibold ${taskIconClass(
+                        task.type,
+                      )}`}
+                    >
+                      {getTaskIcon(task.type)}
                     </span>
-                  </div>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${task.overdue ? "bg-red-100 text-red-700" : "bg-white text-gray-500"}`}>
-                    {task.priority ?? task.type}
-                  </span>
-                </Link>
-              ))}
-              {!loading && data.upcomingTasks.length === 0 && (
-                <p className="rounded-xl bg-emerald-50 px-4 py-5 text-center text-sm text-emerald-800">
-                  You are all caught up. New deadlines and follow-ups will appear here.
-                </p>
-              )}
+
+                    <div className="min-w-0">
+                      <strong className="block text-[14px] font-medium">
+                        {task.title}
+                      </strong>
+
+                      <span className="text-[12px] text-gray-500">
+                        {task.due
+                          ? new Intl.DateTimeFormat(
+                              "en-GB",
+                              {
+                                day: "numeric",
+                                month: "short",
+                              },
+                            ).format(
+                              new Date(
+                                `${task.due}T12:00:00`,
+                              ),
+                            )
+                          : "No due date"}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        task.overdue
+                          ? "bg-red-100 text-red-700"
+                          : "bg-white text-gray-500"
+                      }`}
+                    >
+                      {task.priority ?? task.type}
+                    </span>
+                  </Link>
+                ))}
+
+              {!loading &&
+                data.upcomingTasks.length === 0 && (
+                  <p className="rounded-xl bg-emerald-50 px-4 py-5 text-center text-sm text-emerald-800">
+                    You are all caught up. New deadlines and
+                    follow-ups will appear here.
+                  </p>
+                )}
             </div>
-            <div className="mt-4 rounded-xl bg-gray-50 p-4" aria-label="Career readiness">
-              <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Career readiness</span>
+
+            <div
+              className="mt-4 rounded-xl bg-gray-50 p-4"
+              aria-label="Career readiness"
+            >
+              <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">
+                Career readiness
+              </span>
+
               {loading ? (
-                <p className="mt-1 mb-3 text-sm text-gray-500">Loading interview readiness…</p>
+                <p className="mt-1 mb-3 text-sm text-gray-500">
+                  Loading interview readiness…
+                </p>
               ) : readiness.total === 0 ? (
-                <p className="mt-1 mb-3 text-sm text-gray-700">Record an informational interview to build preparation, thank-you, and follow-up readiness.</p>
+                <p className="mt-1 mb-3 text-sm text-gray-700">
+                  Record an informational interview to build
+                  preparation, thank-you, and follow-up
+                  readiness.
+                </p>
               ) : (
                 <dl className="mt-2 mb-3 grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-lg bg-white px-2 py-2">
-                    <dt className="text-[11px] font-medium text-gray-500">Interviews</dt>
-                    <dd className="text-sm font-semibold text-gray-900">{readiness.total}</dd>
+                    <dt className="text-[11px] font-medium text-gray-500">
+                      Interviews
+                    </dt>
+                    <dd className="text-sm font-semibold text-gray-900">
+                      {readiness.total}
+                    </dd>
                   </div>
+
                   <div className="rounded-lg bg-white px-2 py-2">
-                    <dt className="text-[11px] font-medium text-gray-500">Thank-yous</dt>
-                    <dd className="text-sm font-semibold text-gray-900">{readiness.thankYouPending} pending</dd>
+                    <dt className="text-[11px] font-medium text-gray-500">
+                      Thank-yous
+                    </dt>
+                    <dd className="text-sm font-semibold text-gray-900">
+                      {readiness.thankYouPending} pending
+                    </dd>
                   </div>
+
                   <div className="rounded-lg bg-white px-2 py-2">
-                    <dt className="text-[11px] font-medium text-gray-500">Follow-ups</dt>
-                    <dd className="text-sm font-semibold text-gray-900">{readiness.followUps}</dd>
+                    <dt className="text-[11px] font-medium text-gray-500">
+                      Follow-ups
+                    </dt>
+                    <dd className="text-sm font-semibold text-gray-900">
+                      {readiness.followUps}
+                    </dd>
                   </div>
                 </dl>
               )}
-              {!loading && interviewReminders.length > 0 && (
-                <ul className="mb-3 space-y-1.5">
-                  {interviewReminders.slice(0, 3).map((reminder) => (
-                    <li key={reminder.id}>
-                      <Link to="/informational-interviews" className="block truncate rounded-lg bg-white px-3 py-2 text-xs font-medium text-gray-700 no-underline hover:bg-gray-100">
-                        {reminder.title}{reminder.due ? ` · ${reminder.due}` : ""}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="mt-1 mb-3 text-sm text-gray-700">Review questions and build a focused checklist.</p>
-              <Link to="/informational-interviews" className="inline-flex w-full h-10 items-center justify-center rounded-xl bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-4 text-xs font-semibold text-white no-underline">
+
+              {!loading &&
+                interviewReminders.length > 0 && (
+                  <ul className="mb-3 space-y-1.5">
+                    {interviewReminders
+                      .slice(0, 3)
+                      .map((reminder) => (
+                        <li key={reminder.id}>
+                          <Link
+                            to="/informational-interviews"
+                            className="block truncate rounded-lg bg-white px-3 py-2 text-xs font-medium text-gray-700 no-underline hover:bg-gray-100"
+                          >
+                            {reminder.title}
+                            {reminder.due
+                              ? ` · ${reminder.due}`
+                              : ""}
+                          </Link>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+
+              <p className="mt-1 mb-3 text-sm text-gray-700">
+                Review questions and build a focused checklist.
+              </p>
+
+              <Link
+                to="/informational-interviews"
+                className="inline-flex w-full h-10 items-center justify-center rounded-xl bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-4 text-xs font-semibold text-white no-underline"
+              >
                 Start preparing
               </Link>
             </div>
           </aside>
 
-          <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" id="informational-interviews">
+          <section
+            className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0"
+            id="informational-interviews"
+          >
             <div className="mb-[18px] flex items-center justify-between gap-4">
               <div>
-                <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Professional relationships</span>
+                <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">
+                  Professional relationships
+                </span>
+
                 <h2>Informational interviews</h2>
               </div>
-              <Link to="/informational-interviews" className="inline-flex items-center rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-[#0a5c4d]/10">
+
+              <Link
+                to="/informational-interviews"
+                className="inline-flex items-center rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-[#0a5c4d]/10"
+              >
                 View all
               </Link>
             </div>
+
             {data.informationalInterviews.length ? (
               <div className="w-full overflow-x-auto pb-2">
                 <Table className="min-w-[360px]">
                   <Table.Header>
                     <Table.Row>
-                      <Table.Head className="min-w-[120px]">Contact</Table.Head>
-                      <Table.Head className="min-w-[140px]">Company / role</Table.Head>
-                      <Table.Head className="min-w-[100px]">Date</Table.Head>
+                      <Table.Head className="min-w-[120px]">
+                        Contact
+                      </Table.Head>
+
+                      <Table.Head className="min-w-[140px]">
+                        Company / role
+                      </Table.Head>
+
+                      <Table.Head className="min-w-[100px]">
+                        Date
+                      </Table.Head>
                     </Table.Row>
                   </Table.Header>
+
                   <Table.Body>
-                    {data.informationalInterviews.map((interview) => (
-                      <Table.Row key={interview.id}>
-                        <Table.Cell className="font-medium text-gray-900">
-                          {interview.contactName}
-                        </Table.Cell>
-                        <Table.Cell>
-                          {interview.role} {interview.company ? `(${interview.company})` : ""}
-                        </Table.Cell>
-                        <Table.Cell className="whitespace-nowrap">
-                          {interview.scheduledFor
-                            ? new Intl.DateTimeFormat("en-GB", {
-                                day: "numeric",
-                                month: "short",
-                              }).format(new Date(interview.scheduledFor))
-                            : "—"}
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
+                    {data.informationalInterviews.map(
+                      (interview) => (
+                        <Table.Row key={interview.id}>
+                          <Table.Cell className="font-medium text-gray-900">
+                            {interview.contactName}
+                          </Table.Cell>
+
+                          <Table.Cell>
+                            {interview.role}{" "}
+                            {interview.company
+                              ? `(${interview.company})`
+                              : ""}
+                          </Table.Cell>
+
+                          <Table.Cell className="whitespace-nowrap">
+                            {interview.scheduledFor
+                              ? new Intl.DateTimeFormat(
+                                  "en-GB",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                  },
+                                ).format(
+                                  new Date(
+                                    interview.scheduledFor,
+                                  ),
+                                )
+                              : "—"}
+                          </Table.Cell>
+                        </Table.Row>
+                      ),
+                    )}
                   </Table.Body>
                 </Table>
               </div>
             ) : (
-              <p className="px-4 py-12 text-center text-sm text-gray-500">No informational interviews recorded yet.</p>
+              <p className="px-4 py-12 text-center text-sm text-gray-500">
+                No informational interviews recorded yet.
+              </p>
             )}
           </section>
 
-          {/* New Expense Tracking Summary Widget */}
-          <section className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0" id="expense-tracking">
+          <section
+            className="rounded-2xl bg-white p-4 sm:p-6 border-0 ring-0 min-w-0"
+            id="expense-tracking"
+          >
             <div className="mb-[18px] flex items-center justify-between gap-4">
               <div>
-                <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">Financial overview</span>
-                <h2>Expense Tracking</h2>
+                <span className="mb-0.5 block text-xs font-medium text-kumo-subtle">
+                  Financial overview
+                </span>
+
+                <h2>Expense tracking</h2>
               </div>
-              <Link to="/expenses" className="inline-flex items-center rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-[#0a5c4d]/10">
-                Details
+
+              <Link
+                to="/expenses"
+                className="inline-flex items-center rounded-lg border-0 bg-transparent px-2.5 py-1 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-[#0a5c4d]/10"
+              >
+                View all
               </Link>
             </div>
-            {expensesLoading ? (
-              <p className="mt-1 mb-3 text-sm text-gray-500">Loading expenses…</p>
-            ) : expenseSummary ? (
-              <div className="rounded-xl bg-gray-50 p-4">
-                 <div className="text-center mb-4">
-                   <span className="text-[11px] font-medium text-gray-500 uppercase">Total Spent</span>
-                   <div className="text-2xl font-bold text-gray-900">${expenseSummary.total.toFixed(2)}</div>
-                 </div>
-                 {Object.keys(expenseSummary.byCategory).length > 0 && (
-                   <div className="space-y-2 mt-4 pt-4 border-t border-gray-200">
-                     {Object.entries(expenseSummary.byCategory).map(([cat, amt]) => (
-                       <div key={cat} className="flex justify-between text-xs">
-                         <span className="text-gray-600">{cat.replace("_", " ")}</span>
-                         <span className="font-semibold">${Number(amt).toFixed(2)}</span>
-                       </div>
-                     ))}
-                   </div>
-                 )}
-                 <Link to="/expenses" className="mt-4 flex w-full h-8 items-center justify-center rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 no-underline hover:bg-gray-50 transition-colors">
-                   Log an expense
-                 </Link>
-              </div>
+
+            {expenseSummaryLoading ? (
+              <p className="py-8 text-center text-sm text-gray-500">
+                Loading expenses…
+              </p>
             ) : (
-              <p className="mt-1 mb-3 text-sm text-gray-700">No expenses logged yet.</p>
+              <div className="rounded-xl bg-emerald-50 p-4">
+                <span className="text-xs font-medium text-emerald-700">
+                  Total job-search spending
+                </span>
+
+                <strong className="mt-1 block text-2xl text-emerald-950">
+                  {new Intl.NumberFormat("en-GB", {
+                    style: "currency",
+                    currency: "GBP",
+                  }).format(expenseSummary?.total ?? 0)}
+                </strong>
+
+                <Link
+                  to="/expenses"
+                  className="mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg bg-white px-3 text-xs font-semibold text-[#0a5c4d] no-underline hover:bg-emerald-100"
+                >
+                  Log an expense
+                </Link>
+              </div>
             )}
           </section>
-
         </div>
       </div>
     </>

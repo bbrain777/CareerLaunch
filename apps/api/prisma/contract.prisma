@@ -24,6 +24,11 @@ enum InformationalInterviewStatus {
   COMPLETED
 }
 
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+}
+
 enum ExpenseCategory {
   TRAVEL
   PRINTING
@@ -48,9 +53,28 @@ model User {
   employers               Employer[]
   tasks                   Task[]
   informationalInterviews InformationalInterview[]
+  documents               Document[]
   expenses                Expense[]
 
   @@map("user")
+}
+
+model Document {
+  id          Int          @id @default(autoincrement())
+  type        DocumentType
+  fileName    String
+  pathname    String
+  blobUrl     String
+  contentType String
+  sizeBytes   Int
+  userId      Int
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   temporal.updatedAt()
+
+  @@map("document")
 }
 
 model Employer {
@@ -64,7 +88,7 @@ model Employer {
   createdAt    DateTime             @default(now())
   updatedAt    temporal.updatedAt()
 
-  user         User                 @relation(fields:[userId], references:[id], onDelete: Cascade)
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   applications Application[]
   contacts     Contact[]
 
@@ -84,8 +108,8 @@ model Contact {
   userId                  Int
   employerId              Int?
 
-  user                    User                     @relation(fields:[userId], references:[id], onDelete: Cascade)
-  employer                Employer?                @relation(fields:[employerId], references:[id], onDelete: SetNull)
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employer                Employer?                @relation(fields: [employerId], references: [id], onDelete: SetNull)
   applications            Application[]
   tasks                   Task[]
   informationalInterviews InformationalInterview[]
@@ -110,9 +134,9 @@ model Application {
   employerId Int?
   contactId  Int?
 
-  user       User               @relation(fields:[userId], references:[id], onDelete: Cascade)
-  employer   Employer?          @relation(fields:[employerId], references:[id], onDelete: SetNull)
-  contact    Contact?           @relation(fields:[contactId], references:[id], onDelete: SetNull)
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employer   Employer?          @relation(fields: [employerId], references: [id], onDelete: SetNull)
+  contact    Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
   tasks      Task[]
   expenses   Expense[]
 
@@ -120,6 +144,24 @@ model Application {
   updatedAt  temporal.updatedAt()
 
   @@map("application")
+}
+
+model Expense {
+  id            Int             @id @default(autoincrement())
+  amount        Float
+  category      ExpenseCategory
+  date          DateTime
+  description   String
+  userId        Int
+  applicationId Int?
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application   Application?    @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     temporal.updatedAt()
+
+  @@map("expense")
 }
 
 model Task {
@@ -133,9 +175,9 @@ model Task {
   applicationId Int?
   contactId     Int?
 
-  user          User               @relation(fields:[userId], references:[id], onDelete: Cascade)
-  application   Application?       @relation(fields:[applicationId], references:[id], onDelete: Cascade)
-  contact       Contact?           @relation(fields:[contactId], references:[id], onDelete: SetNull)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application   Application?       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  contact       Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
 
   createdAt     DateTime           @default(now())
   updatedAt     temporal.updatedAt()
@@ -160,30 +202,11 @@ model InformationalInterview {
   userId               Int
   contactId            Int?
 
-  user                 User                         @relation(fields:[userId], references:[id], onDelete: Cascade)
-  contact              Contact?                     @relation(fields:[contactId], references:[id], onDelete: SetNull)
+  user                 User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contact              Contact?                     @relation(fields: [contactId], references: [id], onDelete: SetNull)
 
   createdAt            DateTime                     @default(now())
   updatedAt            temporal.updatedAt()
 
   @@map("informationalInterview")
-}
-
-model Expense {
-  id            Int             @id @default(autoincrement())
-  amount        Float           
-  category      ExpenseCategory 
-  date          DateTime
-  description   String
-
-  userId        Int
-  applicationId Int?
-
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  application   Application?    @relation(fields: [applicationId], references: [id], onDelete: SetNull)
-
-  createdAt     DateTime        @default(now())
-  updatedAt     temporal.updatedAt()
-
-  @@map("expense")
 }

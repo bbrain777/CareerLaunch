@@ -10,16 +10,19 @@
     "test": "vitest run",
     "db:migrate": "npx prisma db migrate",
     "db:seed": "tsx src/seed.ts",
+    "db:seed:user-demo": "tsx src/seed-user-demo.ts",
     "db:reset": "npx prisma db migrate && tsx src/seed.ts"
   },
   "dependencies": {
     "@prisma/orm-postgres": "8.0.0-rc.12",
+    "@vercel/blob": "^2.8.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^18.0.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.4.0",
     "temporal-polyfill": "^1.0.5"
   },
   "devDependencies": {
@@ -27,6 +30,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.3.0",
     "@types/node": "^24.3.0",
     "@types/supertest": "^6.0.3",
     "prisma": "8.0.0-rc.12",

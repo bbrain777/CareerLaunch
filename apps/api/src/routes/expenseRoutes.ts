@@ -1,151 +1,326 @@
 import { Router } from "express";
-import { expenseRepository } from "../repositories/expenseRepository.js";
-import { requireAuth, authenticatedUserId, AuthRequest } from "../middleware/auth.js";
+import { Temporal } from "temporal-polyfill";
+import {
+  authenticatedUserId,
+  requireAuth,
+  type AuthRequest,
+} from "../middleware/auth.js";
+import { applicationRepository } from "../repositories/applicationRepository.js";
+import {
+  expenseRepository,
+  type ExpenseCategory,
+  type ExpenseInput,
+} from "../repositories/expenseRepository.js";
 
 export const expenseRouter = Router();
 
-// 1. GET /api/expenses - List all expenses
-expenseRouter.get("/", requireAuth, async (req: AuthRequest, res) => {
-  try {
-    const userId = authenticatedUserId(req);
-    if (!userId) return;
+const categories = [
+  "TRAVEL",
+  "PRINTING",
+  "TRAINING",
+  "PROFESSIONAL_SERVICES",
+] as const;
 
-    const expenses = await expenseRepository.findAllByUserId(userId);
-    
-    // Sort by date descending
-    const sorted = expenses.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
-    res.status(200).json(sorted);
-  } catch (error) {
-    res.status(500).json({ message: "Server error fetching expenses" });
+function parseId(value: string | string[] | undefined): number | undefined {
+  if (typeof value !== "string") return undefined;
+
+  const id = Number(value);
+
+  return Number.isInteger(id) && id > 0 ? id : undefined;
+}
+
+function parseDate(value: unknown): Temporal.Instant | undefined {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value.trim())
+    ? `${value.trim()}T00:00:00Z`
+    : value.trim();
+
+  try {
+    return Temporal.Instant.from(normalized);
+  } catch {
+    return undefined;
   }
-});
+}
 
-// 2. GET /api/expenses/summary - Get expense totals (Must be BEFORE /:id)
-expenseRouter.get("/summary", requireAuth, async (req: AuthRequest, res) => {
-  try {
-    const userId = authenticatedUserId(req);
-    if (!userId) return;
+function parseCategory(value: unknown): ExpenseCategory | undefined {
+  if (typeof value !== "string") return undefined;
 
-    const { startDate, endDate } = req.query;
+  const normalized = value.trim().toUpperCase();
 
-    const summary = await expenseRepository.getSummary(
-      userId,
-      startDate as string | undefined,
-      endDate as string | undefined
-    );
+  return categories.find((category) => category === normalized);
+}
 
-    res.status(200).json(summary);
-  } catch (error) {
-    res.status(500).json({ message: "Server error calculating summary" });
+function expenseInput(
+  body: Record<string, unknown>,
+  partial = false,
+): { data?: Partial<ExpenseInput>; message?: string } {
+  const data: Partial<ExpenseInput> = {};
+
+  if (!partial || Object.hasOwn(body, "amount")) {
+    if (
+      typeof body.amount !== "number" ||
+      !Number.isFinite(body.amount) ||
+      body.amount <= 0
+    ) {
+      return { message: "amount must be a positive number" };
+    }
+
+    data.amount = body.amount;
   }
-});
 
-// 3. POST /api/expenses - Create
-expenseRouter.post("/", requireAuth, async (req: AuthRequest, res) => {
-  try {
-    const userId = authenticatedUserId(req);
-    if (!userId) return;
-    const { amount, category, date, description, applicationId } = req.body;
+  if (!partial || Object.hasOwn(body, "category")) {
+    const category = parseCategory(body.category);
 
-    if (typeof amount !== "number" || amount <= 0) {
-      res.status(400).json({ message: "A positive amount is required" });
-      return;
-    }
-    const validCategories = ["TRAVEL", "PRINTING", "TRAINING", "PROFESSIONAL_SERVICES"];
-    if (!validCategories.includes(category)) {
-      res.status(400).json({ message: "Valid category is required" });
-      return;
-    }
-    if (!date || isNaN(Date.parse(date))) {
-      res.status(400).json({ message: "Valid date is required" });
-      return;
-    }
-    if (typeof description !== "string" || !description.trim()) {
-      res.status(400).json({ message: "Description is required" });
-      return;
+    if (!category) {
+      return {
+        message: `category must be one of: ${categories.join(", ")}`,
+      };
     }
 
-    const expense = await expenseRepository.create({
-      userId,
-      amount,
-      category,
-      date: new Date(date),
-      description: description.trim(),
-      applicationId: applicationId ? Number(applicationId) : null,
+    data.category = category;
+  }
+
+  if (!partial || Object.hasOwn(body, "date")) {
+    const date = parseDate(body.date);
+
+    if (!date) {
+      return { message: "date must be a valid date" };
+    }
+
+    data.date = date;
+  }
+
+  if (!partial || Object.hasOwn(body, "description")) {
+    if (
+      typeof body.description !== "string" ||
+      !body.description.trim()
+    ) {
+      return { message: "description is required" };
+    }
+
+    data.description = body.description.trim();
+  }
+
+  if (Object.hasOwn(body, "applicationId")) {
+    if (body.applicationId === null) {
+      data.applicationId = null;
+    } else if (
+      typeof body.applicationId === "number" &&
+      Number.isInteger(body.applicationId) &&
+      body.applicationId > 0
+    ) {
+      data.applicationId = body.applicationId;
+    } else {
+      return {
+        message: "applicationId must be a positive integer or null",
+      };
+    }
+  } else if (!partial) {
+    data.applicationId = null;
+  }
+
+  return { data };
+}
+
+function serializeExpense(expense: Record<string, any>) {
+  return {
+    ...expense,
+    id: Number(expense.id),
+    amount: Number(expense.amount),
+    date:
+      expense.date instanceof Date
+        ? expense.date.toISOString()
+        : String(expense.date),
+    applicationId: expense.applicationId
+      ? Number(expense.applicationId)
+      : null,
+    createdAt: expense.createdAt
+      ? String(expense.createdAt)
+      : undefined,
+    updatedAt: expense.updatedAt
+      ? String(expense.updatedAt)
+      : undefined,
+  };
+}
+
+async function ownsApplication(
+  userId: number,
+  applicationId: number | null | undefined,
+) {
+  return (
+    applicationId === undefined ||
+    applicationId === null ||
+    Boolean(
+      await applicationRepository.findById(applicationId, userId),
+    )
+  );
+}
+
+expenseRouter.use(requireAuth);
+
+expenseRouter.get("/summary", async (request: AuthRequest, response) => {
+  const userId = authenticatedUserId(request)!;
+
+  const startDate = request.query.startDate
+    ? parseDate(request.query.startDate)
+    : undefined;
+
+  const endDate = request.query.endDate
+    ? parseDate(request.query.endDate)
+    : undefined;
+
+  if (
+    (request.query.startDate && !startDate) ||
+    (request.query.endDate && !endDate)
+  ) {
+    return response.status(400).json({
+      message: "startDate and endDate must be valid dates",
     });
-
-    res.status(201).json(expense);
-  } catch (error) {
-    res.status(500).json({ message: "Server error creating expense" });
   }
+
+  const startMs = startDate
+    ? Number(startDate.epochMilliseconds)
+    : Number.NEGATIVE_INFINITY;
+
+  const endMs = endDate
+    ? Number(endDate.epochMilliseconds) + 86_399_999
+    : Number.POSITIVE_INFINITY;
+
+  const expenses = (
+    await expenseRepository.findAllByUserId(userId)
+  ).filter((expense: any) => {
+    const value = new Date(String(expense.date)).getTime();
+
+    return value >= startMs && value <= endMs;
+  });
+
+  const byCategory: Record<string, number> = {};
+  let total = 0;
+
+  for (const expense of expenses as any[]) {
+    const amount = Number(expense.amount);
+
+    total += amount;
+
+    const category = String(expense.category);
+
+    byCategory[category] = (byCategory[category] ?? 0) + amount;
+  }
+
+  response.json({
+    summary: {
+      total,
+      byCategory,
+    },
+  });
 });
 
-// 4. GET /api/expenses/:id - Read
-expenseRouter.get("/:id", requireAuth, async (req: AuthRequest, res) => {
-  try {
-    const userId = authenticatedUserId(req);
-    if (!userId) return;
-    const id = Number(req.params.id);
+expenseRouter.get("/", async (request: AuthRequest, response) => {
+  const userId = authenticatedUserId(request)!;
 
-    const expense = await expenseRepository.findByIdAndUserId(id, userId);
+  const expenses = await expenseRepository.findAllByUserId(userId);
 
-    if (!expense) {
-      res.status(404).json({ message: "Expense not found" });
-      return;
-    }
+  expenses.sort(
+    (left: any, right: any) =>
+      new Date(String(right.date)).getTime() -
+      new Date(String(left.date)).getTime(),
+  );
 
-    res.status(200).json(expense);
-  } catch (error) {
-    res.status(500).json({ message: "Server error fetching expense" });
-  }
+  response.json({
+    expenses: expenses.map(serializeExpense),
+  });
 });
 
-// 5. PUT /api/expenses/:id - Update
-expenseRouter.put("/:id", requireAuth, async (req: AuthRequest, res) => {
-  try {
-    const userId = authenticatedUserId(req);
-    if (!userId) return;
-    const id = Number(req.params.id);
-    const { amount, category, date, description, applicationId } = req.body;
+expenseRouter.post("/", async (request: AuthRequest, response) => {
+  const userId = authenticatedUserId(request)!;
 
-    const existing = await expenseRepository.findByIdAndUserId(id, userId);
-    if (!existing) {
-      res.status(404).json({ message: "Expense not found" });
-      return;
-    }
+  const parsed = expenseInput(request.body);
 
-    const updated = await expenseRepository.update(id, {
-      amount: amount ?? (existing.amount as number),
-      category: category ?? (existing.category as string),
-      date: date ? new Date(date) : (existing.date as Date),
-      description: description ? description.trim() : (existing.description as string),
-      applicationId: applicationId !== undefined ? (applicationId ? Number(applicationId) : null) : (existing.applicationId as number | null),
+  if (!parsed.data) {
+    return response.status(400).json({
+      message: parsed.message,
     });
-
-    res.status(200).json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Server error updating expense" });
   }
+
+  if (!(await ownsApplication(userId, parsed.data.applicationId))) {
+    return response.status(400).json({
+      message:
+        "applicationId must reference an application owned by the authenticated user",
+    });
+  }
+
+  const expense = await expenseRepository.create(
+    userId,
+    parsed.data as ExpenseInput,
+  );
+
+  response.status(201).json({
+    expense: serializeExpense(expense),
+  });
 });
 
-// 6. DELETE /api/expenses/:id - Delete
-expenseRouter.delete("/:id", requireAuth, async (req: AuthRequest, res) => {
-  try {
-    const userId = authenticatedUserId(req);
-    if (!userId) return;
-    const id = Number(req.params.id);
+expenseRouter.patch("/:id", async (request: AuthRequest, response) => {
+  const id = parseId(request.params.id);
 
-    const existing = await expenseRepository.findByIdAndUserId(id, userId);
-    if (!existing) {
-      res.status(404).json({ message: "Expense not found" });
-      return;
-    }
-
-    await expenseRepository.delete(id);
-
-    res.status(200).json({ message: "Expense deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error deleting expense" });
+  if (!id) {
+    return response.status(400).json({
+      message: "id must be a positive integer",
+    });
   }
+
+  const userId = authenticatedUserId(request)!;
+
+  if (!(await expenseRepository.findById(id, userId))) {
+    return response.status(404).json({
+      message: "Expense not found",
+    });
+  }
+
+  const parsed = expenseInput(request.body, true);
+
+  if (!parsed.data) {
+    return response.status(400).json({
+      message: parsed.message,
+    });
+  }
+
+  if (!(await ownsApplication(userId, parsed.data.applicationId))) {
+    return response.status(400).json({
+      message:
+        "applicationId must reference an application owned by the authenticated user",
+    });
+  }
+
+  const expense = await expenseRepository.update(
+    id,
+    userId,
+    parsed.data,
+  );
+
+  response.json({
+    expense: serializeExpense(expense as any),
+  });
+});
+
+expenseRouter.delete("/:id", async (request: AuthRequest, response) => {
+  const id = parseId(request.params.id);
+
+  if (!id) {
+    return response.status(400).json({
+      message: "id must be a positive integer",
+    });
+  }
+
+  const userId = authenticatedUserId(request)!;
+
+  if (!(await expenseRepository.findById(id, userId))) {
+    return response.status(404).json({
+      message: "Expense not found",
+    });
+  }
+
+  await expenseRepository.delete(id, userId);
+
+  response.status(204).send();
 });

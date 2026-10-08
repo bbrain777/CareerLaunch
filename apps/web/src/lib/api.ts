@@ -74,4 +74,15 @@ export const api = {
 
   delete: <T>(endpoint: string, options?: RequestOptions) =>
     request<T>(endpoint, { ...options, method: "DELETE" }),
+
+  download: async (endpoint: string) => {
+    const token = localStorage.getItem("careerlaunch_token");
+    const response = await fetch(endpoint, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) {
+      throw new ApiError(response.status, "Document download failed");
+    }
+    return response.blob();
+  },
 };

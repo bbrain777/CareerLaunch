@@ -2,72 +2,138 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { ExpenseTrackingPage } from "./ExpenseTrackingPage";
-import { useAuth } from "../lib/auth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Mock the authentication hook
-vi.mock("../lib/auth", () => ({
-  useAuth: vi.fn(),
+const mockExpenses = [
+  {
+    id: 1,
+    amount: 250,
+    category: "TRAVEL" as const,
+    date: "2026-10-10",
+    description: "Conference Flight",
+    applicationId: null,
+  },
+];
+
+const mockSummary = {
+  total: 250,
+  byCategory: {
+    TRAVEL: 250,
+    PRINTING: 0,
+    TRAINING: 0,
+    PROFESSIONAL_SERVICES: 0,
+  },
+};
+
+vi.mock("../hooks/queries", () => ({
+  useExpensesQuery: vi.fn(() => ({
+    data: mockExpenses,
+    isLoading: false,
+    error: null,
+  })),
+
+  useExpenseSummaryQuery: vi.fn(() => ({
+    data: mockSummary,
+    isLoading: false,
+    error: null,
+  })),
+
+  useApplicationsQuery: vi.fn(() => ({
+    data: [],
+    isLoading: false,
+    error: null,
+  })),
+
+  useCreateExpenseMutation: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+
+  useUpdateExpenseMutation: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
+
+  useDeleteExpenseMutation: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
 }));
+
+function renderPage() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ExpenseTrackingPage />
+    </QueryClientProvider>,
+  );
+}
 
 describe("ExpenseTrackingPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuth as any).mockReturnValue({ token: "mock-jwt-token" });
-
-    // Mock global fetch for API calls
-    global.fetch = vi.fn((url) => {
-      if (url.toString().includes("/summary")) {
-        return Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ total: 250, byCategory: { TRAVEL: 250 } }),
-        });
-      }
-      return Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve([
-          {
-            id: 1,
-            amount: 250,
-            category: "TRAVEL",
-            date: "2026-10-10",
-            description: "Conference Flight",
-            applicationId: null,
-          }
-        ]),
-      });
-    }) as any;
   });
 
-  it("renders loading state initially", () => {
-    render(<ExpenseTrackingPage />);
-    expect(screen.getByText(/Loading expenses/i)).toBeInTheDocument();
+  it("renders the expense page", () => {
+    renderPage();
+
+    expect(
+      screen.getByRole("heading", { name: "Expense tracking" }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Expense history"),
+    ).toBeInTheDocument();
   });
 
   it("loads and displays expenses and summary totals", async () => {
-    render(<ExpenseTrackingPage />);
+    renderPage();
 
-    // Wait for the mock fetch to resolve and render data
     await waitFor(() => {
-      expect(screen.getAllByText("Conference Flight")[0]).toBeInTheDocument();
+      expect(
+        screen.getByText("Conference Flight"),
+      ).toBeInTheDocument();
     });
 
-    // Check summary total across cards and table
-    expect(screen.getAllByText("$250.00").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Total Spending")[0]).toBeInTheDocument();
+    expect(
+      screen.getByText("Total spending"),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getAllByText("£250.00").length,
+    ).toBeGreaterThan(0);
   });
 
   it("filters expenses by search term", async () => {
-    render(<ExpenseTrackingPage />);
+    renderPage();
 
     await waitFor(() => {
-      expect(screen.getAllByText("Conference Flight")[0]).toBeInTheDocument();
+      expect(
+        screen.getByText("Conference Flight"),
+      ).toBeInTheDocument();
     });
 
-    const searchInput = screen.getAllByPlaceholderText("Search description...")[0];
-    fireEvent.change(searchInput, { target: { value: "Uber" } });
+    const searchInput = screen.getByPlaceholderText(
+      "Search description",
+    );
 
-    // Safely assert that all instances of the filtered-out text are gone
-    expect(screen.queryAllByText("Conference Flight")).toHaveLength(0);
-    expect(screen.getByText(/No expenses match your criteria/i)).toBeInTheDocument();
+    fireEvent.change(searchInput, {
+      target: { value: "Uber" },
+    });
+
+    expect(
+      screen.queryByText("Conference Flight"),
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByText("No expenses match your filters."),
+    ).toBeInTheDocument();
   });
 });

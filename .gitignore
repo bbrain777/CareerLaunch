@@ -13,3 +13,13 @@ Thumbs.db
 *.tmp
 *.tsbuildinfo
 ~$*.docx
+.vercel
+.env*
+!.env.example
+!**/.env.example
+
+# Agent/tooling files
+apps/api/.agents/
+apps/api/.claude/
+apps/api/.cursor/
+apps/api/.devin/

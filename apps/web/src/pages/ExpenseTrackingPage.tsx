@@ -1,235 +1,482 @@
-import { useState, useEffect, FormEvent } from "react";
-import { useAuth } from "../lib/auth";
+import { type FormEvent, useMemo, useState } from "react";
+import {
+  PencilSimpleIcon,
+  PlusIcon,
+  ReceiptIcon,
+  TrashIcon,
+  XIcon,
+} from "@phosphor-icons/react";
+import { Button } from "../components/ui";
+import {
+  useApplicationsQuery,
+  useCreateExpenseMutation,
+  useDeleteExpenseMutation,
+  useExpensesQuery,
+  useExpenseSummaryQuery,
+  useUpdateExpenseMutation,
+} from "../hooks/queries";
+import type { Expense, ExpenseCategory, ExpenseInput } from "../types";
 
-type Expense = {
-  id: number;
-  amount: number;
-  category: string;
-  date: string;
-  description: string;
-  applicationId: number | null;
-};
+const categories: Array<{ value: ExpenseCategory; label: string }> = [
+  { value: "TRAVEL", label: "Travel" },
+  { value: "PRINTING", label: "Printing" },
+  { value: "TRAINING", label: "Training" },
+  {
+    value: "PROFESSIONAL_SERVICES",
+    label: "Professional services",
+  },
+];
 
-type Summary = {
-  total: number;
-  byCategory: Record<string, number>;
-};
+const emptyForm = (): ExpenseInput => ({
+  amount: 0,
+  category: "TRAVEL",
+  date: new Date().toISOString().slice(0, 10),
+  description: "",
+  applicationId: null,
+});
 
-const CATEGORIES = ["TRAVEL", "PRINTING", "TRAINING", "PROFESSIONAL_SERVICES"];
-const API_BASE = "/api/expenses";
+const money = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+});
+
+function categoryLabel(category: ExpenseCategory) {
+  return (
+    categories.find((item) => item.value === category)?.label ?? category
+  );
+}
 
 export function ExpenseTrackingPage() {
-  const { token } = useAuth();
-  
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [summary, setSummary] = useState<Summary>({ total: 0, byCategory: {} });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: expenses = [],
+    isLoading,
+    error: loadError,
+  } = useExpensesQuery();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
+  const { data: summary } = useExpenseSummaryQuery();
 
-  const [isEditing, setIsEditing] = useState<number | null>(null);
-  const [formData, setFormData] = useState({
-    amount: "",
-    category: "TRAVEL",
-    date: new Date().toISOString().split("T")[0],
-    description: "",
-    applicationId: "",
-  });
+  const { data: applications = [] } = useApplicationsQuery();
 
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
+  const createExpense = useCreateExpenseMutation();
+  const updateExpense = useUpdateExpenseMutation();
+  const deleteExpense = useDeleteExpenseMutation();
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const [form, setForm] = useState<ExpenseInput>(emptyForm);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<
+    ExpenseCategory | ""
+  >("");
+  const [formError, setFormError] = useState("");
+
+  const filteredExpenses = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return expenses.filter(
+      (expense) =>
+        (!categoryFilter || expense.category === categoryFilter) &&
+        (!query ||
+          expense.description.toLowerCase().includes(query)),
+    );
+  }, [categoryFilter, expenses, search]);
+
+  function resetForm() {
+    setEditingId(null);
+    setForm(emptyForm());
+    setFormError("");
+  }
+
+  function edit(expense: Expense) {
+    setEditingId(expense.id);
+
+    setForm({
+      amount: expense.amount,
+      category: expense.category,
+      date: expense.date.slice(0, 10),
+      description: expense.description,
+      applicationId: expense.applicationId,
+    });
+
+    setFormError("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setFormError("");
+
     try {
-      const [expRes, sumRes] = await Promise.all([
-        fetch(API_BASE, { headers }),
-        fetch(`${API_BASE}/summary`, { headers })
-      ]);
-      
-      if (!expRes.ok || !sumRes.ok) throw new Error("Failed to fetch data");
-      
-      setExpenses(await expRes.json());
-      setSummary(await sumRes.json());
-      setError(null);
-    } catch (err) {
-      setError("Failed to load expenses. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (token) fetchData();
-  }, [token]);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    const payload = {
-      ...formData,
-      amount: Number(formData.amount),
-      applicationId: formData.applicationId ? Number(formData.applicationId) : null,
-    };
-
-    try {
-      const url = isEditing ? `${API_BASE}/${isEditing}` : API_BASE;
-      const method = isEditing ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers,
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Operation failed");
+      if (editingId) {
+        await updateExpense.mutateAsync({
+          id: editingId,
+          changes: form,
+        });
+      } else {
+        await createExpense.mutateAsync(form);
       }
 
       resetForm();
-      fetchData();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Unable to save the expense",
+      );
     }
-  };
+  }
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this expense?")) return;
-    try {
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE", headers });
-      if (!res.ok) throw new Error("Failed to delete");
-      fetchData();
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const handleEdit = (exp: Expense) => {
-    setIsEditing(exp.id);
-    setFormData({
-      amount: String(exp.amount),
-      category: exp.category,
-      date: new Date(exp.date).toISOString().split("T")[0],
-      description: exp.description,
-      applicationId: exp.applicationId ? String(exp.applicationId) : "",
-    });
-  };
-
-  const resetForm = () => {
-    setIsEditing(null);
-    setFormData({ amount: "", category: "TRAVEL", date: new Date().toISOString().split("T")[0], description: "", applicationId: "" });
-  };
-
-  const filteredExpenses = expenses.filter(exp => {
-    const matchesSearch = exp.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory ? exp.category === filterCategory : true;
-    return matchesSearch && matchesCategory;
-  });
-
-  if (isLoading) return <div className="p-8 text-center">Loading expenses...</div>;
+  const saving =
+    createExpense.isPending || updateExpense.isPending;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Expense Tracking</h1>
+    <>
+      <header className="mb-6">
+        <span className="mb-0.5 block text-xs font-medium text-[var(--text-muted)]">
+          Job-search costs
+        </span>
 
-      {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
+        <h1>Expense tracking</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-blue-50 p-4 rounded shadow-sm border border-blue-100">
-          <h2 className="text-lg font-semibold text-blue-800">Total Spending</h2>
-          <p className="text-3xl font-bold text-blue-900">${summary.total.toFixed(2)}</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Record and review costs connected to your career search.
+        </p>
+      </header>
+
+      <section
+        className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
+        aria-label="Expense summary"
+      >
+        <article className="rounded-2xl bg-emerald-50 p-5 lg:col-span-1">
+          <span className="text-xs font-medium text-emerald-700">
+            Total spending
+          </span>
+
+          <strong className="mt-2 block text-2xl text-emerald-950">
+            {money.format(summary?.total ?? 0)}
+          </strong>
+        </article>
+
+        {categories.map((category) => (
+          <article
+            key={category.value}
+            className="rounded-2xl bg-white p-5"
+          >
+            <span className="text-xs font-medium text-gray-500">
+              {category.label}
+            </span>
+
+            <strong className="mt-2 block text-lg text-gray-900">
+              {money.format(
+                summary?.byCategory[category.value] ?? 0,
+              )}
+            </strong>
+          </article>
+        ))}
+      </section>
+
+      <section
+        className="mb-6 rounded-2xl bg-white p-5 sm:p-6"
+        aria-labelledby="expense-form-heading"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <h2
+            id="expense-form-heading"
+            className="text-lg font-semibold"
+          >
+            {editingId ? "Edit expense" : "Log an expense"}
+          </h2>
+
+          {editingId && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={resetForm}
+            >
+              <XIcon className="size-4" />
+              Cancel
+            </Button>
+          )}
         </div>
-        <div className="md:col-span-2 bg-gray-50 p-4 rounded shadow-sm border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">Spending by Category</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {CATEGORIES.map(cat => (
-              <div key={cat}>
-                <div className="text-xs text-gray-500 uppercase">{cat.replace("_", " ")}</div>
-                <div className="font-medium">${(summary.byCategory[cat] || 0).toFixed(2)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      <div className="bg-white p-6 rounded shadow-sm border border-gray-200 mb-8">
-        <h2 className="text-xl font-semibold mb-4">{isEditing ? "Edit Expense" : "Log New Expense"}</h2>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          <div className="lg:col-span-1">
-            <label className="block text-sm font-medium mb-1">Amount ($)</label>
-            <input type="number" step="0.01" min="0.01" required value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full border rounded p-2" />
-          </div>
-          <div className="lg:col-span-1">
-            <label className="block text-sm font-medium mb-1">Category</label>
-            <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full border rounded p-2">
-              {CATEGORIES.map(c => <option key={c} value={c}>{c.replace("_", " ")}</option>)}
+        {formError && (
+          <p
+            role="alert"
+            className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {formError}
+          </p>
+        )}
+
+        <form
+          className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6"
+          onSubmit={submit}
+        >
+          <label className="grid gap-1.5 text-sm font-medium">
+            Amount (£)
+
+            <input
+              className="h-10 rounded-xl border border-gray-200 px-3"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              value={form.amount || ""}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  amount: Number(event.target.value),
+                })
+              }
+            />
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium">
+            Category
+
+            <select
+              className="h-10 rounded-xl border border-gray-200 bg-white px-3"
+              value={form.category}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  category:
+                    event.target.value as ExpenseCategory,
+                })
+              }
+            >
+              {categories.map((category) => (
+                <option
+                  key={category.value}
+                  value={category.value}
+                >
+                  {category.label}
+                </option>
+              ))}
             </select>
-          </div>
-          <div className="lg:col-span-1">
-            <label className="block text-sm font-medium mb-1">Date</label>
-            <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border rounded p-2" />
-          </div>
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <input type="text" required value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full border rounded p-2" />
-          </div>
-          <div className="lg:col-span-1 flex items-end gap-2">
-            <button type="submit" className="w-full bg-blue-600 text-white rounded p-2 hover:bg-blue-700">
-              {isEditing ? "Update" : "Save"}
-            </button>
-            {isEditing && (
-              <button type="button" onClick={resetForm} className="w-full bg-gray-200 text-gray-800 rounded p-2 hover:bg-gray-300">
-                Cancel
-              </button>
-            )}
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium">
+            Date
+
+            <input
+              className="h-10 rounded-xl border border-gray-200 px-3"
+              type="date"
+              required
+              value={form.date}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  date: event.target.value,
+                })
+              }
+            />
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium xl:col-span-2">
+            Description
+
+            <input
+              className="h-10 rounded-xl border border-gray-200 px-3"
+              maxLength={200}
+              required
+              placeholder="Train to an interview"
+              value={form.description}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  description: event.target.value,
+                })
+              }
+            />
+          </label>
+
+          <label className="grid gap-1.5 text-sm font-medium md:col-span-2 xl:col-span-3">
+            Related application (optional)
+
+            <select
+              className="h-10 rounded-xl border border-gray-200 bg-white px-3"
+              value={form.applicationId ?? ""}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  applicationId: event.target.value
+                    ? Number(event.target.value)
+                    : null,
+                })
+              }
+            >
+              <option value="">No related application</option>
+
+              {applications.map((application) => (
+                <option
+                  key={application.id}
+                  value={application.id}
+                >
+                  {application.company} — {application.position}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="flex items-end md:col-span-2 xl:col-span-3">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={saving}
+            >
+              <PlusIcon className="size-4" />
+
+              {saving
+                ? "Saving"
+                : editingId
+                  ? "Save changes"
+                  : "Add expense"}
+            </Button>
           </div>
         </form>
-      </div>
+      </section>
 
-      <div className="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 border-b bg-gray-50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <h2 className="text-xl font-semibold">Expense History</h2>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <input type="text" placeholder="Search description..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="border rounded p-2 text-sm w-full sm:w-48" />
-            <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="border rounded p-2 text-sm w-full sm:w-40">
-              <option value="">All Categories</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c.replace("_", " ")}</option>)}
+      <section
+        className="rounded-2xl bg-white p-5 sm:p-6"
+        aria-labelledby="expense-history-heading"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2
+              id="expense-history-heading"
+              className="text-lg font-semibold"
+            >
+              Expense history
+            </h2>
+
+            <p className="text-sm text-gray-500">
+              {expenses.length} recorded expenses
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input
+              className="h-10 rounded-xl border border-gray-200 px-3 text-sm"
+              aria-label="Search expenses"
+              placeholder="Search description"
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+            />
+
+            <select
+              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm"
+              aria-label="Filter expenses by category"
+              value={categoryFilter}
+              onChange={(event) =>
+                setCategoryFilter(
+                  event.target.value as ExpenseCategory | "",
+                )
+              }
+            >
+              <option value="">All categories</option>
+
+              {categories.map((category) => (
+                <option
+                  key={category.value}
+                  value={category.value}
+                >
+                  {category.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
-        
-        {filteredExpenses.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No expenses match your criteria.</div>
+
+        {isLoading ? (
+          <div className="page-loading">
+            <span
+              className="page-loader"
+              aria-hidden="true"
+            />
+            <span>Loading expenses</span>
+          </div>
+        ) : loadError ? (
+          <p
+            role="alert"
+            className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700"
+          >
+            Unable to load expenses.
+          </p>
+        ) : filteredExpenses.length === 0 ? (
+          <div className="mt-5 rounded-2xl border border-dashed border-gray-200 p-10 text-center text-gray-500">
+            <ReceiptIcon className="mx-auto mb-3 size-8" />
+            <p>No expenses match your filters.</p>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
               <thead>
-                <tr className="bg-gray-100 text-sm">
-                  <th className="p-3 border-b">Date</th>
-                  <th className="p-3 border-b">Description</th>
-                  <th className="p-3 border-b">Category</th>
-                  <th className="p-3 border-b">Amount</th>
-                  <th className="p-3 border-b text-right">Actions</th>
+                <tr className="border-b border-gray-100 text-xs text-gray-500">
+                  <th className="p-3">Date</th>
+                  <th className="p-3">Description</th>
+                  <th className="p-3">Category</th>
+                  <th className="p-3">Amount</th>
+                  <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
-                {filteredExpenses.map(exp => (
-                  <tr key={exp.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 whitespace-nowrap">{new Date(exp.date).toLocaleDateString()}</td>
-                    <td className="p-3">{exp.description}</td>
-                    <td className="p-3 text-xs">
-                      <span className="bg-gray-200 px-2 py-1 rounded">{exp.category.replace("_", " ")}</span>
+                {filteredExpenses.map((expense) => (
+                  <tr
+                    key={expense.id}
+                    className="border-b border-gray-50 last:border-0"
+                  >
+                    <td className="whitespace-nowrap p-3">
+                      {new Intl.DateTimeFormat("en-GB").format(
+                        new Date(expense.date),
+                      )}
                     </td>
-                    <td className="p-3 font-medium">${Number(exp.amount).toFixed(2)}</td>
-                    <td className="p-3 text-right whitespace-nowrap">
-                      <button onClick={() => handleEdit(exp)} className="text-blue-600 hover:underline mr-3 text-sm">Edit</button>
-                      <button onClick={() => handleDelete(exp.id)} className="text-red-600 hover:underline text-sm">Delete</button>
+
+                    <td className="p-3 font-medium text-gray-900">
+                      {expense.description}
+                    </td>
+
+                    <td className="p-3">
+                      <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs">
+                        {categoryLabel(expense.category)}
+                      </span>
+                    </td>
+
+                    <td className="p-3 font-semibold">
+                      {money.format(expense.amount)}
+                    </td>
+
+                    <td className="p-3">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => edit(expense)}
+                        >
+                          <PencilSimpleIcon className="size-4" />
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={deleteExpense.isPending}
+                          onClick={() =>
+                            void deleteExpense.mutateAsync(
+                              expense.id,
+                            )
+                          }
+                        >
+                          <TrashIcon className="size-4" />
+                          Delete
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -237,7 +484,7 @@ export function ExpenseTrackingPage() {
             </table>
           </div>
         )}
-      </div>
-    </div>
+      </section>
+    </>
   );
 }
