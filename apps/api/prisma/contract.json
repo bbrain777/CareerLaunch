@@ -12,6 +12,10 @@
       "model": "Contact",
       "namespace": "public"
     },
+    "document": {
+      "model": "Document",
+      "namespace": "public"
+    },
     "employer": {
       "model": "Employer",
       "namespace": "public"
@@ -63,6 +67,19 @@
               {
                 "name": "CLOSED",
                 "value": "CLOSED"
+              }
+            ]
+          },
+          "DocumentType": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "RESUME",
+                "value": "RESUME"
+              },
+              {
+                "name": "COVER_LETTER",
+                "value": "COVER_LETTER"
               }
             ]
           },
@@ -575,6 +592,140 @@
               },
               "namespaceId": "public",
               "table": "contact"
+            }
+          },
+          "Document": {
+            "fields": {
+              "blobUrl": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "contentType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "fileName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "pathname": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "sizeBytes": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "type": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "DocumentType",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "blobUrl": {
+                  "column": "blobUrl"
+                },
+                "contentType": {
+                  "column": "contentType"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "fileName": {
+                  "column": "fileName"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "pathname": {
+                  "column": "pathname"
+                },
+                "sizeBytes": {
+                  "column": "sizeBytes"
+                },
+                "type": {
+                  "column": "type"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "document"
             }
           },
           "Employer": {
@@ -1359,6 +1510,21 @@
                   "namespace": "public"
                 }
               },
+              "documents": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Document",
+                  "namespace": "public"
+                }
+              },
               "employers": {
                 "cardinality": "1:N",
                 "on": {
@@ -1775,6 +1941,116 @@
                   ],
                   "name": "contact_userId_idx_a489d58a",
                   "prefix": "contact_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "document": {
+              "checks": [
+                {
+                  "expression": "\"type\" IN ('RESUME', 'COVER_LETTER')",
+                  "name": "document_type_check_ef5c2f84",
+                  "prefix": "document_type_check"
+                }
+              ],
+              "columns": {
+                "blobUrl": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "contentType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "fileName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "pathname": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "sizeBytes": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "type": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "DocumentType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "document"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "document_userId_idx_a489d58a",
+                  "prefix": "document_userId_idx",
                   "unique": false
                 }
               ],
@@ -2461,6 +2737,13 @@
                 "CLOSED"
               ]
             },
+            "DocumentType": {
+              "kind": "valueSet",
+              "values": [
+                "RESUME",
+                "COVER_LETTER"
+              ]
+            },
             "ExpenseCategory": {
               "kind": "valueSet",
               "values": [
@@ -2498,14 +2781,10 @@
         "kind": "postgres-schema"
       }
     },
-<<<<<<< HEAD
-    "storageHash": "0f1e0fbc228b248cc6d4f4637a418e2a10313464833368cc185e792f24edfc46"
-=======
-    "storageHash": "acf4db96d337dfb47e6792770d1a3708460c20adec059b1260746c2a28cf231d"
->>>>>>> main
+    "storageHash": "15a71de9a81fa98a8dfe4749daafee8e37c50ace0337810385eef0a657ed19a0"
   },
   "execution": {
-    "executionHash": "73dd6059333b41439975ab543dcf5a492f730de4fd7dd981ce0b6b7d3f8592bd",
+    "executionHash": "6127ecec1f99ea6582c94fff2d0dc7a2a276a14fc2422b4462dc897816995bb1",
     "mutations": {
       "defaults": [
         {
@@ -2536,6 +2815,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "contact"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "document"
           }
         },
         {
