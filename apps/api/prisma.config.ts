@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./src/environment.ts";
 import { definePrismaConfig } from "prisma/config";
 import { defineConfig as ormConfig } from "@prisma/orm-postgres/config";
 
