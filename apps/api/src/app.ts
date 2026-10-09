@@ -8,6 +8,8 @@ import { employerRouter } from "./routes/employerRoutes.js";
 import { contactRouter } from "./routes/contactRoutes.js";
 import { dashboardRouter } from "./routes/dashboardRoutes.js";
 import { informationalInterviewRouter } from "./routes/informationalInterviewRoutes.js";
+import { careerDocumentRouter } from "./routes/careerDocumentRoutes.js";
+import { jobInterviewPreparationRouter } from "./routes/jobInterviewPreparationRoutes.js";
 
 export const app = express();
 
@@ -21,6 +23,8 @@ app.use("/api/employers", employerRouter);
 app.use("/api/contacts", contactRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/informational-interviews", informationalInterviewRouter);
+app.use("/api/career-documents", careerDocumentRouter);
+app.use("/api/job-interview-preparations", jobInterviewPreparationRouter);
 
 app.get("/api/health", (_request, response) => {
   response.json({

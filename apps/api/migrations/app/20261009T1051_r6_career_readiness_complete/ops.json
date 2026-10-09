@@ -1,0 +1,530 @@
+[
+  {
+    "id": "table.careerDocument",
+    "label": "Create table \"careerDocument\"",
+    "summary": "Creates table \"careerDocument\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "careerDocument"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"careerDocument\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"careerDocument\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"careerDocument\"",
+        "sql": "CREATE TABLE \"public\".\"careerDocument\" (\n  \"applicationId\" int4,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"documentType\" text NOT NULL,\n  \"fileName\" text,\n  \"fileSizeBytes\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"mimeType\" text,\n  \"storageReference\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  \"version\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"careerDocument_documentType_check_e63fd2dc\" CHECK (\"documentType\" IN ('RESUME', 'COVER_LETTER'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"careerDocument\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"careerDocument\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.jobInterviewPreparation",
+    "label": "Create table \"jobInterviewPreparation\"",
+    "summary": "Creates table \"jobInterviewPreparation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "jobInterviewPreparation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"jobInterviewPreparation\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"jobInterviewPreparation\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"jobInterviewPreparation\"",
+        "sql": "CREATE TABLE \"public\".\"jobInterviewPreparation\" (\n  \"applicationId\" int4,\n  \"company\" text NOT NULL,\n  \"companyResearch\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"notes\" text,\n  \"practiceQuestions\" text[] DEFAULT '{}' NOT NULL,\n  \"resources\" text[] DEFAULT '{}' NOT NULL,\n  \"responsibilities\" text[] DEFAULT '{}' NOT NULL,\n  \"role\" text NOT NULL,\n  \"scheduledFor\" timestamptz,\n  \"skills\" text[] DEFAULT '{}' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"jobInterviewPreparation_practiceQuestions_elem_not_nul_e541db27\" CHECK (array_position(\"practiceQuestions\", NULL) IS NULL),\n  CONSTRAINT \"jobInterviewPreparation_resources_elem_not_null_207a41cb\" CHECK (array_position(\"resources\", NULL) IS NULL),\n  CONSTRAINT \"jobInterviewPreparation_responsibilities_elem_not_null_1639ba51\" CHECK (array_position(\"responsibilities\", NULL) IS NULL),\n  CONSTRAINT \"jobInterviewPreparation_skills_elem_not_null_79c19a4f\" CHECK (array_position(\"skills\", NULL) IS NULL)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"jobInterviewPreparation\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"jobInterviewPreparation\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.user.currentRole",
+    "label": "Add column \"currentRole\" to \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "currentRole",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"currentRole\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "currentRole"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"currentRole\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD COLUMN \"currentRole\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"currentRole\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "currentRole"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.user.targetRole",
+    "label": "Add column \"targetRole\" to \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "targetRole",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"targetRole\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "targetRole"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"targetRole\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD COLUMN \"targetRole\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"targetRole\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "targetRole"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.user.weeklyGoal",
+    "label": "Add column \"weeklyGoal\" to \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "weeklyGoal",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"weeklyGoal\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "weeklyGoal"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"weeklyGoal\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD COLUMN \"weeklyGoal\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"weeklyGoal\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "user",
+          "weeklyGoal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.careerDocument.careerDocument_applicationId_idx_8158f91a",
+    "label": "Create index \"careerDocument_applicationId_idx_8158f91a\" on \"careerDocument\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "careerDocument_applicationId_idx_8158f91a",
+        "table": "careerDocument"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"careerDocument_applicationId_idx_8158f91a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"careerDocument_applicationId_idx_8158f91a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"careerDocument_applicationId_idx_8158f91a\"",
+        "sql": "CREATE INDEX \"careerDocument_applicationId_idx_8158f91a\" ON \"public\".\"careerDocument\" (\"applicationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"careerDocument_applicationId_idx_8158f91a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"careerDocument_applicationId_idx_8158f91a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.careerDocument.careerDocument_userId_idx_a489d58a",
+    "label": "Create index \"careerDocument_userId_idx_a489d58a\" on \"careerDocument\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "careerDocument_userId_idx_a489d58a",
+        "table": "careerDocument"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"careerDocument_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"careerDocument_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"careerDocument_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"careerDocument_userId_idx_a489d58a\" ON \"public\".\"careerDocument\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"careerDocument_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"careerDocument_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.jobInterviewPreparation.jobInterviewPreparation_applicationId_idx_8158f91a",
+    "label": "Create index \"jobInterviewPreparation_applicationId_idx_8158f91a\" on \"jobInterviewPreparation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "jobInterviewPreparation_applicationId_idx_8158f91a",
+        "table": "jobInterviewPreparation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"jobInterviewPreparation_applicationId_idx_8158f91a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"jobInterviewPreparation_applicationId_idx_8158f91a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"jobInterviewPreparation_applicationId_idx_8158f91a\"",
+        "sql": "CREATE INDEX \"jobInterviewPreparation_applicationId_idx_8158f91a\" ON \"public\".\"jobInterviewPreparation\" (\"applicationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"jobInterviewPreparation_applicationId_idx_8158f91a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"jobInterviewPreparation_applicationId_idx_8158f91a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.jobInterviewPreparation.jobInterviewPreparation_userId_idx_a489d58a",
+    "label": "Create index \"jobInterviewPreparation_userId_idx_a489d58a\" on \"jobInterviewPreparation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "jobInterviewPreparation_userId_idx_a489d58a",
+        "table": "jobInterviewPreparation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"jobInterviewPreparation_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"jobInterviewPreparation_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"jobInterviewPreparation_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"jobInterviewPreparation_userId_idx_a489d58a\" ON \"public\".\"jobInterviewPreparation\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"jobInterviewPreparation_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"jobInterviewPreparation_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.careerDocument.careerDocument_userId_fkey",
+    "label": "Add foreign key \"careerDocument_userId_fkey\" on \"careerDocument\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "careerDocument_userId_fkey",
+        "table": "careerDocument"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"careerDocument_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "careerDocument_userId_fkey",
+          "public",
+          "\"public\".\"careerDocument\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"careerDocument_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"careerDocument\"\nADD CONSTRAINT \"careerDocument_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"careerDocument_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "careerDocument_userId_fkey",
+          "public",
+          "\"public\".\"careerDocument\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.careerDocument.careerDocument_applicationId_fkey",
+    "label": "Add foreign key \"careerDocument_applicationId_fkey\" on \"careerDocument\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "careerDocument_applicationId_fkey",
+        "table": "careerDocument"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"careerDocument_applicationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "careerDocument_applicationId_fkey",
+          "public",
+          "\"public\".\"careerDocument\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"careerDocument_applicationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"careerDocument\"\nADD CONSTRAINT \"careerDocument_applicationId_fkey\"\nFOREIGN KEY (\"applicationId\")\nREFERENCES \"public\".\"application\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"careerDocument_applicationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "careerDocument_applicationId_fkey",
+          "public",
+          "\"public\".\"careerDocument\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.jobInterviewPreparation.jobInterviewPreparation_userId_fkey",
+    "label": "Add foreign key \"jobInterviewPreparation_userId_fkey\" on \"jobInterviewPreparation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "jobInterviewPreparation_userId_fkey",
+        "table": "jobInterviewPreparation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"jobInterviewPreparation_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "jobInterviewPreparation_userId_fkey",
+          "public",
+          "\"public\".\"jobInterviewPreparation\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"jobInterviewPreparation_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"jobInterviewPreparation\"\nADD CONSTRAINT \"jobInterviewPreparation_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"jobInterviewPreparation_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "jobInterviewPreparation_userId_fkey",
+          "public",
+          "\"public\".\"jobInterviewPreparation\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.jobInterviewPreparation.jobInterviewPreparation_applicationId_fkey",
+    "label": "Add foreign key \"jobInterviewPreparation_applicationId_fkey\" on \"jobInterviewPreparation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "jobInterviewPreparation_applicationId_fkey",
+        "table": "jobInterviewPreparation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"jobInterviewPreparation_applicationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "jobInterviewPreparation_applicationId_fkey",
+          "public",
+          "\"public\".\"jobInterviewPreparation\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"jobInterviewPreparation_applicationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"jobInterviewPreparation\"\nADD CONSTRAINT \"jobInterviewPreparation_applicationId_fkey\"\nFOREIGN KEY (\"applicationId\")\nREFERENCES \"public\".\"application\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"jobInterviewPreparation_applicationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "jobInterviewPreparation_applicationId_fkey",
+          "public",
+          "\"public\".\"jobInterviewPreparation\""
+        ]
+      }
+    ]
+  }
+]
