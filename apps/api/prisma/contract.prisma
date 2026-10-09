@@ -54,6 +54,8 @@ model User {
   tasks                   Task[]
   informationalInterviews InformationalInterview[]
   documents               Document[]
+  careerDocuments         CareerDocument[]
+  jobInterviewPreparations JobInterviewPreparation[]
   expenses                Expense[]
 
   @@map("user")
@@ -139,6 +141,8 @@ model Application {
   contact    Contact?           @relation(fields: [contactId], references: [id], onDelete: SetNull)
   tasks      Task[]
   expenses   Expense[]
+  careerDocuments CareerDocument[]
+  jobInterviewPreparations JobInterviewPreparation[]
 
   createdAt  DateTime           @default(now())
   updatedAt  temporal.updatedAt()
@@ -209,4 +213,52 @@ model InformationalInterview {
   updatedAt            temporal.updatedAt()
 
   @@map("informationalInterview")
+}
+
+model CareerDocument {
+  id               Int          @id @default(autoincrement())
+  title            String
+  documentType     DocumentType
+  version          String
+  fileName         String?
+  mimeType         String?
+  fileSizeBytes    Int?
+  storageReference String
+  applicationId    Int?
+  userId           Int
+
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application      Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime     @default(now())
+  updatedAt        temporal.updatedAt()
+
+  @@index([userId])
+  @@index([applicationId])
+  @@map("careerDocument")
+}
+
+model JobInterviewPreparation {
+  id                Int          @id @default(autoincrement())
+  company           String
+  role              String
+  scheduledFor      DateTime?
+  companyResearch   String?
+  notes             String?
+  practiceQuestions String[]     @default([])
+  resources         String[]     @default([])
+  responsibilities  String[]     @default([])
+  skills            String[]     @default([])
+  applicationId     Int?
+  userId            Int
+
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application       Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime     @default(now())
+  updatedAt         temporal.updatedAt()
+
+  @@index([userId])
+  @@index([applicationId])
+  @@map("jobInterviewPreparation")
 }

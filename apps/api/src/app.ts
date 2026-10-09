@@ -12,6 +12,8 @@ import { dashboardRouter } from "./routes/dashboardRoutes.js";
 import { informationalInterviewRouter } from "./routes/informationalInterviewRoutes.js";
 import { documentRouter } from "./routes/documentRoutes.js";
 import { expenseRouter } from "./routes/expenseRoutes.js";
+import { careerDocumentRouter } from "./routes/careerDocumentRoutes.js";
+import { jobInterviewPreparationRouter } from "./routes/jobInterviewPreparationRoutes.js";
 import { corsOptions } from "./cors.js";
 
 export const app = express();
@@ -31,6 +33,8 @@ app.use("/api/dashboard", dashboardRouter);
 app.use("/api/informational-interviews", informationalInterviewRouter);
 app.use("/api/documents", documentRouter);
 app.use("/api/expenses", expenseRouter);
+app.use("/api/career-documents", careerDocumentRouter);
+app.use("/api/job-interview-preparations", jobInterviewPreparationRouter);
 
 app.get("/api/health", (_request, response) => {
   response.json({

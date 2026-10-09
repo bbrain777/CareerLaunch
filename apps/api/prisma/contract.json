@@ -8,6 +8,10 @@
       "model": "Application",
       "namespace": "public"
     },
+    "careerDocument": {
+      "model": "CareerDocument",
+      "namespace": "public"
+    },
     "contact": {
       "model": "Contact",
       "namespace": "public"
@@ -26,6 +30,10 @@
     },
     "informationalInterview": {
       "model": "InformationalInterview",
+      "namespace": "public"
+    },
+    "jobInterviewPreparation": {
+      "model": "JobInterviewPreparation",
       "namespace": "public"
     },
     "task": {
@@ -250,6 +258,21 @@
               }
             },
             "relations": {
+              "careerDocuments": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "applicationId"
+                  ]
+                },
+                "to": {
+                  "model": "CareerDocument",
+                  "namespace": "public"
+                }
+              },
               "contact": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -294,6 +317,21 @@
                 },
                 "to": {
                   "model": "Expense",
+                  "namespace": "public"
+                }
+              },
+              "jobInterviewPreparations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "applicationId"
+                  ]
+                },
+                "to": {
+                  "model": "JobInterviewPreparation",
                   "namespace": "public"
                 }
               },
@@ -373,6 +411,176 @@
               },
               "namespaceId": "public",
               "table": "application"
+            }
+          },
+          "CareerDocument": {
+            "fields": {
+              "applicationId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "documentType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "DocumentType",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "fileName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "fileSizeBytes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "mimeType": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "storageReference": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "title": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "version": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "application": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "applicationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Application",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "applicationId": {
+                  "column": "applicationId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "documentType": {
+                  "column": "documentType"
+                },
+                "fileName": {
+                  "column": "fileName"
+                },
+                "fileSizeBytes": {
+                  "column": "fileSizeBytes"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "mimeType": {
+                  "column": "mimeType"
+                },
+                "storageReference": {
+                  "column": "storageReference"
+                },
+                "title": {
+                  "column": "title"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                },
+                "version": {
+                  "column": "version"
+                }
+              },
+              "namespaceId": "public",
+              "table": "careerDocument"
             }
           },
           "Contact": {
@@ -1227,6 +1435,194 @@
               "table": "informationalInterview"
             }
           },
+          "JobInterviewPreparation": {
+            "fields": {
+              "applicationId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "company": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "companyResearch": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "practiceQuestions": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "resources": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "responsibilities": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "role": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "scheduledFor": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "skills": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "application": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "applicationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Application",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "applicationId": {
+                  "column": "applicationId"
+                },
+                "company": {
+                  "column": "company"
+                },
+                "companyResearch": {
+                  "column": "companyResearch"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "practiceQuestions": {
+                  "column": "practiceQuestions"
+                },
+                "resources": {
+                  "column": "resources"
+                },
+                "responsibilities": {
+                  "column": "responsibilities"
+                },
+                "role": {
+                  "column": "role"
+                },
+                "scheduledFor": {
+                  "column": "scheduledFor"
+                },
+                "skills": {
+                  "column": "skills"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "jobInterviewPreparation"
+            }
+          },
           "Task": {
             "fields": {
               "applicationId": {
@@ -1495,6 +1891,21 @@
                   "namespace": "public"
                 }
               },
+              "careerDocuments": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "CareerDocument",
+                  "namespace": "public"
+                }
+              },
               "contacts": {
                 "cardinality": "1:N",
                 "on": {
@@ -1567,6 +1978,21 @@
                 },
                 "to": {
                   "model": "InformationalInterview",
+                  "namespace": "public"
+                }
+              },
+              "jobInterviewPreparations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "JobInterviewPreparation",
                   "namespace": "public"
                 }
               },
@@ -1804,6 +2230,151 @@
                   ],
                   "name": "application_userId_idx_a489d58a",
                   "prefix": "application_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "careerDocument": {
+              "checks": [
+                {
+                  "expression": "\"documentType\" IN ('RESUME', 'COVER_LETTER')",
+                  "name": "careerDocument_documentType_check_e63fd2dc",
+                  "prefix": "careerDocument_documentType_check"
+                }
+              ],
+              "columns": {
+                "applicationId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "documentType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "DocumentType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "fileName": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "fileSizeBytes": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "mimeType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "storageReference": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "title": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "version": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "careerDocument"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "applicationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "careerDocument"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "application"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "applicationId"
+                  ],
+                  "name": "careerDocument_applicationId_idx_8158f91a",
+                  "prefix": "careerDocument_applicationId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "careerDocument_userId_idx_a489d58a",
+                  "prefix": "careerDocument_userId_idx",
                   "unique": false
                 }
               ],
@@ -2462,6 +3033,190 @@
               },
               "uniques": []
             },
+            "jobInterviewPreparation": {
+              "checks": [
+                {
+                  "expression": "array_position(\"practiceQuestions\", NULL) IS NULL",
+                  "name": "jobInterviewPreparation_practiceQuestions_elem_not_nul_e541db27",
+                  "prefix": "jobInterviewPreparation_practiceQuestions_elem_not_nul"
+                },
+                {
+                  "expression": "array_position(\"resources\", NULL) IS NULL",
+                  "name": "jobInterviewPreparation_resources_elem_not_null_207a41cb",
+                  "prefix": "jobInterviewPreparation_resources_elem_not_null"
+                },
+                {
+                  "expression": "array_position(\"responsibilities\", NULL) IS NULL",
+                  "name": "jobInterviewPreparation_responsibilities_elem_not_null_1639ba51",
+                  "prefix": "jobInterviewPreparation_responsibilities_elem_not_null"
+                },
+                {
+                  "expression": "array_position(\"skills\", NULL) IS NULL",
+                  "name": "jobInterviewPreparation_skills_elem_not_null_79c19a4f",
+                  "prefix": "jobInterviewPreparation_skills_elem_not_null"
+                }
+              ],
+              "columns": {
+                "applicationId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "company": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "companyResearch": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "practiceQuestions": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": []
+                  },
+                  "many": true,
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "resources": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": []
+                  },
+                  "many": true,
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "responsibilities": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": []
+                  },
+                  "many": true,
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "role": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "scheduledFor": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "skills": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": []
+                  },
+                  "many": true,
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "jobInterviewPreparation"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "applicationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "jobInterviewPreparation"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "application"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "applicationId"
+                  ],
+                  "name": "jobInterviewPreparation_applicationId_idx_8158f91a",
+                  "prefix": "jobInterviewPreparation_applicationId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "jobInterviewPreparation_userId_idx_a489d58a",
+                  "prefix": "jobInterviewPreparation_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "task": {
               "checks": [
                 {
@@ -2781,10 +3536,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "15a71de9a81fa98a8dfe4749daafee8e37c50ace0337810385eef0a657ed19a0"
+    "storageHash": "5b376e16e2c6e69e16ab61e5a1c7469cf7c05e87a7bc3d1b72a50a2da6f06524"
   },
   "execution": {
-    "executionHash": "6127ecec1f99ea6582c94fff2d0dc7a2a276a14fc2422b4462dc897816995bb1",
+    "executionHash": "96b925fd293fbe2084221c7e078f15d8a4493c0ed770ededa4e2bce7cc8193c1",
     "mutations": {
       "defaults": [
         {
@@ -2800,6 +3555,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "application"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "careerDocument"
           }
         },
         {
@@ -2875,6 +3645,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "informationalInterview"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "instantNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "jobInterviewPreparation"
           }
         },
         {
