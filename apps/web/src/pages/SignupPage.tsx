@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Input, SensitiveInput, LayerCard, Button } from "@/components/ui";
+import { Input, SensitiveInput } from "@/components/ui";
 import { AppLogo } from "@/components/AppLogo";
 import { useAuth } from "@/lib/auth";
 import { useSignupMutation } from "@/hooks/queries";
@@ -36,21 +36,23 @@ export function SignupPage() {
   const loading = signupMutation.isPending;
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[var(--bg-app)] px-4 py-12">
-      <div className="mx-auto flex w-full max-w-[380px] flex-col items-center">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[#fbfaf8] px-4 py-12">
+      <div className="mx-auto flex w-full max-w-[360px] flex-col items-center">
+        {/* Brand Header */}
         <div className="mb-6 text-center">
-          <div className="mb-3.5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white">
-            <AppLogo size={32} color="#0a5c4d" />
+          <div className="mb-3 inline-flex size-11 items-center justify-center rounded-[10px] bg-white border border-[#e9e7e2] shadow-[0_1px_2px_rgba(28,25,20,0.04)]">
+            <AppLogo size={26} color="#0a5c4d" />
           </div>
-          <h1 className="m-0 text-xl font-semibold text-kumo-strong">
+          <h1 className="text-[20px] font-semibold text-[#1d1c1a] tracking-tight">
             Create an account
           </h1>
-          <p className="mt-1 text-xs text-kumo-subtle">
+          <p className="mt-1 text-[13px] text-[#57544e]">
             Start tracking your pipeline and goals.
           </p>
         </div>
 
-        <LayerCard className="w-full rounded-2xl bg-white px-7 py-6 border-0 ring-0 space-y-4">
+        {/* Auth Panel */}
+        <div className="w-full rounded-[10px] bg-white border border-[#e9e7e2] p-6 shadow-[0_1px_2px_rgba(28,25,20,0.04)]">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
               label="Full name"
@@ -101,26 +103,30 @@ export function SignupPage() {
               className="w-full"
             />
 
-            <Button
+            <button
               type="submit"
-              variant="primary"
-              loading={loading}
               disabled={loading}
-              className="w-full h-10 text-xs font-semibold mt-1 transition-transform active:scale-[0.98]"
+              className="mt-1 inline-flex h-[34px] w-full items-center justify-center gap-1.5 rounded-[6px] bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] text-[13px] font-medium text-white transition-all cursor-pointer shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Create account
-            </Button>
+              {loading ? (
+                <>
+                  <span className="size-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-hidden="true" />
+                  <span>Creating account...</span>
+                </>
+              ) : (
+                "Create account"
+              )}
+            </button>
           </form>
 
-          <div className="text-center text-xs text-kumo-subtle pt-1">
+          <div className="mt-5 border-t border-[#f0eeea] pt-4 text-center text-[12px] text-[#57544e]">
             Already have an account?{" "}
-            <Link to="/login" className="text-[#0a5c4d] font-semibold hover:underline">
+            <Link to="/login" className="text-[#0a5c4d] font-medium hover:underline">
               Sign in
             </Link>
           </div>
-        </LayerCard>
+        </div>
       </div>
     </div>
   );
 }
-
