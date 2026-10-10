@@ -163,6 +163,36 @@ export interface ExpenseSummary {
   byCategory: Partial<Record<ExpenseCategory, number>>;
 }
 
+export interface JobInterviewPreparation {
+  id: number;
+  company: string;
+  role: string;
+  scheduledFor: string | null;
+  companyResearch: string | null;
+  notes: string | null;
+  practiceQuestions: string[];
+  resources: string[];
+  responsibilities: string[];
+  skills: string[];
+  applicationId: number | null;
+  userId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface JobInterviewPreparationInput {
+  company: string;
+  role: string;
+  scheduledFor?: string | null;
+  companyResearch?: string | null;
+  notes?: string | null;
+  practiceQuestions?: string[];
+  resources?: string[];
+  responsibilities?: string[];
+  skills?: string[];
+  applicationId?: number | null;
+}
+
 export interface DashboardData {
   metrics: {
     activeApplications: number;
