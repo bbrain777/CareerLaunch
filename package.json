@@ -19,7 +19,6 @@
     "db:reset": "npm run db:reset --workspace @careerlaunch/api"
   },
   "devDependencies": {
-    "@tailwindcss/oxide-win32-x64-msvc": "4.3.3",
     "concurrently": "^9.2.1"
   },
   "engines": {
