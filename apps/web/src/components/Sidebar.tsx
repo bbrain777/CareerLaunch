@@ -23,6 +23,7 @@ import {
   SidebarInset,
   SidebarTrigger,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -67,17 +68,8 @@ export function SidebarLayout({ children }: SidebarProps) {
 
         <SidebarContent>
           <SidebarGroup>
+            <SidebarGroupLabel>Overview</SidebarGroupLabel>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  icon={FileTextIcon}
-                  isActive={currentPath === "/documents"}
-                  render={<Link to={"/documents" as any} />}
-                >
-                  Documents
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
               <SidebarMenuItem>
                 <SidebarMenuButton
                   icon={Home01Icon}
@@ -87,7 +79,12 @@ export function SidebarLayout({ children }: SidebarProps) {
                   Dashboard
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
 
+          <SidebarGroup>
+            <SidebarGroupLabel>Job search</SidebarGroupLabel>
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   icon={Briefcase01Icon}
@@ -117,7 +114,12 @@ export function SidebarLayout({ children }: SidebarProps) {
                   Contacts
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
 
+          <SidebarGroup>
+            <SidebarGroupLabel>Interviews & prep</SidebarGroupLabel>
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   icon={UserSquareIcon}
@@ -125,6 +127,31 @@ export function SidebarLayout({ children }: SidebarProps) {
                   render={<Link to="/informational-interviews" />}
                 >
                   Interviews
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  icon={Briefcase01Icon}
+                  isActive={currentPath === "/interview-prep"}
+                  render={<Link to={"/interview-prep" as any} />}
+                >
+                  Interview prep
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Materials & finances</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  icon={FileTextIcon}
+                  isActive={currentPath === "/documents"}
+                  render={<Link to={"/documents" as any} />}
+                >
+                  Documents
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
