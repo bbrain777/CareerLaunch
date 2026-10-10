@@ -1,5 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
-import { Alert02Icon, Search01Icon } from "hugeicons-react";
+import { Alert02Icon, PlusSignIcon, Search01Icon } from "hugeicons-react";
 import {
   Button, DatePickerField, Dialog, DialogDescription, DialogRoot, DialogTitle,
   Field, Input, InputArea, Select, Table,
@@ -77,8 +77,13 @@ export function InformationalInterviewsPage() {
           <span className="mb-0.5 block text-[12px] font-medium text-[var(--text-muted)]">Networking</span>
           <h1 className="truncate">Informational interviews</h1>
         </div>
-        <Button variant="primary" className="!h-8.5 !rounded-[14px] !px-3 !text-[13px] !font-medium sm:!px-3.5" onClick={openCreate}>
-          Add interview
+        <Button
+          variant="primary"
+          className="!rounded-lg !h-[30px] !px-3 !text-[12.5px] !font-medium shrink-0 inline-flex items-center gap-1.5 bg-[#0a5c4d] hover:bg-[#07473b] text-white border-0 shadow-sm transition-colors cursor-pointer"
+          onClick={openCreate}
+        >
+          <PlusSignIcon size={14} strokeWidth={2} />
+          <span>Add interview</span>
         </Button>
       </header>
 
@@ -268,9 +273,9 @@ function InterviewDetail({ interview, open, onOpenChange, onEdit }: {
             </section>
           </div>
         )}
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-          <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Close</button>
-          {onEdit && <button type="button" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b]" onClick={onEdit}>Edit interview</button>}
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5">
+          <button type="button" className="h-[30px] px-3 rounded-lg text-[12.5px] font-medium border border-[#dad7d0] bg-white hover:bg-[#f6f5f2] text-[#1d1c1a] transition-colors cursor-pointer shadow-sm" onClick={() => onOpenChange(false)}>Close</button>
+          {onEdit && <button type="button" className="inline-flex h-[30px] items-center justify-center gap-1.5 rounded-lg bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-3.5 text-[12.5px] font-medium text-white transition-all cursor-pointer shadow-sm" onClick={onEdit}>Edit interview</button>}
         </div>
       </Dialog>
     </DialogRoot>
@@ -380,10 +385,10 @@ function InterviewEditor({ interview, contacts, employers, open, saving, deletin
               <Field label="Recommended action"><InputArea rows={3} value={recommendedAction} onChange={(event) => setRecommendedAction(event.target.value)} /></Field>
               <div className="md:col-span-2"><Field label="Referral"><Input value={referral} onChange={(event) => setReferral(event.target.value)} /></Field></div>
             </div>
-            <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-              {onDelete && <button type="button" className="mr-auto h-10 rounded-xl bg-red-50 px-4 text-sm font-medium text-red-600 hover:bg-red-100 disabled:opacity-60" disabled={saving || deleting} onClick={() => setConfirmDeleteOpen(true)}>Delete</button>}
-              <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Cancel</button>
-              <button type="submit" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b] disabled:opacity-60" disabled={saving || deleting || !scheduledFor}>{saving ? "Saving..." : interview ? "Save changes" : "Add interview"}</button>
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5">
+              {onDelete && <button type="button" className="mr-auto h-[30px] px-3 rounded-lg text-[12.5px] font-medium bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer disabled:opacity-60" disabled={saving || deleting} onClick={() => setConfirmDeleteOpen(true)}>Delete</button>}
+              <button type="button" className="h-[30px] px-3 rounded-lg text-[12.5px] font-medium border border-[#dad7d0] bg-white hover:bg-[#f6f5f2] text-[#1d1c1a] transition-colors cursor-pointer shadow-sm" onClick={() => onOpenChange(false)}>Cancel</button>
+              <button type="submit" className="inline-flex h-[30px] items-center justify-center gap-1.5 rounded-lg bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-3.5 text-[12.5px] font-medium text-white transition-all cursor-pointer shadow-sm disabled:opacity-60" disabled={saving || deleting || !scheduledFor}>{saving ? "Saving..." : interview ? "Save changes" : "Add interview"}</button>
             </div>
           </form>
         </Dialog>

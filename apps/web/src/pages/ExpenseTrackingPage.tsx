@@ -6,7 +6,14 @@ import {
   TrashIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { Button } from "../components/ui";
+import {
+  Button,
+  DatePickerField,
+  Field,
+  Input,
+  Select,
+  Table,
+} from "../components/ui";
 import {
   useApplicationsQuery,
   useCreateExpenseMutation,
@@ -26,6 +33,13 @@ const categories: Array<{ value: ExpenseCategory; label: string }> = [
     label: "Professional services",
   },
 ];
+
+const categorySelectItems: Record<string, string> = {
+  TRAVEL: "Travel",
+  PRINTING: "Printing",
+  TRAINING: "Training",
+  PROFESSIONAL_SERVICES: "Professional services",
+};
 
 const emptyForm = (): ExpenseInput => ({
   amount: 0,
@@ -68,6 +82,19 @@ export function ExpenseTrackingPage() {
     ExpenseCategory | ""
   >("");
   const [formError, setFormError] = useState("");
+
+  const applicationSelectItems = useMemo(
+    () => ({
+      none: "No related application",
+      ...Object.fromEntries(
+        applications.map((app) => [
+          String(app.id),
+          `${app.company} — ${app.position}`,
+        ])
+      ),
+    }),
+    [applications]
+  );
 
   const filteredExpenses = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -195,9 +222,10 @@ export function ExpenseTrackingPage() {
               variant="secondary"
               size="sm"
               onClick={resetForm}
+              className="!h-[30px] !px-3 !text-[12.5px] !font-medium !rounded-lg"
             >
-              <XIcon className="size-4" />
-              Cancel
+              <XIcon className="size-3.5" />
+              <span>Cancel</span>
             </Button>
           )}
         </div>
@@ -215,11 +243,9 @@ export function ExpenseTrackingPage() {
           className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-6"
           onSubmit={submit}
         >
-          <label className="grid gap-1.5 text-sm font-medium">
-            Amount (£)
-
-            <input
-              className="h-10 rounded-xl border border-gray-200 px-3"
+          <div className="xl:col-span-1">
+            <Input
+              label="Amount (£)"
               type="number"
               min="0.01"
               step="0.01"
@@ -232,55 +258,41 @@ export function ExpenseTrackingPage() {
                 })
               }
             />
-          </label>
+          </div>
 
-          <label className="grid gap-1.5 text-sm font-medium">
-            Category
-
-            <select
-              className="h-10 rounded-xl border border-gray-200 bg-white px-3"
+          <div className="xl:col-span-1">
+            <Select
+              label="Category"
+              className="w-full"
               value={form.category}
-              onChange={(event) =>
+              onValueChange={(val) =>
+                val &&
                 setForm({
                   ...form,
-                  category:
-                    event.target.value as ExpenseCategory,
+                  category: val as ExpenseCategory,
                 })
               }
-            >
-              {categories.map((category) => (
-                <option
-                  key={category.value}
-                  value={category.value}
-                >
-                  {category.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              items={categorySelectItems}
+            />
+          </div>
 
-          <label className="grid gap-1.5 text-sm font-medium">
-            Date
-
-            <input
-              className="h-10 rounded-xl border border-gray-200 px-3"
-              type="date"
-              required
+          <div className="xl:col-span-2">
+            <DatePickerField
+              label="Date"
               value={form.date}
-              onChange={(event) =>
+              onValueChange={(val) =>
+                val &&
                 setForm({
                   ...form,
-                  date: event.target.value,
+                  date: val,
                 })
               }
             />
-          </label>
+          </div>
 
-          <label className="grid gap-1.5 text-sm font-medium xl:col-span-2">
-            Description
-
-            <input
-              className="h-10 rounded-xl border border-gray-200 px-3"
+          <div className="md:col-span-2 xl:col-span-2">
+            <Input
+              label="Description"
               maxLength={200}
               required
               placeholder="Train to an interview"
@@ -292,49 +304,38 @@ export function ExpenseTrackingPage() {
                 })
               }
             />
-          </label>
+          </div>
 
-          <label className="grid gap-1.5 text-sm font-medium md:col-span-2 xl:col-span-3">
-            Related application (optional)
-
-            <select
-              className="h-10 rounded-xl border border-gray-200 bg-white px-3"
-              value={form.applicationId ?? ""}
-              onChange={(event) =>
+          <div className="md:col-span-2 xl:col-span-4">
+            <Select
+              label="Related application (optional)"
+              className="w-full"
+              value={form.applicationId ? String(form.applicationId) : "none"}
+              onValueChange={(val) =>
                 setForm({
                   ...form,
-                  applicationId: event.target.value
-                    ? Number(event.target.value)
-                    : null,
+                  applicationId: val && val !== "none" ? Number(val) : null,
                 })
               }
-            >
-              <option value="">No related application</option>
+              items={applicationSelectItems}
+            />
+          </div>
 
-              {applications.map((application) => (
-                <option
-                  key={application.id}
-                  value={application.id}
-                >
-                  {application.company} — {application.position}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="flex items-end md:col-span-2 xl:col-span-3">
+          <div className="flex items-end md:col-span-2 xl:col-span-2">
             <Button
               type="submit"
               variant="primary"
               disabled={saving}
+              className="!h-[30px] !px-3.5 !text-[12.5px] !font-medium !rounded-lg w-full sm:w-auto bg-[#0a5c4d] hover:bg-[#07473b] text-white border-0 shadow-sm inline-flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <PlusIcon className="size-4" />
-
-              {saving
-                ? "Saving"
-                : editingId
-                  ? "Save changes"
-                  : "Add expense"}
+              <PlusIcon className="size-3.5" />
+              <span>
+                {saving
+                  ? "Saving..."
+                  : editingId
+                    ? "Save changes"
+                    : "Add expense"}
+              </span>
             </Button>
           </div>
         </form>
@@ -359,8 +360,7 @@ export function ExpenseTrackingPage() {
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
-            <input
-              className="h-10 rounded-xl border border-gray-200 px-3 text-sm"
+            <Input
               aria-label="Search expenses"
               placeholder="Search description"
               value={search}
@@ -369,27 +369,19 @@ export function ExpenseTrackingPage() {
               }
             />
 
-            <select
-              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm"
+            <Select
               aria-label="Filter expenses by category"
-              value={categoryFilter}
-              onChange={(event) =>
+              value={categoryFilter || "All"}
+              onValueChange={(val) =>
                 setCategoryFilter(
-                  event.target.value as ExpenseCategory | "",
+                  val === "All" ? "" : (val as ExpenseCategory)
                 )
               }
-            >
-              <option value="">All categories</option>
-
-              {categories.map((category) => (
-                <option
-                  key={category.value}
-                  value={category.value}
-                >
-                  {category.label}
-                </option>
-              ))}
-            </select>
+              items={{
+                All: "All categories",
+                ...categorySelectItems,
+              }}
+            />
           </div>
         </div>
 
@@ -415,44 +407,41 @@ export function ExpenseTrackingPage() {
           </div>
         ) : (
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-xs text-gray-500">
-                  <th className="p-3">Date</th>
-                  <th className="p-3">Description</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Amount</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
+            <Table className="min-w-[680px]">
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head className="p-3">Date</Table.Head>
+                  <Table.Head className="p-3">Description</Table.Head>
+                  <Table.Head className="p-3">Category</Table.Head>
+                  <Table.Head className="p-3">Amount</Table.Head>
+                  <Table.Head className="p-3 text-right">Actions</Table.Head>
+                </Table.Row>
+              </Table.Header>
 
-              <tbody>
+              <Table.Body>
                 {filteredExpenses.map((expense) => (
-                  <tr
-                    key={expense.id}
-                    className="border-b border-gray-50 last:border-0"
-                  >
-                    <td className="whitespace-nowrap p-3">
+                  <Table.Row key={expense.id}>
+                    <Table.Cell className="whitespace-nowrap">
                       {new Intl.DateTimeFormat("en-GB").format(
                         new Date(expense.date),
                       )}
-                    </td>
+                    </Table.Cell>
 
-                    <td className="p-3 font-medium text-gray-900">
+                    <Table.Cell className="font-medium text-gray-900">
                       {expense.description}
-                    </td>
+                    </Table.Cell>
 
-                    <td className="p-3">
-                      <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs">
+                    <Table.Cell>
+                      <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-800">
                         {categoryLabel(expense.category)}
                       </span>
-                    </td>
+                    </Table.Cell>
 
-                    <td className="p-3 font-semibold">
+                    <Table.Cell className="font-semibold text-gray-900">
                       {money.format(expense.amount)}
-                    </td>
+                    </Table.Cell>
 
-                    <td className="p-3">
+                    <Table.Cell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="secondary"
@@ -477,11 +466,11 @@ export function ExpenseTrackingPage() {
                           Delete
                         </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
-              </tbody>
-            </table>
+              </Table.Body>
+            </Table>
           </div>
         )}
       </section>
