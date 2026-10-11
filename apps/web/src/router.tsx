@@ -1,3 +1,4 @@
+import React, { Suspense, lazy } from "react";
 import {
   createRouter,
   createRoute,
@@ -7,18 +8,39 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { SidebarLayout } from "./components/Sidebar";
-import { DashboardPage } from "./pages/DashboardPage";
-import { ApplicationsPage } from "./pages/ApplicationsPage";
-import { EmployersPage } from "./pages/EmployersPage";
-import { ContactsPage } from "./pages/ContactsPage";
-import { InformationalInterviewsPage } from "./pages/InformationalInterviewsPage";
-import { DocumentsPage } from "./pages/DocumentsPage";
-import { ExpenseTrackingPage } from "./pages/ExpenseTrackingPage";
-import { LoginPage } from "./pages/LoginPage";
-import { SignupPage } from "./pages/SignupPage";
-import { ProfilePage } from "./pages/ProfilePage";
 import { useAuth } from "./lib/auth";
 import { isPublicAuthPath, requiresLogin } from "./lib/auth-routing";
+
+const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const ApplicationsPage = lazy(() => import("./pages/ApplicationsPage").then((m) => ({ default: m.ApplicationsPage })));
+const EmployersPage = lazy(() => import("./pages/EmployersPage").then((m) => ({ default: m.EmployersPage })));
+const ContactsPage = lazy(() => import("./pages/ContactsPage").then((m) => ({ default: m.ContactsPage })));
+const InformationalInterviewsPage = lazy(() => import("./pages/InformationalInterviewsPage").then((m) => ({ default: m.InformationalInterviewsPage })));
+const InterviewPrepPage = lazy(() => import("./pages/InterviewPrepPage").then((m) => ({ default: m.InterviewPrepPage })));
+const DocumentsPage = lazy(() => import("./pages/DocumentsPage").then((m) => ({ default: m.DocumentsPage })));
+const ExpenseTrackingPage = lazy(() => import("./pages/ExpenseTrackingPage").then((m) => ({ default: m.ExpenseTrackingPage })));
+const LoginPage = lazy(() => import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })));
+const SignupPage = lazy(() => import("./pages/SignupPage").then((m) => ({ default: m.SignupPage })));
+const ProfilePage = lazy(() => import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage })));
+
+function RouteFallback() {
+  return (
+    <div className="flex h-64 items-center justify-center" role="status" aria-live="polite">
+      <span className="page-loader" aria-hidden="true" />
+      <span className="sr-only">Loading page...</span>
+    </div>
+  );
+}
+
+function withSuspense(Component: React.ComponentType) {
+  return function SuspenseWrapped() {
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <Component />
+      </Suspense>
+    );
+  };
+}
 
 function RootComponent() {
   const { token, loading } = useAuth();
@@ -68,61 +90,67 @@ const rootRoute = createRootRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
-  component: LoginPage,
+  component: withSuspense(LoginPage),
 });
 
 const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/signup",
-  component: SignupPage,
+  component: withSuspense(SignupPage),
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: DashboardPage,
+  component: withSuspense(DashboardPage),
 });
 
 const applicationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/applications",
-  component: ApplicationsPage,
+  component: withSuspense(ApplicationsPage),
 });
 
 const interviewsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/informational-interviews",
-  component: InformationalInterviewsPage,
+  component: withSuspense(InformationalInterviewsPage),
+});
+
+const interviewPrepRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/interview-prep",
+  component: withSuspense(InterviewPrepPage),
 });
 
 const employersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/employers",
-  component: EmployersPage,
+  component: withSuspense(EmployersPage),
 });
 
 const contactsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/contacts",
-  component: ContactsPage,
+  component: withSuspense(ContactsPage),
 });
 
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
-  component: ProfilePage,
+  component: withSuspense(ProfilePage),
 });
 
 const documentsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/documents",
-  component: DocumentsPage,
+  component: withSuspense(DocumentsPage),
 });
 
 const expensesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/expenses",
-  component: ExpenseTrackingPage,
+  component: withSuspense(ExpenseTrackingPage),
 });
 
 const routeTree = rootRoute.addChildren([
@@ -131,6 +159,7 @@ const routeTree = rootRoute.addChildren([
   employersRoute,
   contactsRoute,
   interviewsRoute,
+  interviewPrepRoute,
   profileRoute,
   documentsRoute,
   expensesRoute,

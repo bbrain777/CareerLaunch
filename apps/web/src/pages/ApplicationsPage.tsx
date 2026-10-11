@@ -1,5 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
-import { Alert02Icon, Search01Icon } from "hugeicons-react";
+import { Alert02Icon, PlusSignIcon, Search01Icon } from "hugeicons-react";
 import { pipelineStatuses } from "../status";
 import { ApplicationCard } from "../components/Cards";
 import {
@@ -92,10 +92,11 @@ export function ApplicationsPage() {
         </div>
         <Button
           variant="primary"
-          className="!rounded-[14px] !h-8.5 !px-3 sm:!px-3.5 !text-[13px] !font-medium shrink-0"
+          className="!rounded-lg !h-[30px] !px-3 !text-[12.5px] !font-medium shrink-0 inline-flex items-center gap-1.5 bg-[#0a5c4d] hover:bg-[#07473b] text-white border-0 shadow-sm transition-colors cursor-pointer"
           onClick={openCreate}
         >
-          Add application
+          <PlusSignIcon size={14} strokeWidth={2} />
+          <span>Add application</span>
         </Button>
       </header>
 
@@ -184,27 +185,23 @@ export function ApplicationsPage() {
             />
           </div>
 
-          <label className="grid gap-1.5 text-sm font-medium text-gray-700">
-            Deadline from
-            <input
-              type="date"
-              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm"
-              value={deadlineFrom}
-              max={deadlineTo || undefined}
-              onChange={(event) => setDeadlineFrom(event.target.value)}
+          <div className="w-full">
+            <DatePickerField
+              label="Deadline from"
+              value={deadlineFrom || null}
+              onValueChange={(val) => setDeadlineFrom(val ?? "")}
+              placeholder="From date"
             />
-          </label>
+          </div>
 
-          <label className="grid gap-1.5 text-sm font-medium text-gray-700">
-            Deadline to
-            <input
-              type="date"
-              className="h-10 rounded-xl border border-gray-200 bg-white px-3 text-sm"
-              value={deadlineTo}
-              min={deadlineFrom || undefined}
-              onChange={(event) => setDeadlineTo(event.target.value)}
+          <div className="w-full">
+            <DatePickerField
+              label="Deadline to"
+              value={deadlineTo || null}
+              onValueChange={(val) => setDeadlineTo(val ?? "")}
+              placeholder="To date"
             />
-          </label>
+          </div>
 
           <label className="flex h-10 w-full items-center gap-2 rounded-xl bg-gray-100/80 border border-gray-200/60 px-3.5 text-gray-400 focus-within:border-[#0a5c4d] focus-within:ring-2 focus-within:ring-[#0a5c4d]/20 transition-all">
             <span className="sr-only">Search applications</span>
@@ -457,13 +454,13 @@ function ApplicationEditor({
             {onDelete && (
               <button
                 type="button"
-                className="mr-auto h-10 px-4 rounded-xl text-sm font-medium bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                className="mr-auto h-[30px] px-3 rounded-lg text-[12.5px] font-medium bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={saving || deleting}
                 onClick={() => setConfirmDeleteOpen(true)}
               >
                 {deleting ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="size-4 rounded-full border-2 border-red-600/30 border-t-red-600 animate-spin" aria-hidden="true" />
+                  <span className="flex items-center justify-center gap-1.5">
+                    <span className="size-3.5 rounded-full border-2 border-red-600/30 border-t-red-600 animate-spin" aria-hidden="true" />
                     Deleting...
                   </span>
                 ) : (
@@ -473,19 +470,19 @@ function ApplicationEditor({
             )}
             <button
               type="button"
-              className="h-10 px-4 rounded-xl text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+              className="h-[30px] px-3 rounded-lg text-[12.5px] font-medium border border-[#dad7d0] bg-white hover:bg-[#f6f5f2] text-[#1d1c1a] transition-colors cursor-pointer shadow-sm"
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-5 text-sm font-medium text-white transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-[30px] items-center justify-center gap-1.5 rounded-lg bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-3.5 text-[12.5px] font-medium text-white transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 shadow-sm"
               disabled={saving || deleting}
             >
               {saving ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-hidden="true" />
+                <span className="flex items-center justify-center gap-1.5">
+                  <span className="size-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-hidden="true" />
                   Saving...
                 </span>
               ) : (
@@ -620,9 +617,9 @@ function ApplicationDetail({ application, employerName, contactName, open, onOpe
             </section>
           </div>
         )}
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-          <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Close</button>
-          {onEdit && <button type="button" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b]" onClick={onEdit}>Edit application</button>}
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5">
+          <button type="button" className="h-[30px] px-3 rounded-lg text-[12.5px] font-medium border border-[#dad7d0] bg-white hover:bg-[#f6f5f2] text-[#1d1c1a] transition-colors cursor-pointer shadow-sm" onClick={() => onOpenChange(false)}>Close</button>
+          {onEdit && <button type="button" className="inline-flex h-[30px] items-center justify-center gap-1.5 rounded-lg bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-3.5 text-[12.5px] font-medium text-white transition-all cursor-pointer shadow-sm" onClick={onEdit}>Edit application</button>}
         </div>
       </Dialog>
     </DialogRoot>

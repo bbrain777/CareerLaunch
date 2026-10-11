@@ -16,6 +16,8 @@ import type {
   Expense,
   ExpenseInput,
   ExpenseSummary,
+  JobInterviewPreparation,
+  JobInterviewPreparationInput,
 } from "../types";
 import type { AuthUser } from "../lib/auth";
 
@@ -25,6 +27,7 @@ export const queryKeys = {
   applications: ["applications"] as const,
   tasks: ["tasks"] as const,
   interviews: ["interviews"] as const,
+  jobInterviewPreparations: ["jobInterviewPreparations"] as const,
   profile: ["profile"] as const,
   employers: ["employers"] as const,
   contacts: ["contacts"] as const,
@@ -32,6 +35,77 @@ export const queryKeys = {
   expenses: ["expenses"] as const,
   expenseSummary: ["expenses", "summary"] as const,
 };
+
+export function useJobInterviewPreparationsQuery() {
+  return useQuery({
+    queryKey: queryKeys.jobInterviewPreparations,
+    queryFn: async () => {
+      const result = await api.get<{ jobInterviewPreparations: JobInterviewPreparation[] }>(
+        "/api/job-interview-preparations"
+      );
+      return result.jobInterviewPreparations;
+    },
+  });
+}
+
+export function useCreateJobInterviewPreparationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (preparation: JobInterviewPreparationInput) =>
+      api.post<{ jobInterviewPreparation: JobInterviewPreparation }>(
+        "/api/job-interview-preparations",
+        preparation
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobInterviewPreparations });
+      appToastManager.add({
+        title: "Interview prep saved",
+        description: "Your interview preparation workspace was created.",
+        variant: "success",
+      });
+    },
+  });
+}
+
+export function useUpdateJobInterviewPreparationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      changes,
+    }: {
+      id: number;
+      changes: Partial<JobInterviewPreparationInput>;
+    }) =>
+      api.patch<{ jobInterviewPreparation: JobInterviewPreparation }>(
+        `/api/job-interview-preparations/${id}`,
+        changes
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobInterviewPreparations });
+      appToastManager.add({
+        title: "Interview prep updated",
+        description: "Your changes were saved.",
+        variant: "success",
+      });
+    },
+  });
+}
+
+export function useDeleteJobInterviewPreparationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      api.delete<void>(`/api/job-interview-preparations/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.jobInterviewPreparations });
+      appToastManager.add({
+        title: "Interview prep removed",
+        description: "The interview prep record was deleted.",
+      });
+    },
+  });
+}
 
 export function useExpensesQuery() {
   return useQuery({
@@ -105,11 +179,32 @@ export function useDocumentsQuery() {
 export function useUploadDocumentMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ file, type }: { file: File; type: CareerDocument["type"] }) => {
+    mutationFn: ({
+      file,
+      type,
+      title,
+      version,
+      applicationId,
+      onProgress,
+    }: {
+      file: File;
+      type: CareerDocument["type"];
+      title: string;
+      version: string;
+      applicationId: number | null;
+      onProgress?: (percent: number) => void;
+    }) => {
       const form = new FormData();
       form.append("type", type);
       form.append("file", file);
-      return api.post<{ document: CareerDocument }>("/api/documents", form);
+      form.append("title", title);
+      form.append("version", version);
+      if (applicationId !== null) form.append("applicationId", String(applicationId));
+      return api.uploadWithProgress<{ document: CareerDocument }>(
+        "/api/documents",
+        form,
+        onProgress
+      );
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.documents });

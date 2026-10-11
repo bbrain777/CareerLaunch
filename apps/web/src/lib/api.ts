@@ -9,7 +9,50 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
 }
 
-async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+let refreshPromise: Promise<string | null> | null = null;
+
+async function attemptTokenRefresh(): Promise<string | null> {
+  const currentToken = localStorage.getItem("careerlaunch_token");
+  if (!currentToken) return null;
+
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          localStorage.setItem("careerlaunch_token", data.token);
+          if (data.user) {
+            localStorage.setItem("careerlaunch_user", JSON.stringify(data.user));
+          }
+          return data.token;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
+async function request<T>(
+  endpoint: string,
+  options: RequestOptions = {},
+  isRetry = false
+): Promise<T> {
   const token = localStorage.getItem("careerlaunch_token");
 
   const headers = new Headers(options.headers || {});
@@ -31,6 +74,14 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   };
 
   const response = await fetch(endpoint, config);
+
+  if (response.status === 401 && !isRetry && !endpoint.includes("/api/auth/login") && !endpoint.includes("/api/auth/refresh")) {
+    const newToken = await attemptTokenRefresh();
+    if (newToken) {
+      headers.set("Authorization", `Bearer ${newToken}`);
+      return request<T>(endpoint, { ...options, headers }, true);
+    }
+  }
 
   if (response.status === 204) {
     return {} as T;
@@ -85,4 +136,55 @@ export const api = {
     }
     return response.blob();
   },
+
+  uploadWithProgress: <T>(
+    endpoint: string,
+    formData: FormData,
+    onProgress?: (percent: number) => void
+  ): Promise<T> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", endpoint);
+
+      const token = localStorage.getItem("careerlaunch_token");
+      if (token) {
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      }
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(percent);
+          }
+        };
+      }
+
+      xhr.onload = () => {
+        let responseData: any = null;
+        try {
+          responseData = JSON.parse(xhr.responseText);
+        } catch {
+          responseData = xhr.responseText;
+        }
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(responseData as T);
+        } else {
+          const message =
+            typeof responseData === "object" && responseData?.message
+              ? responseData.message
+              : `Upload failed with status ${xhr.status}`;
+          reject(new ApiError(xhr.status, message, responseData));
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new ApiError(0, "Network error during file upload."));
+      };
+
+      xhr.send(formData);
+    });
+  },
 };
+

@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "./app.js";
+import { applicationRepository } from "./repositories/applicationRepository.js";
+import { careerDocumentRepository } from "./repositories/careerDocumentRepository.js";
 import { documentRepository } from "./repositories/documentRepository.js";
 
 const blobMocks = vi.hoisted(() => ({
@@ -46,6 +48,12 @@ describe("authenticated document routes", () => {
 
   it("lists only the authenticated user's document metadata", async () => {
     const findAll = vi.spyOn(documentRepository, "findAllByUserId").mockResolvedValue([documentRecord] as any);
+    vi.spyOn(careerDocumentRepository, "findAllByUserId").mockResolvedValue([{
+      title: "Software Engineer Resume",
+      version: "v2",
+      applicationId: 12,
+      storageReference: documentRecord.pathname,
+    }] as any);
     const response = await request(app).get("/api/documents").set(authorization);
     expect(response.status).toBe(200);
     expect(findAll).toHaveBeenCalledWith(42);
@@ -53,6 +61,9 @@ describe("authenticated document routes", () => {
       id: 8,
       type: "RESUME",
       fileName: "resume.pdf",
+      title: "Software Engineer Resume",
+      version: "v2",
+      applicationId: 12,
       downloadUrl: "/api/documents/8/download",
     });
     expect(response.body.documents[0].blobUrl).toBeUndefined();
@@ -64,11 +75,21 @@ describe("authenticated document routes", () => {
       url: documentRecord.blobUrl,
     });
     const create = vi.spyOn(documentRepository, "create").mockResolvedValue(documentRecord as any);
+    const createMetadata = vi.spyOn(careerDocumentRepository, "create").mockResolvedValue({
+      title: "Software Engineer Resume",
+      version: "v2",
+      applicationId: 12,
+      storageReference: documentRecord.pathname,
+    } as any);
+    vi.spyOn(applicationRepository, "findById").mockResolvedValue({ id: 12 } as any);
 
     const response = await request(app)
       .post("/api/documents")
       .set(authorization)
       .field("type", "RESUME")
+      .field("title", "Software Engineer Resume")
+      .field("version", "v2")
+      .field("applicationId", "12")
       .attach("file", Buffer.from("sample-pdf"), {
         filename: "resume.pdf",
         contentType: "application/pdf",
@@ -81,6 +102,33 @@ describe("authenticated document routes", () => {
       expect.objectContaining({ access: "private", contentType: "application/pdf" }),
     );
     expect(create).toHaveBeenCalledWith(42, expect.objectContaining({ type: "RESUME", fileName: "resume.pdf" }));
+    expect(createMetadata).toHaveBeenCalledWith(42, expect.objectContaining({
+      title: "Software Engineer Resume",
+      version: "v2",
+      applicationId: 12,
+      storageReference: documentRecord.pathname,
+    }));
+    expect(response.body.document).toMatchObject({ title: "Software Engineer Resume", version: "v2", applicationId: 12 });
+  });
+
+  it("rejects an application link owned by another user before uploading", async () => {
+    vi.spyOn(applicationRepository, "findById").mockResolvedValue(null as any);
+    const create = vi.spyOn(documentRepository, "create");
+
+    const response = await request(app)
+      .post("/api/documents")
+      .set(authorization)
+      .field("type", "RESUME")
+      .field("applicationId", "99")
+      .attach("file", Buffer.from("sample-pdf"), {
+        filename: "resume.pdf",
+        contentType: "application/pdf",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain("owned application");
+    expect(blobMocks.put).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
   });
 
   it("rejects unsupported file types before writing to storage", async () => {
@@ -110,10 +158,15 @@ describe("authenticated document routes", () => {
   it("deletes the private blob before its owned metadata", async () => {
     vi.spyOn(documentRepository, "findById").mockResolvedValue(documentRecord as any);
     const remove = vi.spyOn(documentRepository, "delete").mockResolvedValue(undefined as any);
+    vi.spyOn(careerDocumentRepository, "findByStorageReference").mockResolvedValue({
+      id: 17,
+    } as any);
+    const removeMetadata = vi.spyOn(careerDocumentRepository, "delete").mockResolvedValue(undefined as any);
     blobMocks.del.mockResolvedValue(undefined);
     const response = await request(app).delete("/api/documents/8").set(authorization);
     expect(response.status).toBe(204);
     expect(blobMocks.del).toHaveBeenCalledWith(documentRecord.blobUrl);
     expect(remove).toHaveBeenCalledWith(8, 42);
+    expect(removeMetadata).toHaveBeenCalledWith(17, 42);
   });
 });

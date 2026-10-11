@@ -11,24 +11,19 @@ export interface MetricCardProps {
   accent: MetricAccent;
 }
 
-const accentBg: Record<MetricAccent, string> = {
-  teal: "bg-[#e6f6f2] text-[#0a5c4d]",
-  violet: "bg-[#f3effe] text-[#6b21a8]",
-  amber: "bg-[#fef7ee] text-[#b45309]",
-  blue: "bg-[#edf5fe] text-[#1d4ed8]",
-};
-
-export function MetricCard({ label, value, suffix = "", detail, accent }: MetricCardProps) {
-  const bgClass = accentBg[accent] ?? "bg-white text-gray-900";
-
+export function MetricCard({ label, value, suffix = "", detail, accent: _accent }: MetricCardProps) {
   return (
-    <article className={`rounded-2xl p-5 transition-all border-0 ring-0 ${bgClass}`}>
-      <span className="text-xs font-medium opacity-80">{label}</span>
-      <strong className="my-2 block text-3xl font-semibold">
+    <div className="flex flex-col gap-1.5 p-3.5 sm:p-4 text-left bg-white transition-colors duration-140 hover:bg-[#f6f5f2]">
+      <span className="text-[12.5px] font-normal text-[#57544e] flex items-center gap-1.5">
+        {label}
+      </span>
+      <span className="text-[22px] font-semibold text-[#1d1c1a] tracking-tight tabular-nums leading-tight">
         {value}{suffix}
-      </strong>
-      <small className="block text-xs opacity-75 font-normal">{detail}</small>
-    </article>
+      </span>
+      <span className="text-[12px] text-[#6b6760] font-normal truncate">
+        {detail}
+      </span>
+    </div>
   );
 }
 
@@ -47,26 +42,28 @@ export function ApplicationCard({
     : null;
 
   return (
-    <article className="rounded-xl bg-white p-4 transition-all border-0 ring-0 group">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-semibold text-[#0a5c4d] bg-[#e6f6f2] px-2 py-0.5 rounded-md">
+    <article className="rounded-[8px] bg-white p-3.5 border border-[#e9e7e2] transition-all hover:border-[#dad7d0] hover:shadow-[0_1px_2px_rgba(28,25,20,0.05)] group">
+      <div className="flex items-center justify-between mb-2">
+        <span className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-[#0a5c4d] bg-[#e6f6f2] px-2 py-0.5 rounded-[5px]">
+          <span className="size-1.5 rounded-full bg-[#0a5c4d]" />
           {formatStatus(application.status)}
         </span>
-        <span className="text-xs text-gray-500 font-medium">{deadline ? `Due ${deadline}` : ""}</span>
+        <span className="text-[12px] text-[#8c8880] tabular-nums">{deadline ? `Due ${deadline}` : ""}</span>
       </div>
-      <h4 className="text-sm font-semibold text-gray-900 group-hover:text-[#0a5c4d] transition-colors">{application.position}</h4>
-      <p className="text-xs font-medium text-gray-600 mt-0.5">{application.company}</p>
+      <h4 className="text-[13.5px] font-semibold text-[#1d1c1a] group-hover:text-[#0a5c4d] transition-colors line-clamp-1">{application.position}</h4>
+      <p className="text-[12.5px] text-[#57544e] mt-0.5">{application.company}</p>
       {application.location && (
-        <span className="mt-1 block text-xs text-gray-400">{application.location}</span>
+        <span className="mt-1 block text-[11.5px] text-[#8c8880]">{application.location}</span>
       )}
-      <div className="mt-3 flex items-center justify-end">
+      <div className="mt-3 pt-2.5 border-t border-[#f0eeea] flex items-center justify-between">
+        <span className="text-[11.5px] text-[#8c8880]">Updated recently</span>
         <button
           type="button"
-          className="rounded-lg bg-gray-100 group-hover:bg-[#0a5c4d] group-hover:text-white px-3 py-1 text-xs font-medium text-gray-700 transition-all cursor-pointer border-0"
+          className="h-[26px] px-2.5 rounded-[6px] bg-[#f6f5f2] border border-[#dad7d0] hover:bg-white text-[12px] font-medium text-[#1d1c1a] transition-colors cursor-pointer"
           aria-label={"View " + application.position}
           onClick={onOpen ?? (() => window.location.assign("/applications"))}
         >
-          View
+          View details
         </button>
       </div>
     </article>
@@ -88,46 +85,44 @@ export function InformationalInterviewCard({ interview }: { interview: Informati
     : "Not scheduled";
 
   return (
-    <article className="rounded-2xl bg-white p-4 border-0 ring-0">
+    <article className="rounded-[10px] bg-white p-4 border border-[#e9e7e2] shadow-[0_1px_2px_rgba(28,25,20,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="inline-block mb-1 text-xs font-semibold text-[#0a5c4d] bg-[#e6f6f2] px-2 py-0.5 rounded-md">
+          <span className="inline-flex items-center gap-1.5 mb-1.5 text-[11.5px] font-medium text-[#0a5c4d] bg-[#e6f6f2] px-2 py-0.5 rounded-[5px]">
+            <span className="size-1.5 rounded-full bg-[#0a5c4d]" />
             {interview.status}
           </span>
-          <h3 className="text-[15px] font-semibold">{interview.contactName}</h3>
-          <p className="text-[14px] text-[var(--text-muted)]">{interview.role} · {interview.company}</p>
+          <h3 className="text-[14.5px] font-semibold text-[#1d1c1a]">{interview.contactName}</h3>
+          <p className="text-[13px] text-[#57544e]">{interview.role} · {interview.company}</p>
         </div>
-        <time dateTime={interview.scheduledFor} className="whitespace-nowrap text-[12px] font-medium text-[var(--text-muted)]">
+        <time dateTime={interview.scheduledFor} className="whitespace-nowrap text-[12px] text-[#6b6760] font-normal tabular-nums">
           {scheduledFor}
         </time>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-4">
+      <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-3 gap-3 p-2.5 rounded-[6px] bg-[#f6f5f2] border border-[#e9e7e2]">
         <div>
-          <strong className="block text-[13px] font-medium text-[var(--text-main)]">Preparation</strong>
-          <span className="text-[12px] text-[var(--text-muted)]">{interview.preparationQuestions.length} questions ready</span>
+          <strong className="block text-[11.5px] font-medium text-[#57544e] uppercase tracking-wider">Preparation</strong>
+          <span className="text-[12.5px] text-[#1d1c1a] font-normal">{interview.preparationQuestions.length} questions</span>
         </div>
         <div>
-          <strong className="block text-[13px] font-medium text-[var(--text-main)]">Follow-up</strong>
-          <span className="text-[12px] text-[var(--text-muted)]">{nextFollowUp}</span>
+          <strong className="block text-[11.5px] font-medium text-[#57544e] uppercase tracking-wider">Follow-up</strong>
+          <span className="text-[12.5px] text-[#1d1c1a] font-normal">{nextFollowUp}</span>
         </div>
         <div>
-          <strong className="block text-[13px] font-medium text-[var(--text-main)]">Next action</strong>
-          <span className="text-[12px] text-[var(--text-muted)]">{interview.recommendedAction ?? "Capture notes"}</span>
+          <strong className="block text-[11.5px] font-medium text-[#57544e] uppercase tracking-wider">Next action</strong>
+          <span className="text-[12.5px] text-[#1d1c1a] font-normal truncate block">{interview.recommendedAction ?? "Capture notes"}</span>
         </div>
       </div>
       {interview.keyTakeaway && (
-        <p className="mt-3 rounded-[10px] bg-gray-50 px-3 py-2 text-[14px] text-gray-600">
-          <strong className="font-medium">Key takeaway:</strong> {interview.keyTakeaway}
+        <p className="mt-2.5 rounded-[6px] bg-[#fbfaf8] border border-[#e9e7e2] px-3 py-2 text-[12.5px] text-[#57544e]">
+          <strong className="font-semibold text-[#1d1c1a]">Key takeaway:</strong> {interview.keyTakeaway}
         </p>
       )}
       {interview.referral && (
-        <p className="mt-3 rounded-[10px] bg-gray-50 px-3 py-2 text-[14px] text-gray-600">
-          <strong className="font-medium">Referral:</strong> {interview.referral}
+        <p className="mt-2 rounded-[6px] bg-[#fbfaf8] border border-[#e9e7e2] px-3 py-2 text-[12.5px] text-[#57544e]">
+          <strong className="font-semibold text-[#1d1c1a]">Referral:</strong> {interview.referral}
         </p>
       )}
-      <p className="mt-3 rounded-[10px] bg-gray-50 px-3 py-2 text-[14px] text-gray-600">
-        <strong className="font-medium">Thank-you note:</strong> {interview.thankYouSent ? "Sent" : "Pending"}
-      </p>
     </article>
   );
 }

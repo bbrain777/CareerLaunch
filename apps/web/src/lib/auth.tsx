@@ -24,6 +24,7 @@ interface AuthContextType {
   login: (token: string, user: AuthUser) => void;
   logout: () => Promise<void>;
   updateUser: (user: AuthUser) => void;
+  refreshToken: () => Promise<string | null>;
 }
 
 const TOKEN_KEY = "careerlaunch_token";
@@ -78,6 +79,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(updated);
   }, []);
 
+  const refreshToken = useCallback(async (): Promise<string | null> => {
+    const currentToken = localStorage.getItem(TOKEN_KEY);
+    if (!currentToken) return null;
+
+    try {
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${currentToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      if (data.token) {
+        localStorage.setItem(TOKEN_KEY, data.token);
+        setToken(data.token);
+        if (data.user) {
+          localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+          setUser(data.user);
+        }
+        return data.token;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     const verifySession = async () => {
       const storedToken = localStorage.getItem(TOKEN_KEY);
@@ -99,6 +133,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             localStorage.setItem(USER_KEY, JSON.stringify(data.user));
             setUser(data.user);
           }
+        } else if (res.status === 401) {
+          // Attempt token refresh on initial expired session
+          const refreshed = await refreshToken();
+          if (!refreshed) {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            setToken(null);
+            setUser(null);
+          }
         } else {
           localStorage.removeItem(TOKEN_KEY);
           localStorage.removeItem(USER_KEY);
@@ -113,10 +156,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     void verifySession();
-  }, []);
+  }, [refreshToken]);
+
+  // Periodic background token refresh before expiry
+  useEffect(() => {
+    if (!token) return;
+
+    // Refresh every 45 minutes (session token expires in 1h)
+    const REFRESH_INTERVAL_MS = 45 * 60 * 1000;
+    const intervalId = setInterval(() => {
+      void refreshToken();
+    }, REFRESH_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [token, refreshToken]);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, updateUser, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );

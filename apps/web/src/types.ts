@@ -131,6 +131,9 @@ export interface CareerDocument {
   id: number;
   type: "RESUME" | "COVER_LETTER";
   fileName: string;
+  title: string;
+  version: string;
+  applicationId: number | null;
   contentType: string;
   sizeBytes: number;
   createdAt: string;
@@ -161,6 +164,36 @@ export interface ExpenseInput {
 export interface ExpenseSummary {
   total: number;
   byCategory: Partial<Record<ExpenseCategory, number>>;
+}
+
+export interface JobInterviewPreparation {
+  id: number;
+  company: string;
+  role: string;
+  scheduledFor: string | null;
+  companyResearch: string | null;
+  notes: string | null;
+  practiceQuestions: string[];
+  resources: string[];
+  responsibilities: string[];
+  skills: string[];
+  applicationId: number | null;
+  userId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface JobInterviewPreparationInput {
+  company: string;
+  role: string;
+  scheduledFor?: string | null;
+  companyResearch?: string | null;
+  notes?: string | null;
+  practiceQuestions?: string[];
+  resources?: string[];
+  responsibilities?: string[];
+  skills?: string[];
+  applicationId?: number | null;
 }
 
 export interface DashboardData {

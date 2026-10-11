@@ -1,5 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
-import { Alert02Icon, Search01Icon } from "hugeicons-react";
+import { Alert02Icon, PlusSignIcon, Search01Icon } from "hugeicons-react";
 import {
   Button,
   Field,
@@ -86,10 +86,11 @@ export function EmployersPage() {
         </div>
         <Button
           variant="primary"
-          className="!rounded-[14px] !h-8.5 !px-3 sm:!px-3.5 !text-[13px] !font-medium shrink-0"
+          className="!rounded-lg !h-[30px] !px-3 !text-[12.5px] !font-medium shrink-0 inline-flex items-center gap-1.5 bg-[#0a5c4d] hover:bg-[#07473b] text-white border-0 shadow-sm transition-colors cursor-pointer"
           onClick={openCreate}
         >
-          Add employer
+          <PlusSignIcon size={14} strokeWidth={2} />
+          <span>Add employer</span>
         </Button>
       </header>
 
@@ -209,10 +210,10 @@ export function EmployersPage() {
                       {contacts.filter((contact) => contact.employerId === employer.id).length}
                     </Table.Cell>
                     <Table.Cell className="text-right">
-                      <span className="inline-flex justify-end gap-2">
+                      <span className="inline-flex justify-end gap-1.5">
                         <button
                           type="button"
-                          className="rounded-[6px] border border-gray-200 bg-white px-2.5 py-1 text-[14px] font-medium text-gray-700 hover:bg-gray-100"
+                          className="h-[26px] px-2.5 rounded-[6px] border border-[#dad7d0] bg-white text-[12px] font-medium text-[#1d1c1a] hover:bg-[#f6f5f2] transition-colors cursor-pointer"
                           aria-label={`View ${employer.name}`}
                           onClick={() => setDetail(employer)}
                         >
@@ -220,7 +221,7 @@ export function EmployersPage() {
                         </button>
                         <button
                           type="button"
-                          className="rounded-[6px] border-0 bg-[#e6f6f2] px-2.5 py-1 text-[14px] font-medium text-[#0a5c4d] hover:bg-[#cceee5]"
+                          className="h-[26px] px-2.5 rounded-[6px] border-0 bg-[#e6f6f2] text-[12px] font-medium text-[#0a5c4d] hover:bg-[#cceee5] transition-colors cursor-pointer"
                           aria-label={`Open ${employer.name}`}
                           onClick={() => openEdit(employer)}
                         >
@@ -338,17 +339,17 @@ function EmployerEditor({
             </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5">
               {onDelete && (
                 <button
                   type="button"
-                  className="mr-auto h-10 px-4 rounded-xl text-sm font-medium bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mr-auto h-[30px] px-3 rounded-lg text-[12.5px] font-medium bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={saving || deleting}
                   onClick={() => setConfirmDeleteOpen(true)}
                 >
                   {deleting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="size-4 rounded-full border-2 border-red-600/30 border-t-red-600 animate-spin" aria-hidden="true" />
+                    <span className="flex items-center justify-center gap-1.5">
+                      <span className="size-3.5 rounded-full border-2 border-red-600/30 border-t-red-600 animate-spin" aria-hidden="true" />
                       Deleting...
                     </span>
                   ) : (
@@ -358,19 +359,19 @@ function EmployerEditor({
               )}
               <button
                 type="button"
-                className="h-10 px-4 rounded-xl text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+                className="h-[30px] px-3 rounded-lg text-[12.5px] font-medium border border-[#dad7d0] bg-white hover:bg-[#f6f5f2] text-[#1d1c1a] transition-colors cursor-pointer shadow-sm"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-5 text-sm font-medium text-white transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-[30px] items-center justify-center gap-1.5 rounded-lg bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-3.5 text-[12.5px] font-medium text-white transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 shadow-sm"
                 disabled={saving || deleting}
               >
                 {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-hidden="true" />
+                  <span className="flex items-center justify-center gap-1.5">
+                    <span className="size-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-hidden="true" />
                     Saving...
                   </span>
                 ) : (
@@ -505,9 +506,9 @@ function EmployerDetail({ employer, linkedContacts, open, onOpenChange, onEdit }
             </section>
           </div>
         )}
-        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
-          <button type="button" className="h-10 rounded-xl bg-gray-100 px-4 text-sm font-medium text-gray-700 hover:bg-gray-200" onClick={() => onOpenChange(false)}>Close</button>
-          {onEdit && <button type="button" className="inline-flex h-10 items-center justify-center rounded-xl bg-[#0a5c4d] px-5 text-sm font-medium text-white hover:bg-[#07473b]" onClick={onEdit}>Edit employer</button>}
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-2.5">
+          <button type="button" className="h-[30px] px-3 rounded-lg text-[12.5px] font-medium border border-[#dad7d0] bg-white hover:bg-[#f6f5f2] text-[#1d1c1a] transition-colors cursor-pointer shadow-sm" onClick={() => onOpenChange(false)}>Close</button>
+          {onEdit && <button type="button" className="inline-flex h-[30px] items-center justify-center gap-1.5 rounded-lg bg-[#0a5c4d] hover:bg-[#07473b] active:scale-[0.98] px-3.5 text-[12.5px] font-medium text-white transition-all cursor-pointer shadow-sm" onClick={onEdit}>Edit employer</button>}
         </div>
       </Dialog>
     </DialogRoot>
