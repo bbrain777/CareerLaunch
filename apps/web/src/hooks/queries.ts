@@ -182,15 +182,24 @@ export function useUploadDocumentMutation() {
     mutationFn: ({
       file,
       type,
+      title,
+      version,
+      applicationId,
       onProgress,
     }: {
       file: File;
       type: CareerDocument["type"];
+      title: string;
+      version: string;
+      applicationId: number | null;
       onProgress?: (percent: number) => void;
     }) => {
       const form = new FormData();
       form.append("type", type);
       form.append("file", file);
+      form.append("title", title);
+      form.append("version", version);
+      if (applicationId !== null) form.append("applicationId", String(applicationId));
       return api.uploadWithProgress<{ document: CareerDocument }>(
         "/api/documents",
         form,

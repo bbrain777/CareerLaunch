@@ -2,7 +2,12 @@ import { type FormEvent, useState } from "react";
 import { DownloadSimpleIcon, FileTextIcon, TrashIcon, UploadSimpleIcon } from "@phosphor-icons/react";
 import { Alert02Icon } from "hugeicons-react";
 import { Dialog, DialogDescription, DialogRoot, DialogTitle, Select } from "../components/ui";
-import { useDeleteDocumentMutation, useDocumentsQuery, useUploadDocumentMutation } from "../hooks/queries";
+import {
+  useApplicationsQuery,
+  useDeleteDocumentMutation,
+  useDocumentsQuery,
+  useUploadDocumentMutation,
+} from "../hooks/queries";
 import { api } from "../lib/api";
 import { appToastManager } from "../lib/toast";
 import type { CareerDocument } from "../types";
@@ -20,9 +25,13 @@ function fileSize(bytes: number) {
 
 export function DocumentsPage() {
   const { data: documents = [], isLoading } = useDocumentsQuery();
+  const { data: applications = [] } = useApplicationsQuery();
   const uploadDocument = useUploadDocumentMutation();
   const deleteDocument = useDeleteDocumentMutation();
   const [type, setType] = useState<CareerDocument["type"]>("RESUME");
+  const [title, setTitle] = useState("");
+  const [version, setVersion] = useState("v1");
+  const [applicationId, setApplicationId] = useState("none");
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -34,6 +43,9 @@ export function DocumentsPage() {
     if (!selectedFile) return;
 
     const extension = selectedFile.name.split(".").pop()?.toLowerCase() ?? "";
+    if (!title.trim()) {
+      setTitle(selectedFile.name.replace(/\.[^.]+$/, ""));
+    }
     if (!allowedExtensions.includes(extension)) {
       setValidationError("Unsupported file format. Please choose a PDF, DOC, or DOCX file.");
       return;
@@ -67,9 +79,15 @@ export function DocumentsPage() {
       await uploadDocument.mutateAsync({
         file,
         type,
+        title: title.trim() || file.name,
+        version: version.trim() || "v1",
+        applicationId: applicationId === "none" ? null : Number(applicationId),
         onProgress: (percent) => setUploadProgress(percent),
       });
       setFile(null);
+      setTitle("");
+      setVersion("v1");
+      setApplicationId("none");
       setUploadProgress(null);
       setValidationError(null);
       const input = document.getElementById("career-document-file") as HTMLInputElement | null;
@@ -115,7 +133,10 @@ export function DocumentsPage() {
           <h2 id="upload-document-heading" className="text-[14.5px] font-semibold text-[#1d1c1a]">Upload a document</h2>
           <p className="mt-0.5 text-[12.5px] text-[#57544e]">PDF, DOC, or DOCX only. Maximum file size: 5 MB.</p>
         </div>
-        <form className="mt-2 grid gap-3.5 md:grid-cols-[200px_1fr_auto] md:items-end" onSubmit={submit}>
+        <form
+          className="mt-2 grid gap-3.5 md:grid-cols-2 md:items-end xl:grid-cols-[160px_minmax(160px,1fr)_100px_minmax(180px,1fr)_minmax(180px,1fr)_auto]"
+          onSubmit={submit}
+        >
           <div className="w-full">
             <Select
               label="Document type"
@@ -125,6 +146,43 @@ export function DocumentsPage() {
               items={{
                 RESUME: "Resume",
                 COVER_LETTER: "Cover letter",
+              }}
+            />
+          </div>
+          <label className="grid gap-1.5 text-[12.5px] font-medium text-[#1d1c1a]">
+            Document title
+            <input
+              className="h-[30px] rounded-[6px] border border-[#dad7d0] px-2.5 text-[12.5px]"
+              value={title}
+              maxLength={200}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+            />
+          </label>
+          <label className="grid gap-1.5 text-[12.5px] font-medium text-[#1d1c1a]">
+            Version
+            <input
+              className="h-[30px] rounded-[6px] border border-[#dad7d0] px-2.5 text-[12.5px]"
+              value={version}
+              maxLength={200}
+              onChange={(event) => setVersion(event.target.value)}
+              required
+            />
+          </label>
+          <div className="w-full">
+            <Select
+              label="Link to application"
+              className="w-full"
+              value={applicationId}
+              onValueChange={(value) => value && setApplicationId(value)}
+              items={{
+                none: "No application",
+                ...Object.fromEntries(
+                  applications.map((application) => [
+                    String(application.id),
+                    `${application.position} at ${application.company}`,
+                  ]),
+                ),
               }}
             />
           </div>
@@ -191,8 +249,20 @@ export function DocumentsPage() {
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <span className="grid size-8 shrink-0 place-items-center rounded-[6px] bg-[#e6f6f2] text-[#0a5c4d]"><FileTextIcon className="size-4" /></span>
                   <div className="min-w-0">
-                    <h3 className="truncate text-[13.5px] font-semibold text-[#1d1c1a]">{document.fileName}</h3>
-                    <p className="text-[11.5px] text-[#57544e]">{documentLabel(document.type)} · {fileSize(document.sizeBytes)}</p>
+                    <h3 className="truncate text-[13.5px] font-semibold text-[#1d1c1a]">
+                      {document.title || document.fileName}
+                    </h3>
+                    <p className="text-[11.5px] text-[#57544e]">
+                      {documentLabel(document.type)} · {document.fileName} · {fileSize(document.sizeBytes)} · Version {document.version}
+                    </p>
+                    {document.applicationId !== null && (
+                      <p className="truncate text-[11.5px] text-[#57544e]">
+                        Linked to {applications.find((application) => application.id === document.applicationId)?.position
+                          ?? "application"} at{" "}
+                        {applications.find((application) => application.id === document.applicationId)?.company
+                          ?? "your application"}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

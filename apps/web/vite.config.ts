@@ -14,14 +14,13 @@ export default defineConfig({
     }
   },
   build: {
-    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         manualChunks(id: string) {
+          if (id.includes("@cloudflare/kumo") || id.includes("@base-ui/react")) {
+            return;
+          }
           if (id.includes("node_modules")) {
-            if (id.includes("@cloudflare/kumo") || id.includes("@base-ui/react")) {
-              return "kumo-ui";
-            }
             if (id.includes("@tanstack/react-query") || id.includes("@tanstack/react-router")) {
               return "tanstack-vendor";
             }

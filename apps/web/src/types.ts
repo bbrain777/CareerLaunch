@@ -131,6 +131,9 @@ export interface CareerDocument {
   id: number;
   type: "RESUME" | "COVER_LETTER";
   fileName: string;
+  title: string;
+  version: string;
+  applicationId: number | null;
   contentType: string;
   sizeBytes: number;
   createdAt: string;

@@ -3,6 +3,8 @@ import { del, get, put } from "@vercel/blob";
 import { Router, type RequestHandler } from "express";
 import multer from "multer";
 import { authenticatedUserId, AuthRequest, requireAuth } from "../middleware/auth.js";
+import { applicationRepository } from "../repositories/applicationRepository.js";
+import { careerDocumentRepository } from "../repositories/careerDocumentRepository.js";
 import { documentRepository, type DocumentType } from "../repositories/documentRepository.js";
 
 export const documentRouter = Router();
@@ -53,11 +55,17 @@ function safeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "document";
 }
 
-function serializeDocument(document: Record<string, any>) {
+function serializeDocument(
+  document: Record<string, any>,
+  metadata?: Record<string, any> | null,
+) {
   return {
     id: Number(document.id),
     type: String(document.type),
     fileName: String(document.fileName),
+    title: String(metadata?.title ?? document.fileName),
+    version: String(metadata?.version ?? "v1"),
+    applicationId: metadata?.applicationId == null ? null : Number(metadata.applicationId),
     contentType: String(document.contentType),
     sizeBytes: Number(document.sizeBytes),
     createdAt: String(document.createdAt),
@@ -69,8 +77,18 @@ documentRouter.use(requireAuth);
 
 documentRouter.get("/", async (request: AuthRequest, response) => {
   const userId = authenticatedUserId(request)!;
-  const documents = await documentRepository.findAllByUserId(userId);
-  response.json({ documents: documents.map(serializeDocument) });
+  const [documents, metadata] = await Promise.all([
+    documentRepository.findAllByUserId(userId),
+    careerDocumentRepository.findAllByUserId(userId),
+  ]);
+  const metadataByStorageReference = new Map(
+    metadata.map((item) => [item.storageReference, item]),
+  );
+  response.json({
+    documents: documents.map((document) =>
+      serializeDocument(document, metadataByStorageReference.get(document.pathname)),
+    ),
+  });
 });
 
 documentRouter.post("/", receiveSingleDocument, async (request: AuthRequest, response) => {
@@ -93,7 +111,32 @@ documentRouter.post("/", receiveSingleDocument, async (request: AuthRequest, res
     return;
   }
 
+  const title = typeof request.body.title === "string" && request.body.title.trim()
+    ? request.body.title.trim()
+    : file.originalname;
+  const version = typeof request.body.version === "string" && request.body.version.trim()
+    ? request.body.version.trim()
+    : "v1";
+  if (title.length > 200 || version.length > 200) {
+    response.status(400).json({ message: "Document title and version must not exceed 200 characters" });
+    return;
+  }
+
+  let applicationId: number | null = null;
+  if (request.body.applicationId) {
+    applicationId = Number(request.body.applicationId);
+    if (!Number.isSafeInteger(applicationId) || applicationId <= 0) {
+      response.status(400).json({ message: "applicationId must be a positive integer or empty" });
+      return;
+    }
+    if (!(await applicationRepository.findById(applicationId, userId))) {
+      response.status(400).json({ message: "applicationId must reference an owned application" });
+      return;
+    }
+  }
+
   let blob: Awaited<ReturnType<typeof put>> | undefined;
+  let savedDocument: Record<string, any> | undefined;
   try {
     const pathname = `users/${userId}/documents/${Date.now()}-${safeFileName(file.originalname)}`;
     blob = await put(pathname, file.buffer, {
@@ -101,7 +144,7 @@ documentRouter.post("/", receiveSingleDocument, async (request: AuthRequest, res
       contentType: file.mimetype,
       addRandomSuffix: true,
     });
-    const document = await documentRepository.create(userId, {
+    savedDocument = await documentRepository.create(userId, {
       type,
       fileName: file.originalname,
       pathname: blob.pathname,
@@ -109,8 +152,21 @@ documentRouter.post("/", receiveSingleDocument, async (request: AuthRequest, res
       contentType: file.mimetype,
       sizeBytes: file.size,
     });
-    response.status(201).json({ document: serializeDocument(document) });
+    const metadata = await careerDocumentRepository.create(userId, {
+      title,
+      documentType: type,
+      version,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      fileSizeBytes: file.size,
+      storageReference: blob.pathname,
+      applicationId,
+    });
+    response.status(201).json({ document: serializeDocument(savedDocument, metadata) });
   } catch (error) {
+    if (savedDocument) {
+      await documentRepository.delete(Number(savedDocument.id), userId);
+    }
     if (blob) await del(blob.url).catch(() => undefined);
     console.error("Document upload failed", error);
     response.status(500).json({ message: "Document upload failed" });
@@ -158,6 +214,13 @@ documentRouter.delete("/:id", async (request: AuthRequest, response) => {
   }
 
   await del(String(document.blobUrl));
+  const metadata = await careerDocumentRepository.findByStorageReference(
+    String(document.pathname),
+    userId,
+  );
+  if (metadata) {
+    await careerDocumentRepository.delete(Number(metadata.id), userId);
+  }
   await documentRepository.delete(id, userId);
   response.status(204).send();
 });

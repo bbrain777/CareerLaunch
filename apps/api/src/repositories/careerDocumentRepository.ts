@@ -25,6 +25,12 @@ async findAllByUserId(userId: number) {
 return getDb().orm.public.CareerDocument.where({ userId }).all();
 },
 
+async findByStorageReference(storageReference: string, userId: number) {
+return getDb().orm.public.CareerDocument
+.where({ storageReference, userId })
+.first();
+},
+
 async findById(id: number, userId: number) {
 return getDb().orm.public.CareerDocument.where({ id, userId }).first();
 },
