@@ -81,6 +81,7 @@ documentRouter.get("/", async (request: AuthRequest, response) => {
     documentRepository.findAllByUserId(userId),
     careerDocumentRepository.findAllByUserId(userId),
   ]);
+  // Blob records own private file access; career metadata is joined by the unique blob pathname.
   const metadataByStorageReference = new Map(
     metadata.map((item) => [item.storageReference, item]),
   );
@@ -137,6 +138,7 @@ documentRouter.post("/", receiveSingleDocument, async (request: AuthRequest, res
 
   let blob: Awaited<ReturnType<typeof put>> | undefined;
   let savedDocument: Record<string, any> | undefined;
+  let savedMetadata: Record<string, any> | undefined;
   try {
     const pathname = `users/${userId}/documents/${Date.now()}-${safeFileName(file.originalname)}`;
     blob = await put(pathname, file.buffer, {
@@ -152,7 +154,7 @@ documentRouter.post("/", receiveSingleDocument, async (request: AuthRequest, res
       contentType: file.mimetype,
       sizeBytes: file.size,
     });
-    const metadata = await careerDocumentRepository.create(userId, {
+    savedMetadata = await careerDocumentRepository.create(userId, {
       title,
       documentType: type,
       version,
@@ -162,12 +164,23 @@ documentRouter.post("/", receiveSingleDocument, async (request: AuthRequest, res
       storageReference: blob.pathname,
       applicationId,
     });
-    response.status(201).json({ document: serializeDocument(savedDocument, metadata) });
+    response.status(201).json({ document: serializeDocument(savedDocument, savedMetadata) });
   } catch (error) {
-    if (savedDocument) {
-      await documentRepository.delete(Number(savedDocument.id), userId);
+    // Blob storage and the two database records cannot share a transaction, so compensate any partial upload.
+    const cleanup = await Promise.allSettled([
+      ...(savedMetadata
+        ? [careerDocumentRepository.delete(Number(savedMetadata.id), userId)]
+        : []),
+      ...(savedDocument
+        ? [documentRepository.delete(Number(savedDocument.id), userId)]
+        : []),
+      ...(blob ? [del(blob.url)] : []),
+    ]);
+    for (const result of cleanup) {
+      if (result.status === "rejected") {
+        console.error("Document upload cleanup failed", result.reason);
+      }
     }
-    if (blob) await del(blob.url).catch(() => undefined);
     console.error("Document upload failed", error);
     response.status(500).json({ message: "Document upload failed" });
   }
