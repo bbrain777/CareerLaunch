@@ -2,16 +2,30 @@
 
 CareerLaunch is a responsive web application for students and recent graduates to organize job opportunities, track applications from discovery through decision, and prepare for interviews.
 
-The project combines Olakunle Obademi's CareerLaunch proposal with selected ideas from Saleh Ntege's BizTrack proposal. BizTrack-inspired features include employer and professional-contact records, business-style dashboard reporting, search and filtering, and job-search expense tracking.
+The project combines Olakunle Tayo Obademi's CareerLaunch proposal with selected ideas from Saleh Ntege's BizTrack proposal. BizTrack-inspired features include employer and professional-contact records, business-style dashboard reporting, search and filtering, and job-search expense tracking.
 
 ## Team
 
-- Olakunle Obademi (team lead) — [@bbrain777](https://github.com/bbrain777)
+- Olakunle Tayo Obademi (team lead) — [@bbrain777](https://github.com/bbrain777)
 - Saleh Ntege — [@salehish](https://github.com/salehish)
 - Alex Koje Okhitoya — [@lexmanthefirst](https://github.com/lexmanthefirst)
 - Samar Mohammed Walakabouh Salah Mahmoud Abbas — [@sameljawabryBYUI](https://github.com/sameljawabryBYUI)
 
 Synchronous meeting time: Tuesdays at 6:00 PM UK time (BST) / 8:00 PM Uganda time (EAT), beginning September 22, 2026. The team changed the schedule to stay aligned with course-required deadlines.
+
+## Delivered contributions
+
+Olakunle originated and led CareerLaunch and contributed substantial implementation across the
+full stack. His delivered work includes the runnable project foundation, architecture and CI,
+application/task workflows, dashboard analytics and reminders, informational interviews, profile
+persistence, private document storage, application filters, database and environment integration,
+security fixes, cross-branch correction, production migrations, and Vercel deployment. Saleh,
+Alex, and Samar made significant backend, frontend, authentication, testing, security, and expense
+tracking contributions. Shared features are credited to both their original implementers and their
+integrators.
+
+See the [commit-backed contribution and ownership record](docs/CONTRIBUTIONS.md) for the complete
+breakdown, and [the architecture document](docs/ARCHITECTURE.md) for system boundaries.
 
 ## Local development
 
@@ -116,7 +130,10 @@ The MVP intentionally excludes a complete customer, inventory, product, sales, o
 - Use **prototype/dashboard** only as a preserved visual and technical reference.
 - Keep **main** limited to agreed and reviewed team work.
 
-See **docs/ARCHITECTURE.md** for system and integration decisions, **docs/TEAM-PLANNING.md** for team agreements, and **CONTRIBUTING.md** for the branch and pull-request workflow.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for system and integration decisions,
+[docs/TEAM-PLANNING.md](docs/TEAM-PLANNING.md) for team agreements,
+[docs/CONTRIBUTIONS.md](docs/CONTRIBUTIONS.md) for verified contribution ownership, and
+[CONTRIBUTING.md](CONTRIBUTING.md) for the branch and pull-request workflow.
 
 ## Course document
 
