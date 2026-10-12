@@ -1,5 +1,5 @@
 import { Temporal } from "temporal-polyfill";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { getDb } from "./db.js";
 
 async function main() {
