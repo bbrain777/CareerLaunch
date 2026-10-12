@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Input, SensitiveInput } from "@/components/ui";
+import { Input } from "@/components/ui";
 import { AppLogo } from "@/components/AppLogo";
 import { useAuth } from "@/lib/auth";
 import { useSignupMutation } from "@/hooks/queries";
@@ -91,13 +91,14 @@ export function SignupPage() {
               className="w-full"
             />
 
-            <SensitiveInput
+            <Input
               label="Password"
               id="signup-password"
+              type="password"
               required
               placeholder="••••••••"
               value={password}
-              onValueChange={setPassword}
+              onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               size="base"
               className="w-full"
