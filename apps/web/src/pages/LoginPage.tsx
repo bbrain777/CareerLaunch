@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Input, SensitiveInput } from "@/components/ui";
+import { Input } from "@/components/ui";
 import { AppLogo } from "@/components/AppLogo";
 import { useAuth } from "@/lib/auth";
 import { useLoginMutation } from "@/hooks/queries";
@@ -60,13 +60,14 @@ export function LoginPage() {
             />
 
             <div className="flex flex-col gap-1">
-              <SensitiveInput
+              <Input
                 label="Password"
                 id="password"
+                type="password"
                 required
                 placeholder="••••••••"
                 value={password}
-                onValueChange={setPassword}
+                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
                 size="base"
                 className="w-full"
